@@ -19,16 +19,17 @@ jobs:
 
       - name: Log in to Azure Container Registry
         run: |
-          az acr login --name acrfoodlytics123
+          az acr login --name foodlytics-eqbaanavawbqcxfs
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t acrfoodlytics123.azurecr.io/backend:latest ./backend
-          docker push acrfoodlytics123.azurecr.io/backend:latest
+          docker build -t foodlytics-eqbaanavawbqcxfs.azurecr.io/backend:latest ./backend
+          docker push foodlytics-eqbaanavawbqcxfs.azurecr.io/backend:latest
 
       - name: Deploy to Azure Container App
         run: |
-          az containerapp update \
-            --name ca-foodlytics-backend \
+          az webapp config container set \
+            --name foodlytics-backend \
             --resource-group rg-foodlytics \
-            --image acrfoodlytics123.azurecr.io/backend:latest
+            --docker-custom-image-name foodlytics-eqbaanavawbqcxfs.azurecr.io/backend:latest \
+            --docker-registry-server-url https://foodlytics-eqbaanavawbqcxfs.azurecr.io
