@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+supabase
+pydantic
+python-dotenv
+google-genai
+httpx
+huggingface_hub
+
+# Increment 3: Topic Modeling (BERTopic)
+bertopic
+sentence-transformers
+torch
+umap-learn
+hdbscan
+scikit-learn
+
