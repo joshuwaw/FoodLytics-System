@@ -130,7 +130,18 @@ def get_topics(premise_id: int):
             freq = data["kekerapan"]
             avg_skor = round(data["skor_total"] / freq, 3) if freq > 0 else 0.0
             counts = data["sentimen_counts"]
-            dominant = max(counts, key=counts.get)
+            
+            # Penentuan sentimen dominan yang lebih pintar (Abaikan Neutral dalam perbandingan)
+            # Jika ulasan Negatif melebihi Positif, ia adalah Isu Kritikal
+            if counts["Negatif"] > counts["Positif"]:
+                dominant = "Negatif"
+            # Jika Positif melebihi Negatif, ia adalah Kekuatan
+            elif counts["Positif"] > counts["Negatif"]:
+                dominant = "Positif"
+            # Jika jumlah sama, maka ia bercampur/Neutral
+            else:
+                dominant = "Neutral"
+                
             topics.append({
                 "label_topik": label,
                 "kekerapan": freq,
