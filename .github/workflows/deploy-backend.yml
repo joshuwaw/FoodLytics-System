@@ -18,26 +18,26 @@ jobs:
 
       - name: Log in to Azure Container Registry
         run: |
-          az acr login --name acrfoodlytics123
+          az acr login --name foodlytics
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t acrfoodlytics123.azurecr.io/backend:latest ./backend
-          docker push acrfoodlytics123.azurecr.io/backend:latest
+          docker build -t foodlytics-eqbaanavawbqcxfs.azurecr.io/backend:latest ./backend
+          docker push foodlytics-eqbaanavawbqcxfs.azurecr.io/backend:latest
 
       - name: Deploy to Azure App Service
         run: |
           # Enable admin user if not already enabled to get credentials
-          az acr update -n acrfoodlytics123 --admin-enabled true
+          az acr update -n foodlytics --admin-enabled true
           
           # Retrieve ACR credentials
-          ACR_USERNAME=$(az acr credential show --name acrfoodlytics123 --query "username" -o tsv)
-          ACR_PASSWORD=$(az acr credential show --name acrfoodlytics123 --query "passwords[0].value" -o tsv)
+          ACR_USERNAME=$(az acr credential show --name foodlytics --query "username" -o tsv)
+          ACR_PASSWORD=$(az acr credential show --name foodlytics --query "passwords[0].value" -o tsv)
           
           az webapp config container set \
             --name foodlytics-backend \
             --resource-group rg-foodlytics \
-            --docker-custom-image-name acrfoodlytics123.azurecr.io/backend:latest \
-            --docker-registry-server-url https://acrfoodlytics123.azurecr.io \
+            --docker-custom-image-name foodlytics-eqbaanavawbqcxfs.azurecr.io/backend:latest \
+            --docker-registry-server-url https://foodlytics-eqbaanavawbqcxfs.azurecr.io \
             --docker-registry-server-user $ACR_USERNAME \
             --docker-registry-server-password $ACR_PASSWORD
