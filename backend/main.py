@@ -5,7 +5,11 @@ from routes import admin, customer, analytics
 app = FastAPI(title="FoodLytics API", version="1.0.0")
 
 # Configure CORS
-origins = ["*"]
+origins = [
+    "http://localhost:3000",
+    "https://foodlytics-system.vercel.app",
+    "https://www.foodlytics-system.vercel.app"
+]
 
 app.add_middleware(
     CORSMiddleware,
