@@ -26,3 +26,12 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"]
 @app.get("/")
 def read_root():
     return {"message": "FoodLytics API is running"}
+
+@app.get("/api/debug-cors")
+def debug_cors():
+    return {
+        "status": "active",
+        "allowed_origins": origins,
+        "version": "1.0.1"
+    }
+
