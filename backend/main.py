@@ -23,6 +23,12 @@ app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(customer.router, prefix="/api/customer", tags=["customer"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 
+# Robustness fallback: include routers without /api prefix to handle misconfigured frontend env vars
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(customer.router, prefix="/customer", tags=["customer"])
+app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
+
+
 @app.get("/")
 def read_root():
     return {"message": "FoodLytics API is running"}
