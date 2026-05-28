@@ -5,11 +5,7 @@ from routes import admin, customer, analytics
 app = FastAPI(title="FoodLytics API", version="1.0.0")
 
 # Configure CORS
-origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    # Add production frontend URL here when deploying
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
