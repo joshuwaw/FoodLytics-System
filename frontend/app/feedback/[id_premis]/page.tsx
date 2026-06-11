@@ -40,9 +40,16 @@ export default function FeedbackPortal() {
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
     fetch(`${API_URL}/customer/premises/${id_premis}`, { signal: controller.signal })
-      .then((res) => {
+      .then(async (res) => {
         clearTimeout(timeoutId);
-        if (res.status === 404) throw new Error("Premis tidak dijumpai");
+        if (res.status === 404) {
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            throw new Error("Premis tidak dijumpai");
+          } else {
+            throw new Error("Konfigurasi API tidak sah (pelayan memulangkan 404)");
+          }
+        }
         if (!res.ok) throw new Error("Ralat pelayan");
         return res.json();
       })
