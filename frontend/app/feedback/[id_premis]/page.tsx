@@ -35,7 +35,7 @@ export default function FeedbackPortal() {
 
   useEffect(() => {
     if (!id_premis) return;
-    
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
@@ -63,7 +63,7 @@ export default function FeedbackPortal() {
           setCafeName("Ralat: " + err.message);
         }
       });
-      
+
     return () => clearTimeout(timeoutId);
   }, [id_premis, API_URL]);
 
@@ -117,7 +117,7 @@ export default function FeedbackPortal() {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Terima Kasih!</h2>
           <p className="text-gray-600 dark:text-zinc-400">
-            Maklum balas anda untuk <strong>{cafeName}</strong> telah berjaya direkodkan. Penghargaan atas masa yang diluangkan.
+            Maklum balas anda untuk <strong>{cafeName}</strong> telah berjaya direkodkan. Terima kasih kerana sudi meluangkan masa!
           </p>
         </Card>
       </div>
@@ -139,7 +139,7 @@ export default function FeedbackPortal() {
             {cafeName}
           </h1>
           <p className="text-sm text-gray-500 dark:text-zinc-400 mt-2">
-            Sila kongsikan pengalaman anda untuk membantu kami bertambah baik.
+            Sila kongsikan pengalaman anda untuk bantu kami bertambah baik.
           </p>
         </div>
 
@@ -161,21 +161,20 @@ export default function FeedbackPortal() {
                       className="transition-transform hover:scale-110 focus:outline-none"
                     >
                       <Star
-                        className={`w-10 h-10 ${
-                          star <= (hoveredRatings[cat.key] || ratings[cat.key])
+                        className={`w-10 h-10 ${star <= (hoveredRatings[cat.key] || ratings[cat.key])
                             ? "fill-amber-400 text-amber-500 hover:fill-amber-300"
                             : "text-gray-300 dark:text-zinc-700 hover:text-gray-400"
-                        } transition-colors duration-200`}
+                          } transition-colors duration-200`}
                       />
                     </button>
                   ))}
                 </div>
                 <div className="text-[10px] font-bold text-amber-500 mt-2 uppercase tracking-widest opacity-80">
-                  { (hoveredRatings[cat.key] || ratings[cat.key]) === 1 && "Sangat Mengecewakan" }
-                  { (hoveredRatings[cat.key] || ratings[cat.key]) === 2 && "Kurang Memuaskan" }
-                  { (hoveredRatings[cat.key] || ratings[cat.key]) === 3 && "Sederhana" }
-                  { (hoveredRatings[cat.key] || ratings[cat.key]) === 4 && "Memuaskan" }
-                  { (hoveredRatings[cat.key] || ratings[cat.key]) === 5 && "Sangat Hebat" }
+                  {(hoveredRatings[cat.key] || ratings[cat.key]) === 1 && "Sangat Mengecewakan"}
+                  {(hoveredRatings[cat.key] || ratings[cat.key]) === 2 && "Kurang Memuaskan"}
+                  {(hoveredRatings[cat.key] || ratings[cat.key]) === 3 && "Sederhana"}
+                  {(hoveredRatings[cat.key] || ratings[cat.key]) === 4 && "Memuaskan"}
+                  {(hoveredRatings[cat.key] || ratings[cat.key]) === 5 && "Sangat Hebat"}
                 </div>
               </div>
             ))}
@@ -202,9 +201,9 @@ export default function FeedbackPortal() {
 
           <Divider />
 
-          <Button 
-            type="submit" 
-            loading={loading} 
+          <Button
+            type="submit"
+            loading={loading}
             className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 border-none rounded-xl py-3 shadow-lg shadow-teal-500/25 transition-all active:scale-[0.98]"
           >
             Hantar Maklum Balas
