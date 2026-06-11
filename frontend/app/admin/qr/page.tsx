@@ -15,8 +15,10 @@ export default function GenerateQR() {
   const [loading, setLoading] = useState(true);
   const qrRef = useRef<HTMLDivElement>(null);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/premises`)
+    fetch(`${API_URL}/admin/premises`)
       .then((res) => {
         if (!res.ok) {
            throw new Error("Failed to fetch");
@@ -34,9 +36,9 @@ export default function GenerateQR() {
       .catch((err) => {
          console.error(err);
          setPremises([]);
-      })
+       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [API_URL]);
 
   const downloadQR = () => {
     const svg = qrRef.current?.querySelector("svg");

@@ -1,13 +1,15 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { Card, Button, Divider } from "@tremor/react";
 import { Star } from "lucide-react";
 
-export default function FeedbackPortal({ params }: { params: Promise<{ id_premis: string }> }) {
-  // Extract id_premis using the unwrap pattern for Next 15 Dynamic APIs
-  const resolvedParams = use(params);
-  const { id_premis } = resolvedParams;
+export default function FeedbackPortal() {
+  const params = useParams();
+  const id_premis = params?.id_premis as string;
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
   const [cafeName, setCafeName] = useState<string>("Memuatkan...");
   const [ratings, setRatings] = useState<{ [key: string]: number }>({
@@ -32,14 +34,31 @@ export default function FeedbackPortal({ params }: { params: Promise<{ id_premis
   ];
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/customer/premises/${id_premis}`)
+    if (!id_premis) return;
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    fetch(`${API_URL}/customer/premises/${id_premis}`, { signal: controller.signal })
       .then((res) => {
-        if (!res.ok) throw new Error("Premis tidak dijumpai");
+        clearTimeout(timeoutId);
+        if (res.status === 404) throw new Error("Premis tidak dijumpai");
+        if (!res.ok) throw new Error("Ralat pelayan");
         return res.json();
       })
       .then((data) => setCafeName(data.nama_premis))
-      .catch((err) => setCafeName("Premis Tidak Dikenali"));
-  }, [id_premis]);
+      .catch((err) => {
+        if (err.name === 'AbortError' || err.message === 'Failed to fetch') {
+          setCafeName("Ralat Rangkaian (Pelayan Tidak Boleh Diakses)");
+        } else if (err.message === "Premis tidak dijumpai") {
+          setCafeName("Premis Tidak Dikenali");
+        } else {
+          setCafeName("Ralat: " + err.message);
+        }
+      });
+      
+    return () => clearTimeout(timeoutId);
+  }, [id_premis, API_URL]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +77,7 @@ export default function FeedbackPortal({ params }: { params: Promise<{ id_premis
     );
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/customer/feedback`, {
+      const res = await fetch(`${API_URL}/customer/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
