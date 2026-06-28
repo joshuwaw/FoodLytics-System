@@ -65,7 +65,7 @@ function TopicsAnalysisContent() {
       if (!res.ok) throw new Error("Failed to fetch topics");
 
       const data = await res.json();
-      const fetchedTopics = data.topics || [];
+      const fetchedTopics: TopicInfo[] = data.topics || [];
       setTopics(fetchedTopics);
 
       // Auto-select first topic if none selected
