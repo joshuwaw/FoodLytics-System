@@ -48,6 +48,8 @@ TOPIC_RULES = [
             "staf", "pelayan", "waitress", "waiter", "pekerja", "kakitangan",
             "servis teruk", "layanan teruk", "layanan baik", "service teruk",
             "service lambat", "servis lambat", "layanan lambat",
+            "polite", "rude", "hospitality", "barista", "cashier", "attitude", "greet", "greeting",
+            "impatient", "friendly", "unfriendly"
         ]
     },
 
@@ -69,14 +71,10 @@ TOPIC_RULES = [
             "marvellous", "delicious", "yummy", "lagi", "nak lagi",
             "kopi", "teh", "air", "milo", "horlicks", "drink", "minuman",
             "kopi tawar", "kopi o", "teh tarik", "air sejuk",
-        ]
-    },
-    {
-        "label": "Kuantiti & Pembungkusan",
-        "keywords": [
             "sikit", "sedikit", "kurang", "tidak cukup", "tak cukup",
             "portion kecil", "portion sikit", "pembungkusan", "packaging",
             "bungkus bocor", "bungkus rosak",
+            "soggy", "cold", "stale", "tasteless", "flaky", "dry", "sweet", "sour", "bitter", "fresh", "crispy", "tasty", "food", "beverage"
         ]
     },
 
@@ -90,6 +88,7 @@ TOPIC_RULES = [
             "delay", "lambat gila",
             "cepat", "pantas", "laju", "quick", "fast", "efficient",
             "servis cepat", "datang cepat",
+            "wait", "waiting time", "queue", "delayed"
         ]
     },
 
@@ -100,6 +99,7 @@ TOPIC_RULES = [
             "busuk", "bau busuk", "bau hancing", "bau taik", "bau hapak",
             "lalat", "lipas", "cicak", "ulat", "semut dalam makanan",
             "meja kotor", "pinggan kotor", "kotor", "tidak bersih", "tak bersih",
+            "hygiene", "dirty", "fly", "flies", "sticky", "clean", "dusty", "trash", "disgusting"
         ]
     },
     {
@@ -109,6 +109,7 @@ TOPIC_RULES = [
             "selesa", "selesa sangat", "best suasana", "cantik", "cozy",
             "aircond", "air cond", "penyaman udara", "tiada aircond",
             "tiada aircon", "xde aircond", "kipas", "gelap",
+            "ambiance", "atmosphere", "music", "light", "lighting", "aesthetic", "comfortable", "uncomfortable", "loud"
         ]
     },
 
@@ -120,6 +121,7 @@ TOPIC_RULES = [
             "overpriced", "tak berbaloi", "tidak berbaloi",
             "murah", "harga murah", "berbaloi", "worth it", "affordable",
             "jimat", "value for money", "berpatutan",
+            "price", "cost", "cheap"
         ]
     },
 
@@ -133,8 +135,17 @@ TOPIC_RULES = [
             "teruk", "teruk gila", "teruk sangat", "kecewa", "sangat kecewa",
             "disappointing", "disappointed", "tak puas", "tidak puas",
             "tak puas hati", "tidak puas hati", "complain", "complaint",
+            "excellent", "amazing", "bad", "worst", "awesome"
         ]
     },
+
+    # ── 7. Kemudahan Asas ─────────────────────────────────────────────────────
+    {
+        "label": "Kemudahan Asas",
+        "keywords": [
+            "parking", "park", "toilet", "tandas", "bayar", "pay", "credit card", "machine", "wifi"
+        ]
+    }
 ]
 
 
@@ -192,11 +203,13 @@ def _normalize_for_embedding(text: str) -> str:
 # Uses Cosine Similarity embeddings. Threshold: 0.55
 # -----------------------------------------------------------------------------
 EXTENDED_TAXONOMY = {
-    "Masalah Tempat Letak Kereta": ["susah nak parking", "takde tempat letak kereta", "parking penuh", "kena saman parking", "jauh parking"],
-    "Masalah Pembayaran": ["mesin rosak", "tak boleh bayar kad", "qr tak function", "cashless problem", "sistem offline", "tak terima cash"],
-    "Kemudahan Asas": ["tandas kotor", "sudu garpu kotor", "takde tisu", "sinki sumbat", "kerusi rosak", "meja goyang"],
-    "Isu Penghantaran/Bungkus": ["bungkusan bocor", "kuah tumpah", "bekas pecah", "lambat sampai", "salah hantar", "order tak cukup bila sampai"],
-    "Pilihan Menu Terhad": ["menu sikit", "banyak makanan habis", "pilihan terhad", "takde pelbagai", "selalu sold out"],
+    "Kualiti Makanan": ["makanan tidak sedap", "terlalu masin", "tasteless food", "cold food", "soggy fries", "stale bread", "bungkusan bocor", "kuah tumpah", "bekas pecah", "menu sikit", "banyak makanan habis", "pilihan terhad", "takde pelbagai", "selalu sold out"],
+    "Layanan Staf": ["layanan teruk", "staf biadap", "rude staff", "polite barista", "excellent hospitality", "impatient waiter", "friendly service", "unhelpful cashier"],
+    "Kebersihan Kedai": ["kotor", "berbau", "dirty table", "disgusting hygiene", "fly in cup", "sudu garpu kotor", "takde tisu", "sinki sumbat", "kerusi rosak", "meja goyang", "dusty floor", "trash everywhere"],
+    "Masa Menunggu": ["lambat", "tunggu lama", "long queue", "waiting time", "slow service", "fast delivery", "quick order"],
+    "Suasana & Keselesaan": ["bising", "panas", "noisy", "hot temperature", "nice ambiance", "loud music", "uncomfortable seats"],
+    "Nilai & Harga": ["mahal", "tidak berbaloi", "overpriced", "expensive", "cheap", "value for money", "affordable price"],
+    "Kemudahan Asas": ["susah parking", "tandas kotor", "hard to park", "no parking", "broken machine", "susah nak parking", "takde tempat letak kereta", "parking penuh", "kena saman parking", "jauh parking", "mesin rosak", "tak boleh bayar kad", "qr tak function", "cashless problem", "sistem offline", "tak terima cash"],
 }
 
 _semantic_model_cache = None
@@ -335,44 +348,37 @@ def _bertopic_to_malay_label(keywords: str) -> str:
     Only used for the BERTopic fallback path (Layer 3).
     """
     label_map = {
-        "staf": "Layanan Staf", "pelayan": "Layanan Staf",
-        "kurang ajar": "Layanan Staf", "biadap": "Layanan Staf",
-        "mesra": "Layanan Staf", "ramah": "Layanan Staf",
-        "lambat": "Masa Menunggu", "tunggu": "Masa Menunggu",
-        "sedap": "Kualiti Makanan", "lazat": "Kualiti Makanan",
-        "tak sedap": "Kualiti Makanan", "tawar": "Kualiti Makanan",
-        "mentah": "Kualiti Makanan", "x masak": "Kualiti Makanan",
-        "basi": "Kualiti Makanan", "rosak": "Kualiti Makanan",
-        "pahit": "Kualiti Makanan",
-        "mahal": "Nilai & Harga", "murah": "Nilai & Harga", "berbaloi": "Nilai & Harga",
-        "kotor": "Kebersihan Kedai", "busuk": "Kebersihan Kedai", "bau": "Kebersihan Kedai",
-        "panas": "Suasana & Keselesaan", "bising": "Suasana & Keselesaan", "selesa": "Suasana & Keselesaan",
-        "best": "Pengalaman Umum", "bagus": "Pengalaman Umum",
-        "teruk": "Pengalaman Umum", "kecewa": "Pengalaman Umum",
-        "test": "Ujian Sistem", "testing": "Ujian Sistem", "feedback": "Ujian Sistem",
+        "staf": "Layanan Staf", "pelayan": "Layanan Staf", "pekerja": "Layanan Staf", "staff": "Layanan Staf", "waiter": "Layanan Staf", "cashier": "Layanan Staf",
+        "kurang ajar": "Layanan Staf", "biadap": "Layanan Staf", "kasar": "Layanan Staf", "rude": "Layanan Staf", "impatient": "Layanan Staf",
+        "mesra": "Layanan Staf", "ramah": "Layanan Staf", "sopan": "Layanan Staf", "friendly": "Layanan Staf", "smile": "Layanan Staf",
+        
+        "lambat": "Masa Menunggu", "tunggu": "Masa Menunggu", "lama": "Masa Menunggu", "cepat": "Masa Menunggu", "pantas": "Masa Menunggu", "wait": "Masa Menunggu", "queue": "Masa Menunggu", "delay": "Masa Menunggu", "fast": "Masa Menunggu", "slow": "Masa Menunggu",
+        
+        "sedap": "Kualiti Makanan", "lazat": "Kualiti Makanan", "makanan": "Kualiti Makanan", "minuman": "Kualiti Makanan", "delicious": "Kualiti Makanan", "tasty": "Kualiti Makanan", "food": "Kualiti Makanan", "drink": "Kualiti Makanan",
+        "tak sedap": "Kualiti Makanan", "tawar": "Kualiti Makanan", "manis": "Kualiti Makanan", "masin": "Kualiti Makanan", "sweet": "Kualiti Makanan", "sour": "Kualiti Makanan", "dry": "Kualiti Makanan",
+        "mentah": "Kualiti Makanan", "x masak": "Kualiti Makanan", "overcook": "Kualiti Makanan", "cold": "Kualiti Makanan", "soggy": "Kualiti Makanan",
+        "basi": "Kualiti Makanan", "rosak": "Kualiti Makanan", "pahit": "Kualiti Makanan", "bitter": "Kualiti Makanan",
+        
+        "mahal": "Nilai & Harga", "murah": "Nilai & Harga", "berbaloi": "Nilai & Harga", "harga": "Nilai & Harga", "expensive": "Nilai & Harga", "cheap": "Nilai & Harga", "price": "Nilai & Harga", "worth": "Nilai & Harga", "overprice": "Nilai & Harga",
+        
+        "kotor": "Kebersihan Kedai", "busuk": "Kebersihan Kedai", "bau": "Kebersihan Kedai", "bersih": "Kebersihan Kedai", "lalat": "Kebersihan Kedai", "clean": "Kebersihan Kedai", "dirty": "Kebersihan Kedai", "dust": "Kebersihan Kedai", "sticky": "Kebersihan Kedai", "hygiene": "Kebersihan Kedai",
+        
+        "panas": "Suasana & Keselesaan", "bising": "Suasana & Keselesaan", "selesa": "Suasana & Keselesaan", "suasana": "Suasana & Keselesaan", "aircond": "Suasana & Keselesaan", "noise": "Suasana & Keselesaan", "cozy": "Suasana & Keselesaan", "aesthetic": "Suasana & Keselesaan", "music": "Suasana & Keselesaan", "quiet": "Suasana & Keselesaan", "light": "Suasana & Keselesaan",
+        
+        "parking": "Kemudahan Asas", "tandas": "Kemudahan Asas", "bayar": "Kemudahan Asas", "kemudahan": "Kemudahan Asas", "toilet": "Kemudahan Asas",
+        
+        "best": "Pengalaman Umum", "bagus": "Pengalaman Umum", "good": "Pengalaman Umum", "excellent": "Pengalaman Umum", "amazing": "Pengalaman Umum",
+        "teruk": "Pengalaman Umum", "kecewa": "Pengalaman Umum", "bad": "Pengalaman Umum", "disappoint": "Pengalaman Umum", "worst": "Pengalaman Umum"
     }
+    
     kw_lower = keywords.lower()
     for key, value in label_map.items():
         if key in kw_lower:
             return value
             
-    # Fallback: Clean up raw BERTopic keywords
-    # 1. Replace underscores
-    clean_kw = keywords.replace("_", " ")
-    
-    # 2. Remove duplicate words (e.g., "makanan makanan pahit" -> "Makanan Pahit")
-    words = clean_kw.split()
-    seen = set()
-    unique_words = []
-    for w in words:
-        if w.lower() not in seen:
-            seen.add(w.lower())
-            unique_words.append(w.title())
-            
-    # 3. Limit to max 3 words for a clean label
-    final_label = " ".join(unique_words[:3])
-    
-    return final_label if final_label else "Lain-lain"
+    # STRICT ENFORCEMENT: If BERTopic invents a completely unknown cluster, group it under "Lain-lain"
+    # This prevents the UI from being flooded with weird dynamic topic names.
+    return "Lain-lain"
 
 
 # -----------------------------------------------------------------------------

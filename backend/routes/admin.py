@@ -16,6 +16,8 @@ def login(request: LoginRequest):
         user = res.data[0]
         id_pengguna = user["id_pengguna"]
         peranan = user["peranan"]
+        if peranan == "Staf":
+            peranan = "Staf Operasi"
         
         # Get id_premis from the role-specific table
         id_premis = None
@@ -79,7 +81,7 @@ def register_premise(request: AccountRegisterRequest):
             "nama": request.nama_penuh,
             "emel": request.emel,
             "kata_laluan": request.kata_laluan, # In production, this MUST be hashed!
-            "peranan": request.peranan
+            "peranan": "Staf" if request.peranan == "Staf Operasi" else request.peranan
         }
         pengguna_response = supabase.table("tbl_pengguna").insert(pengguna_data).execute()
         

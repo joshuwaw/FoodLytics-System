@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import Link from "next/link";
-import { LayoutDashboard, LogOut, Utensils } from "lucide-react";
+import { LayoutDashboard, LogOut, Utensils, ClipboardList, TrendingUp, BrainCircuit } from "lucide-react";
 
 export default function StafLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isLoading } = useAuth();
@@ -33,6 +33,9 @@ export default function StafLayout({ children }: { children: React.ReactNode }) 
 
   const navItems = [
     { href: "/staf", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/staf/tindakan", label: "Arahan Kerja", icon: ClipboardList },
+    { href: "/staf/trend", label: "Prestasi & Trend", icon: TrendingUp },
+    { href: "/staf/topics", label: "Analisis Topik", icon: BrainCircuit },
   ];
 
   return (

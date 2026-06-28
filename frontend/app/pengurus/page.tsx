@@ -12,6 +12,7 @@ import {
   Star, MessageSquare, TrendingUp, CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface PremisDetail {
   nama_premis: string;
@@ -20,11 +21,14 @@ interface PremisDetail {
   kod_perniagaan: string;
 }
 
-const dataSources = [
-  { icon: "G", iconBg: "bg-blue-100 text-blue-700",      name: "Google Reviews",      sub: "Last synced: 2 min ago" },
-  { icon: "⊞", iconBg: "bg-slate-100 text-slate-600",    name: "QR Portal (Internal)", sub: "Last synced: Just now" },
-  { icon: "◎", iconBg: "bg-indigo-100 text-indigo-700",  name: "Social Media APIs",   sub: "Last synced: 5 min ago" },
-];
+import { RefreshCw } from "lucide-react";
+
+interface DataSrc {
+  platform: string;
+  connected: boolean;
+  last_sync: string;
+  jumlah_ulasan: number;
+}
 
 // ─── Custom Tooltip: glassmorphism style ─────────────────────────────────
 function SentimentTooltip({ active, payload }: any) {
@@ -66,6 +70,7 @@ const SENTIMENT_COLORS: Record<string, string> = {
 
 export default function PengurusDashboard() {
   const { user } = useAuth();
+  const router = useRouter();
   const [premis, setPremis] = useState<PremisDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [sentimentData, setSentimentData] = useState([
@@ -79,6 +84,9 @@ export default function PengurusDashboard() {
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [pecahanRating, setPecahanRating] = useState({ makanan: 0, layanan: 0, suasana: 0 });
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [dataSources, setDataSources] = useState<DataSrc[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [pertumbuhan, setPertumbuhan] = useState<number>(0);
 
   useEffect(() => {
     if (!user?.id_premis) { setLoading(false); return; }
@@ -101,6 +109,7 @@ export default function PengurusDashboard() {
         setTotalUlasan(d.total);
         setPurataBintang(d.purata_bintang);
         if (d.pecahan_rating) setPecahanRating(d.pecahan_rating);
+        setPertumbuhan(d.pertumbuhan ?? 0);
       })
       .catch(() => {});
 
@@ -114,9 +123,45 @@ export default function PengurusDashboard() {
     fetch(`${API_URL}/customer/weekly-stats/${user.id_premis}`)
       .then((r) => r.json())
       .then((d) => setWeeklyData(Array.isArray(d) ? d : []))
+      .catch(() => {});
+
+    // Fetch data sources
+    fetch(`${API_URL}/ingestion/sources/${user.id_premis}`)
+      .then((r) => r.json())
+      .then((d) => setDataSources(Array.isArray(d) ? d : []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [user]);
+
+  const handleSync = async () => {
+    if (!user?.id_premis) return;
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+    setSyncing(true);
+    try {
+      await fetch(`${API_URL}/ingestion/fetch/${user.id_premis}`, { method: "POST" });
+      // Refresh sources and feedback after a short delay
+      setTimeout(() => {
+        fetch(`${API_URL}/ingestion/sources/${user.id_premis}`)
+          .then((r) => r.json())
+          .then((d) => setDataSources(Array.isArray(d) ? d : []));
+        fetch(`${API_URL}/customer/recent-feedback/${user.id_premis}?limit=5`)
+          .then((r) => r.json())
+          .then((d) => setRecentFeedback(Array.isArray(d) ? d : []));
+        fetch(`${API_URL}/customer/weekly-stats/${user.id_premis}`)
+          .then((r) => r.json())
+          .then((d) => setWeeklyData(Array.isArray(d) ? d : []));
+        fetch(`${API_URL}/customer/sentiment-stats/${user.id_premis}`)
+          .then((r) => r.json())
+          .then((d) => {
+            setTotalUlasan(d.total);
+          });
+        setSyncing(false);
+      }, 2000);
+    } catch (e) {
+      console.error(e);
+      setSyncing(false);
+    }
+  };
 
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -195,8 +240,8 @@ export default function PengurusDashboard() {
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Jumlah Ulasan</p>
           </div>
           <p className="text-4xl font-black text-slate-900 mono-accent">{totalUlasan}</p>
-          <p className="text-xs text-emerald-500 font-bold mt-1 flex items-center gap-1">
-            <TrendingUp className="w-3 h-3" /> +12% bulan ini
+          <p className={`text-xs font-bold mt-1 flex items-center gap-1 ${pertumbuhan >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+            <TrendingUp className="w-3 h-3" /> {pertumbuhan >= 0 ? '+' : ''}{pertumbuhan}% bulan ini
           </p>
         </div>
 
@@ -307,24 +352,52 @@ export default function PengurusDashboard() {
         </div>
 
         {/* Data Sources */}
-        <div className="glass-light rounded-3xl p-6">
-          <h3 className="font-black text-slate-800 text-sm tracking-tight mb-4">
-            Integrasi Sumber Data Luaran
-          </h3>
-          <div className="space-y-3">
-            {dataSources.map(({ icon, iconBg, name, sub }) => (
-              <div key={name}
-                className="flex items-center gap-4 p-3.5 bg-white/50 rounded-2xl border border-slate-100/60 spring-hover">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm ${iconBg}`}>
-                  {icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-black text-slate-800">{name}</p>
-                  <p className="text-xs text-slate-400 mono-accent">{sub}</p>
-                </div>
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-              </div>
-            ))}
+        <div className="glass-light rounded-3xl p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-black text-slate-800 text-sm tracking-tight">
+              Integrasi Sumber Data Luaran
+            </h3>
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold spring-hover hover:text-orange-500 hover:border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Menyegerak...' : 'Segerak Sekarang'}
+            </button>
+          </div>
+          <div className="space-y-3 flex-1 overflow-y-auto">
+            {dataSources.length === 0 ? (
+              <p className="text-sm text-slate-400 italic">Memuatkan sumber data...</p>
+            ) : (
+              dataSources.map((src) => {
+                let icon = "⊞"; let iconBg = "bg-slate-100 text-slate-600";
+                if (src.platform.includes("Google")) { icon = "G"; iconBg = "bg-blue-100 text-blue-700"; }
+                if (src.platform.includes("Social") || src.platform.includes("X") || src.platform.includes("Instagram")) { icon = "◎"; iconBg = "bg-indigo-100 text-indigo-700"; }
+                
+                return (
+                  <div key={src.platform}
+                    onClick={() => router.push(`/pengurus/topics?platform=${encodeURIComponent(src.platform)}`)}
+                    className="group flex items-center gap-4 p-3.5 bg-white/50 rounded-2xl border border-slate-100/60 spring-hover cursor-pointer hover:border-orange-200">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm ${iconBg}`}>
+                      {icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-slate-800">{src.platform}</p>
+                      <p className="text-xs text-slate-400 mono-accent">
+                        {src.last_sync === "Live" ? "Sentiasa aktif" : src.last_sync ? `Terakhir: ${new Date(src.last_sync).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : "Belum disegerak"} • {src.jumlah_ulasan} rekod
+                      </p>
+                    </div>
+                    {src.connected ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-slate-300" />
+                    )}
+                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-orange-500 transition-colors flex-shrink-0" />
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
@@ -431,19 +504,26 @@ export default function PengurusDashboard() {
                     </span>
                   </div>
                   <p className="text-sm font-semibold text-slate-700 italic mb-2">"{feedback.ulasan_teks}"</p>
-                  <div className="flex gap-3">
-                    {[
-                      { l: "F", v: feedback.rating_makanan, c: "text-orange-500" },
-                      { l: "S", v: feedback.rating_layanan, c: "text-blue-500" },
-                      { l: "A", v: feedback.rating_suasana, c: "text-indigo-500" }
-                    ].map((r, i) => (
-                      <div key={i} className="flex items-center gap-1">
-                        <span className={`text-[10px] font-black ${r.c}`}>{r.l}</span>
-                        <div className="flex text-[8px] text-amber-400">
-                           {Array.from({ length: r.v }).map((_, j) => <Star key={j} className="w-2 h-2 fill-current" />)}
+                  <div className="flex justify-between items-end mt-3">
+                    <div className="flex gap-3">
+                      {[
+                        { l: "F", v: feedback.rating_makanan, c: "text-orange-500" },
+                        { l: "S", v: feedback.rating_layanan, c: "text-blue-500" },
+                        { l: "A", v: feedback.rating_suasana, c: "text-indigo-500" }
+                      ].map((r, i) => (
+                        <div key={i} className="flex items-center gap-1">
+                          <span className={`text-[10px] font-black ${r.c}`}>{r.l}</span>
+                          <div className="flex text-[8px] text-amber-400">
+                             {Array.from({ length: r.v }).map((_, j) => <Star key={j} className="w-2 h-2 fill-current" />)}
+                          </div>
                         </div>
+                      ))}
+                    </div>
+                    {feedback.sumber_platform && (
+                      <div className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
+                        {feedback.sumber_platform}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
                 <div className={`px-3 py-1.5 rounded-xl border flex items-center justify-center gap-1.5 text-xs font-bold w-fit sm:w-28

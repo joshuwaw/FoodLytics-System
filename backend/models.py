@@ -21,10 +21,10 @@ class PremiseResponse(BaseModel):
 
 class FeedbackCreate(BaseModel):
     id_premis: int
-    bilangan_bintang: int # Purata Keseluruhan
-    rating_makanan: int
-    rating_layanan: int
-    rating_suasana: int
+    bilangan_bintang: Optional[int] = None # Purata Keseluruhan
+    rating_makanan: Optional[int] = None
+    rating_layanan: Optional[int] = None
+    rating_suasana: Optional[int] = None
     ulasan_teks: str
     kategori_aduan: Optional[str] = None
     sumber_platform: str = "Portal QR"
@@ -60,3 +60,59 @@ class AccountRegisterRequest(BaseModel):
 
     # Staf fields
     kod_perniagaan: Optional[str] = None
+
+# ─── Increment 4: External Data Ingestion Models ────────────────────────────
+
+class ExternalReviewItem(BaseModel):
+    """Normalized schema for a single review from any external source."""
+    platform: str                           # e.g., "Google Reviews", "X (Twitter)", "Instagram"
+    teks_ulasan: str
+    bintang: Optional[int] = None           # Nullable for social media
+    tarikh: Optional[str] = None
+    nama_pengguna: Optional[str] = None
+
+class ExternalFeedbackCreate(BaseModel):
+    """Variant of FeedbackCreate where star ratings are optional (social media)."""
+    id_premis: int
+    bilangan_bintang: Optional[int] = None
+    rating_makanan: Optional[int] = None
+    rating_layanan: Optional[int] = None
+    rating_suasana: Optional[int] = None
+    ulasan_teks: str
+    kategori_aduan: Optional[str] = None
+    sumber_platform: str = "Google Reviews"
+
+class IngestionResponse(BaseModel):
+    """Response after triggering an ingestion job."""
+    message: str
+    status: str
+    premise_id: int
+    jumlah_diimport: int = 0
+    pecahan_sumber: Optional[dict] = None
+
+class IngestionSourceStatus(BaseModel):
+    """Per-source sync status for a premise."""
+    platform: str
+    connected: bool = False
+    last_sync: Optional[str] = None
+    jumlah_ulasan: int = 0
+
+# ─── Increment 5: Prescriptive AI Models ────────────────────────────
+
+class CadanganResponse(BaseModel):
+    id_cadangan: int
+    id_premis: int
+    id_topik: Optional[int] = None
+    id_log_proses: Optional[int] = None
+    jenis_tindakan: str
+    analisis_punca: str
+    saranan_strategik: str
+    skor_keyakinan: int
+    status_kelulusan: str
+    status_pelaksanaan: str
+    created_at: Optional[datetime] = None
+
+class CadanganUpdate(BaseModel):
+    status_kelulusan: Optional[str] = None
+    status_pelaksanaan: Optional[str] = None
+    saranan_strategik: Optional[str] = None

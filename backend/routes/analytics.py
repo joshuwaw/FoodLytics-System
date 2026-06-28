@@ -29,13 +29,22 @@ async def trigger_topic_analysis(premise_id: int, background_tasks: BackgroundTa
     Triggers a BERTopic analysis run for the given premise as a background task.
     This prevents the server from hanging during the heavy AI processing.
     """
+    # Delete old drafts immediately synchronously so the frontend polling works flawlessly
+    supabase.table("tbl_cadangan_ai").delete().eq("id_premis", premise_id).eq("status_kelulusan", "Draf").execute()
+
     def run_analysis_task():
         try:
             from services.topic_modeling import run_topic_analysis
+            from services.prescriptive_generator import generate_prescriptive_drafts
             result = run_topic_analysis(premise_id, supabase)
             print(f"[Analytics] Background Topic run complete for premise {premise_id}: {result}")
+            
+            # 5th Increment: Prescriptive generation right after topic modeling
+            pres_result = generate_prescriptive_drafts(premise_id, supabase)
+            print(f"[Analytics] Background Prescriptive run complete: {pres_result}")
+            
         except Exception as e:
-            print(f"[Analytics] Background Topic pipeline failed: {e}")
+            print(f"[Analytics] Background Topic/Prescriptive pipeline failed: {e}")
 
     background_tasks.add_task(run_analysis_task)
     
@@ -61,10 +70,11 @@ def get_topics(premise_id: int):
     try:
         # Get all feedback IDs for this premise
         feedback_res = supabase.table("tbl_maklumbalas") \
-            .select("id_maklum_balas") \
+            .select("id_maklum_balas, sumber_platform") \
             .eq("id_premis", premise_id) \
             .execute()
-        feedback_ids = [r["id_maklum_balas"] for r in (feedback_res.data or [])]
+        feedbacks_map = {r["id_maklum_balas"]: (r.get("sumber_platform") or "Portal QR") for r in (feedback_res.data or [])}
+        feedback_ids = list(feedbacks_map.keys())
 
         if not feedback_ids:
             return {"premise_id": premise_id, "topics": []}
@@ -103,26 +113,32 @@ def get_topics(premise_id: int):
             .execute()
         sentimen_map = {s["id_maklum_balas"]: s["label_sentimen"] for s in (sentimen_res.data or [])}
 
-        # Aggregate by label_topik
+        # Aggregate by label_topik (cleaning the sentiment suffix like "(Negatif)", "(Positif)", "(Neutral)")
         aggregated: dict[str, dict] = {}
         for record in topik_records:
-            label = record["label_topik"]
+            raw_label = record["label_topik"]
+            label = raw_label.replace(" (Negatif)", "").replace(" (Positif)", "").replace(" (Neutral)", "")
             log_id = record["id_log_proses"]
             skor = record.get("skor_topik") or 0.5
             fb_id = log_to_feedback.get(log_id)
             sentimen = sentimen_map.get(fb_id, "Neutral") if fb_id else "Neutral"
+            platform = feedbacks_map.get(fb_id, "Portal QR") if fb_id else "Portal QR"
 
             if label not in aggregated:
                 aggregated[label] = {
                     "label_topik": label,
                     "kekerapan": 0,
                     "skor_total": 0.0,
-                    "sentimen_counts": {"Positif": 0, "Neutral": 0, "Negatif": 0}
+                    "sentimen_counts": {"Positif": 0, "Neutral": 0, "Negatif": 0},
+                    "platform_counts": {}
                 }
             aggregated[label]["kekerapan"] += 1
             aggregated[label]["skor_total"] += skor
             if sentimen in aggregated[label]["sentimen_counts"]:
                 aggregated[label]["sentimen_counts"][sentimen] += 1
+            if platform not in aggregated[label]["platform_counts"]:
+                aggregated[label]["platform_counts"][platform] = 0
+            aggregated[label]["platform_counts"][platform] += 1
 
         # Build final response, sorted by frequency desc
         topics = []
@@ -148,6 +164,7 @@ def get_topics(premise_id: int):
                 "purata_skor": avg_skor,
                 "sentimen_dominan": dominant,
                 "sentimen_breakdown": counts,
+                "platform_breakdown": data["platform_counts"]
             })
 
         topics.sort(key=lambda x: x["kekerapan"], reverse=True)
@@ -177,7 +194,7 @@ def get_topic_drilldown(premise_id: int, topic: str):
     try:
         # Get all feedback IDs for this premise
         feedback_res = supabase.table("tbl_maklumbalas") \
-            .select("id_maklum_balas, ulasan_teks, bilangan_bintang, rating_makanan, rating_layanan, rating_suasana, tarikh_terima") \
+            .select("id_maklum_balas, ulasan_teks, bilangan_bintang, rating_makanan, rating_layanan, rating_suasana, tarikh_terima, sumber_platform") \
             .eq("id_premis", premise_id) \
             .execute()
         feedbacks = {r["id_maklum_balas"]: r for r in (feedback_res.data or [])}
@@ -192,13 +209,17 @@ def get_topic_drilldown(premise_id: int, topic: str):
             .execute()
         log_to_feedback = {r["id_log_proses"]: r["id_maklum_balas"] for r in (enjin_res.data or [])}
 
-        # Get topic records matching the requested label
+        # Get topic records matching the requested label (ignoring the sentiment suffix)
         topik_res = supabase.table("tbl_topik") \
             .select("id_log_proses, label_topik, skor_topik") \
-            .eq("label_topik", topic) \
             .in_("id_log_proses", list(log_to_feedback.keys())) \
             .execute()
-        matched_logs = topik_res.data or []
+        
+        matched_logs = []
+        for r in (topik_res.data or []):
+            clean_label = r["label_topik"].replace(" (Negatif)", "").replace(" (Positif)", "").replace(" (Neutral)", "")
+            if clean_label == topic:
+                matched_logs.append(r)
 
         if not matched_logs:
             return {"topic": topic, "ulasan": [], "message": "No feedback found for this topic."}
@@ -211,12 +232,14 @@ def get_topic_drilldown(premise_id: int, topic: str):
             .execute()
         sentimen_map = {s["id_maklum_balas"]: s for s in (sentimen_res.data or [])}
 
-        # Assemble drill-down results
+        # Assemble drill-down results (deduplicated by id_maklum_balas)
         results = []
+        seen_fb_ids = set()
         for log_record in matched_logs:
             fb_id = log_to_feedback.get(log_record["id_log_proses"])
-            if not fb_id or fb_id not in feedbacks:
+            if not fb_id or fb_id not in feedbacks or fb_id in seen_fb_ids:
                 continue
+            seen_fb_ids.add(fb_id)
             fb = feedbacks[fb_id]
             sent = sentimen_map.get(fb_id, {})
             results.append({
@@ -230,6 +253,7 @@ def get_topic_drilldown(premise_id: int, topic: str):
                 "label_sentimen": sent.get("label_sentimen", "Processing..."),
                 "skor_sentimen": sent.get("skor_ketepatan", 0.0),
                 "skor_topik": log_record.get("skor_topik", 0.5),
+                "sumber_platform": fb.get("sumber_platform", "Tidak Diketahui"),
             })
 
         # Sort by date desc (most recent first)

@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
-import { RefreshCw, MessageSquareQuote, ArrowLeft, Star, Clock, Utensils, DollarSign, Sparkles, AlertCircle, XCircle, Search } from "lucide-react";
+import { MessageSquareQuote, ArrowLeft, Star, Clock, Utensils, DollarSign, Sparkles, AlertCircle, XCircle, Search, BrainCircuit } from "lucide-react";
 import Link from "next/link";
 
 interface TopicInfo {
@@ -36,13 +36,11 @@ interface DrilldownItem {
 function TopicsAnalysisContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
-  const router = useRouter();
   
   const initialPlatform = searchParams.get("platform");
 
   const [topics, setTopics] = useState<TopicInfo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [runningAI, setRunningAI] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(initialPlatform);
   const [drilldown, setDrilldown] = useState<DrilldownItem[]>([]);
@@ -72,7 +70,6 @@ function TopicsAnalysisContent() {
 
       // Auto-select first topic if none selected
       if (fetchedTopics.length > 0 && !selectedTopic) {
-        // If initialPlatform is given, try to find a topic that has this platform
         let topicToSelect = fetchedTopics[0].label_topik;
         if (initialPlatform) {
           const matchingTopic = fetchedTopics.find(t => t.platform_breakdown && t.platform_breakdown[initialPlatform] > 0);
@@ -115,33 +112,11 @@ function TopicsAnalysisContent() {
     }
   };
 
-  // Run AI Analysis
-  const runAIAnalysis = async () => {
-    if (!user?.id_premis) return;
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-    setRunningAI(true);
-    try {
-      const res = await fetch(`${API_URL}/analytics/topics/run/${user.id_premis}`, {
-        method: "POST",
-      });
-
-      // Since it runs in background, we wait a few seconds before refreshing
-      // to give the AI time to process the first few records.
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      await fetchTopics();
-    } catch (e) {
-      console.error("AI Analysis Error:", e);
-    } finally {
-      setRunningAI(false);
-    }
-
-  };
-
   const getTopicIcon = (label: string) => {
     const l = label.toLowerCase();
-    if (l.includes("servis") || l.includes("lambat") || l.includes("layanan")) return <Clock className="w-5 h-5 text-orange-500" />;
+    if (l.includes("servis") || l.includes("lambat") || l.includes("layanan")) return <Clock className="w-5 h-5 text-amber-500" />;
     if (l.includes("makanan") || l.includes("sedap") || l.includes("rasa")) return <Utensils className="w-5 h-5 text-emerald-500" />;
-    if (l.includes("harga") || l.includes("mahal") || l.includes("murah")) return <DollarSign className="w-5 h-5 text-amber-500" />;
+    if (l.includes("harga") || l.includes("mahal") || l.includes("murah")) return <DollarSign className="w-5 h-5 text-blue-500" />;
     if (l.includes("kebersihan") || l.includes("kotor") || l.includes("suasana")) return <Sparkles className="w-5 h-5 text-indigo-500" />;
     return <AlertCircle className="w-5 h-5 text-slate-500" />;
   };
@@ -172,11 +147,12 @@ function TopicsAnalysisContent() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <Link href="/pengurus" className="text-orange-500 hover:text-orange-600 font-bold text-xs uppercase tracking-widest flex items-center gap-2 mb-4 spring-hover">
+          <Link href="/staf" className="text-blue-500 hover:text-blue-600 font-bold text-xs uppercase tracking-widest flex items-center gap-2 mb-4 spring-hover">
             <ArrowLeft size={14} /> Kembali ke Dashboard
           </Link>
-          <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
-            Perincian <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">Analisis Topik</span>
+          <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <BrainCircuit className="w-8 h-8 text-blue-500" />
+            Analisis <span className="bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">Topik</span>
           </h2>
           <p className="text-slate-400 mt-1.5 text-sm mono-accent">
             Data dikemaskini sehingga {todayStr}
@@ -204,18 +180,6 @@ function TopicsAnalysisContent() {
               <Sparkles className="w-3.5 h-3.5" /> Kekuatan
             </button>
           </div>
-          <button
-            onClick={runAIAnalysis}
-            disabled={runningAI}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl text-white font-bold text-sm spring-hover shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {runningAI ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-            {runningAI ? "Menganalisis..." : "Jalankan Analisis AI"}
-          </button>
         </div>
       </div>
 
@@ -257,84 +221,89 @@ function TopicsAnalysisContent() {
                 const displaySentiment = activeFilter === "Semua" ? t.sentimen_dominan : activeFilter;
                 const percent = Math.round((displayCount / t.kekerapan) * 100) || 0;
 
-                const pctPos = Math.round((t.sentimen_breakdown.Positif / t.kekerapan) * 100) || 0;
-                const pctNeu = Math.round((t.sentimen_breakdown.Neutral / t.kekerapan) * 100) || 0;
-                const pctNeg = Math.round((t.sentimen_breakdown.Negatif / t.kekerapan) * 100) || 0;
-
                 return (
                   <div
                     key={t.label_topik}
                     onClick={() => fetchDrilldown(t.label_topik)}
                     className={`p-5 rounded-3xl cursor-pointer spring-hover flex flex-col justify-between
                       ${isSelected
-                        ? "bg-white border-2 border-orange-500 shadow-xl shadow-orange-500/10 scale-[1.02]"
-                        : "glass-light border border-transparent hover:border-orange-200"
+                        ? "bg-white border-2 border-blue-500 shadow-xl shadow-blue-500/10 scale-[1.02]"
+                        : "glass-light border border-transparent hover:border-blue-200"
                       }`}
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm 
-                        ${isSelected ? "bg-orange-50 border border-orange-100" : "bg-white border border-slate-100"}`}>
+                        ${isSelected ? "bg-blue-50 border border-blue-100" : "bg-white border border-slate-100"}`}>
                         {getTopicIcon(t.label_topik)}
                       </div>
 
-                      {/* Premium Donut Chart representing sentiment ratio with total reviews inside */}
-                      {t.kekerapan > 0 && (
-                        <div className="relative flex items-center justify-center shrink-0" title={`${pctPos}% Positif, ${pctNeu}% Neutral, ${pctNeg}% Negatif`}>
-                          <svg width="44" height="44" viewBox="0 0 36 36" className="transform -rotate-90">
-                            <circle cx="18" cy="18" r="15.9155" fill="transparent" stroke="#e2e8f0" strokeWidth="4.5" />
-                            {pctPos > 0 && (
-                              <circle
-                                cx="18"
-                                cy="18"
-                                r="15.9155"
-                                fill="transparent"
-                                stroke="#10b981"
-                                strokeWidth="4.5"
-                                strokeDasharray={`${pctPos} ${100 - pctPos}`}
-                                strokeDashoffset="0"
-                              />
-                            )}
-                            {pctNeu > 0 && (
-                              <circle
-                                cx="18"
-                                cy="18"
-                                r="15.9155"
-                                fill="transparent"
-                                stroke="#94a3b8"
-                                strokeWidth="4.5"
-                                strokeDasharray={`${pctNeu} ${100 - pctNeu}`}
-                                strokeDashoffset={-pctPos}
-                              />
-                            )}
-                            {pctNeg > 0 && (
-                              <circle
-                                cx="18"
-                                cy="18"
-                                r="15.9155"
-                                fill="transparent"
-                                stroke="#f43f5e"
-                                strokeWidth="4.5"
-                                strokeDasharray={`${pctNeg} ${100 - pctNeg}`}
-                                strokeDashoffset={-(pctPos + pctNeu)}
-                              />
-                            )}
-                          </svg>
-                          <div className="absolute text-[10px] font-black text-slate-800">
-                            {t.kekerapan}
-                          </div>
-                        </div>
-                      )}
+                      <div className={`px-2.5 py-1 rounded-xl border flex items-center gap-1 text-[10px] uppercase font-black tracking-widest
+                        ${displaySentiment === 'Positif' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                          displaySentiment === 'Negatif' ? 'bg-rose-50 border-rose-100 text-rose-600' :
+                            'bg-slate-50 border-slate-100 text-slate-600'}`}>
+                        {displaySentiment === 'Negatif' ? "↓" : "↑"} {percent}%
+                      </div>
                     </div>
 
                     <div className="flex-1">
                       <h3 className="text-xl font-black text-slate-900 tracking-tight">{t.label_topik}</h3>
-                      <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-slate-450 uppercase tracking-wider">
-                        <span>{displayCount} Ulasan</span>
-                        <span>•</span>
-                        <span className="text-emerald-600">{pctPos}% Positif</span>
-                        <span>•</span>
-                        <span className="text-rose-500">{pctNeg}% Negatif</span>
-                      </div>
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
+                        {displayCount} Ulasan Dikesan
+                      </p>
+                      
+                      {/* Platform Pills */}
+                      {t.platform_breakdown && Object.keys(t.platform_breakdown).length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-3">
+                          {Object.entries(t.platform_breakdown).map(([platform, count]) => (
+                            <button
+                              key={platform}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPlatform(platform);
+                                fetchDrilldown(t.label_topik);
+                              }}
+                              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[10px] font-black transition-all ${getPlatformColor(platform)} ${selectedPlatform === platform && isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
+                            >
+                              <span>{getPlatformIcon(platform)}</span>
+                              <span>{count}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Sentiment Distribution Mini-Bar */}
+                      {t.kekerapan > 0 && (
+                        <div className="mt-3 space-y-1">
+                          <div className="flex h-1.5 rounded-full overflow-hidden bg-slate-100">
+                            {t.sentimen_breakdown.Positif > 0 && (
+                              <div 
+                                className="bg-emerald-500 transition-all duration-500" 
+                                style={{ width: `${(t.sentimen_breakdown.Positif / t.kekerapan) * 100}%` }}
+                                title={`Positif: ${t.sentimen_breakdown.Positif}`}
+                              />
+                            )}
+                            {t.sentimen_breakdown.Neutral > 0 && (
+                              <div 
+                                className="bg-slate-400 transition-all duration-500" 
+                                style={{ width: `${(t.sentimen_breakdown.Neutral / t.kekerapan) * 100}%` }}
+                                title={`Neutral: ${t.sentimen_breakdown.Neutral}`}
+                              />
+                            )}
+                            {t.sentimen_breakdown.Negatif > 0 && (
+                              <div 
+                                className="bg-rose-500 transition-all duration-500" 
+                                style={{ width: `${(t.sentimen_breakdown.Negatif / t.kekerapan) * 100}%` }}
+                                title={`Negatif: ${t.sentimen_breakdown.Negatif}`}
+                              />
+                            )}
+                          </div>
+                          <div className="flex justify-between text-[8px] font-bold tracking-wider">
+                            <span className="text-emerald-600">{t.sentimen_breakdown.Positif}P</span>
+                            <span className="text-slate-400">{t.sentimen_breakdown.Neutral}N</span>
+                            <span className="text-rose-500">{t.sentimen_breakdown.Negatif}A</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -349,7 +318,7 @@ function TopicsAnalysisContent() {
                 <div className="flex justify-center mt-2">
                   <button
                     onClick={() => setShowAllTopics(!showAllTopics)}
-                    className="text-xs uppercase tracking-widest font-bold text-slate-400 hover:text-orange-500 transition-colors py-2"
+                    className="text-xs uppercase tracking-widest font-bold text-slate-400 hover:text-blue-500 transition-colors py-2"
                   >
                     {showAllTopics ? "Tutup Senarai Penuh" : `Lihat Semua Topik (${filteredCount})`}
                   </button>
@@ -365,15 +334,15 @@ function TopicsAnalysisContent() {
       <div className="mt-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
           <h3 className="font-black text-slate-800 text-sm tracking-tight flex items-center gap-2">
-            <MessageSquareQuote className="w-4 h-4 text-orange-500" />
-            Maklum Balas Terperinci: <span className="text-orange-500">{selectedTopic || "..."}</span>
+            <MessageSquareQuote className="w-4 h-4 text-blue-500" />
+            Maklum Balas Terperinci: <span className="text-blue-500">{selectedTopic || "..."}</span>
           </h3>
           
           <div className="flex items-center gap-2 flex-wrap">
             {selectedPlatform && (
               <button
                 onClick={() => setSelectedPlatform(null)}
-                className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-600 rounded-xl text-xs font-bold border border-orange-200 hover:bg-orange-100 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold border border-blue-200 hover:bg-blue-100 transition-colors"
               >
                 Ditapis: {selectedPlatform} <XCircle className="w-3.5 h-3.5" />
               </button>
@@ -387,7 +356,7 @@ function TopicsAnalysisContent() {
                 placeholder="Cari dalam ulasan..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setVisibleCount(5); }}
-                className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white/80 focus:outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 w-48 font-medium text-slate-700 placeholder:text-slate-400"
+                className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white/80 focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 w-48 font-medium text-slate-700 placeholder:text-slate-400"
               />
             </div>
           </div>
@@ -395,7 +364,7 @@ function TopicsAnalysisContent() {
 
         {loadingDrilldown ? (
           <div className="glass-light rounded-3xl p-12 flex justify-center">
-            <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : drilldown.length > 0 ? (
           (() => {
@@ -410,7 +379,7 @@ function TopicsAnalysisContent() {
             if (totalFiltered === 0) {
               return (
                 <div className="glass-light rounded-3xl p-12 text-center">
-                  <MessageSquareQuote className="w-10 h-10 text-orange-200 mx-auto mb-3" />
+                  <MessageSquareQuote className="w-10 h-10 text-blue-200 mx-auto mb-3" />
                   <h3 className="text-sm font-black text-slate-700 tracking-tight mb-1">
                     {searchQuery ? "Tiada Ulasan Sepadan" : `Tiada Ulasan ${activeFilter}`}
                   </h3>
@@ -496,7 +465,7 @@ function TopicsAnalysisContent() {
                   <div className="flex justify-center pt-2">
                     <button
                       onClick={() => setVisibleCount(prev => prev + 5)}
-                      className="text-xs uppercase tracking-widest font-bold text-slate-400 hover:text-orange-500 transition-colors py-2 px-4 rounded-xl border border-slate-200 hover:border-orange-200 bg-white/50"
+                      className="text-xs uppercase tracking-widest font-bold text-slate-400 hover:text-blue-500 transition-colors py-2 px-4 rounded-xl border border-slate-200 hover:border-blue-200 bg-white/50"
                     >
                       Lihat Lagi ({totalFiltered - visibleCount} ulasan lagi)
                     </button>
@@ -507,7 +476,7 @@ function TopicsAnalysisContent() {
           })()
         ) : selectedTopic ? (
           <div className="glass-light rounded-3xl p-12 text-center">
-            <MessageSquareQuote className="w-10 h-10 text-orange-200 mx-auto mb-3" />
+            <MessageSquareQuote className="w-10 h-10 text-blue-200 mx-auto mb-3" />
             <h3 className="text-sm font-black text-slate-700 tracking-tight mb-1">Tiada Ulasan Dijumpai</h3>
             <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Pilih topik lain untuk melihat ulasan.</p>
           </div>
@@ -521,7 +490,7 @@ export default function TopicsAnalysisPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     }>
       <TopicsAnalysisContent />

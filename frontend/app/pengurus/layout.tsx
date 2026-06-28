@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import Link from "next/link";
-import { QrCode, LayoutDashboard, LogOut, Utensils, BrainCircuit } from "lucide-react";
+import { QrCode, LayoutDashboard, LogOut, Utensils, BrainCircuit, TrendingUp, Lightbulb } from "lucide-react";
 
 export default function PengurusLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isLoading } = useAuth();
@@ -33,9 +33,12 @@ export default function PengurusLayout({ children }: { children: React.ReactNode
 
   const navItems = [
     { href: "/pengurus", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/pengurus/trend", label: "Prestasi & Trend", icon: TrendingUp },
     { href: "/pengurus/topics", label: "Analisis Topik", icon: BrainCircuit },
+    { href: "/pengurus/cadangan", label: "Cadangan & Tindakan", icon: Lightbulb },
     { href: "/pengurus/qr", label: "Jana Kod QR", icon: QrCode },
   ];
+
 
   return (
     <div className="flex h-screen font-sans mesh-dots">

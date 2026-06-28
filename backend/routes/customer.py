@@ -99,17 +99,20 @@ def submit_feedback(feedback: FeedbackCreate, background_tasks: BackgroundTasks)
 
 
 @router.get("/sentiment-stats/{premise_id}")
-def get_sentiment_stats(premise_id: int):
+def get_sentiment_stats(premise_id: int, sumber: str = None):
     """
     Returns live sentiment breakdown for the Pengurus dashboard donut chart.
     Joins: tbl_maklumbalas → tbl_enjin_ai → tbl_sentimen
     """
     try:
-        # Get all feedback IDs for this premise
-        feedback_res = supabase.table("tbl_maklumbalas") \
-            .select("id_maklum_balas, bilangan_bintang, rating_makanan, rating_layanan, rating_suasana") \
-            .eq("id_premis", premise_id) \
-            .execute()
+        # Base query
+        query = supabase.table("tbl_maklumbalas").select("id_maklum_balas, bilangan_bintang, rating_makanan, rating_layanan, rating_suasana").eq("id_premis", premise_id)
+        
+        # Apply source filter if provided
+        if sumber:
+            query = query.eq("sumber_platform", sumber)
+            
+        feedback_res = query.execute()
 
         records = feedback_res.data or []
         total = len(records)
@@ -145,7 +148,9 @@ def get_sentiment_stats(premise_id: int):
         labelled_total = sum(counts.values())
         denom = labelled_total if labelled_total > 0 else 1
 
-        total_stars = sum(r.get("bilangan_bintang") or 0 for r in records)
+        valid_stars = [r.get("bilangan_bintang") for r in records if r.get("bilangan_bintang") is not None]
+        total_stars = sum(valid_stars)
+        count_stars = len(valid_stars)
         
         def calculate_avg(key):
             vals = [r.get(key) for r in records if r.get(key) is not None]
@@ -155,6 +160,38 @@ def get_sentiment_stats(premise_id: int):
         avg_layanan = calculate_avg("rating_layanan")
         avg_suasana = calculate_avg("rating_suasana")
 
+        # Calculate month-over-month growth %
+        # We need tarikh_terima for this, so fetch it
+        date_res = supabase.table("tbl_maklumbalas") \
+            .select("tarikh_terima") \
+            .eq("id_premis", premise_id) \
+            .execute()
+        date_records = date_res.data or []
+        
+        now = datetime.datetime.now()
+        thirty_days_ago = now - datetime.timedelta(days=30)
+        sixty_days_ago = now - datetime.timedelta(days=60)
+        
+        current_period = 0
+        previous_period = 0
+        for dr in date_records:
+            try:
+                dt = datetime.datetime.fromisoformat(dr["tarikh_terima"])
+                dt_naive = dt.replace(tzinfo=None)
+                if dt_naive >= thirty_days_ago.replace(tzinfo=None):
+                    current_period += 1
+                elif dt_naive >= sixty_days_ago.replace(tzinfo=None):
+                    previous_period += 1
+            except Exception:
+                pass
+        
+        if previous_period > 0:
+            pertumbuhan = round(((current_period - previous_period) / previous_period) * 100, 1)
+        elif current_period > 0:
+            pertumbuhan = 100.0  # All new data, 100% growth
+        else:
+            pertumbuhan = 0.0
+
         return {
             "total": total,
             "sentimen": [
@@ -162,30 +199,33 @@ def get_sentiment_stats(premise_id: int):
                 {"name": "Neutral",  "value": round(counts["Neutral"]  / denom * 100, 1)},
                 {"name": "Negatif",  "value": round(counts["Negatif"]  / denom * 100, 1)},
             ],
-            "purata_bintang": round(total_stars / total, 1),
+            "purata_bintang": round(total_stars / count_stars, 1) if count_stars > 0 else 0.0,
             "pecahan_rating": {
                 "makanan": round(avg_makanan, 1),
                 "layanan": round(avg_layanan, 1),
                 "suasana": round(avg_suasana, 1),
-            }
+            },
+            "pertumbuhan": pertumbuhan,
         }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 @router.get("/recent-feedback/{premise_id}")
-def get_recent_feedback(premise_id: int, limit: int = 5):
+def get_recent_feedback(premise_id: int, limit: int = 5, sumber: str = None):
     """
     Returns recent feedback for a premise, including the sentiment label.
     """
     try:
         # Get recent feedback
-        feedback_res = supabase.table("tbl_maklumbalas") \
-            .select("id_maklum_balas, ulasan_teks, bilangan_bintang, rating_makanan, rating_layanan, rating_suasana, tarikh_terima") \
-            .eq("id_premis", premise_id) \
-            .order("tarikh_terima", desc=True) \
-            .limit(limit) \
-            .execute()
+        query = supabase.table("tbl_maklumbalas") \
+            .select("id_maklum_balas, ulasan_teks, bilangan_bintang, rating_makanan, rating_layanan, rating_suasana, tarikh_terima, sumber_platform") \
+            .eq("id_premis", premise_id)
+            
+        if sumber:
+            query = query.eq("sumber_platform", sumber)
+            
+        feedback_res = query.order("tarikh_terima", desc=True).limit(limit).execute()
             
         records = feedback_res.data or []
         
@@ -295,5 +335,98 @@ def get_weekly_stats(premise_id: int):
             
         return result
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@router.get("/feedback-by-source/{premise_id}")
+def get_feedback_by_source(premise_id: int):
+    """
+    Returns breakdown of feedback volume by platform source.
+    Useful for the Tremor BarChart.
+    """
+    try:
+        feedback_res = supabase.table("tbl_maklumbalas") \
+            .select("sumber_platform") \
+            .eq("id_premis", premise_id) \
+            .execute()
+            
+        records = feedback_res.data or []
+        
+        # Group by platform
+        counts = {}
+        for r in records:
+            src = r.get("sumber_platform") or "Portal QR"
+            counts[src] = counts.get(src, 0) + 1
+            
+        # Format for Tremor BarChart
+        result = []
+        for src, count in counts.items():
+            result.append({
+                "sumber": src,
+                "jumlah": count
+            })
+            
+        # Sort by volume desc
+        result.sort(key=lambda x: x["jumlah"], reverse=True)
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@router.get("/trend-data/{premise_id}")
+def get_trend_data(premise_id: int):
+    """
+    Returns sentiment trend data spanning the last 30 days, grouped into weeks.
+    Used for a multi-series AreaChart comparing sources over time.
+    """
+    try:
+        thirty_days_ago = (datetime.datetime.now() - datetime.timedelta(days=30)).isoformat()
+        
+        # Get feedback from last 30 days
+        feedback_res = supabase.table("tbl_maklumbalas") \
+            .select("id_maklum_balas, tarikh_terima, sumber_platform") \
+            .eq("id_premis", premise_id) \
+            .gte("tarikh_terima", thirty_days_ago) \
+            .execute()
+            
+        records = feedback_res.data or []
+        
+        if not records:
+            return []
+            
+        # Define 4 weekly buckets
+        now = datetime.datetime.now()
+        buckets = [
+            {"label": "Minggu 1", "start": now - datetime.timedelta(days=28), "end": now - datetime.timedelta(days=21)},
+            {"label": "Minggu 2", "start": now - datetime.timedelta(days=21), "end": now - datetime.timedelta(days=14)},
+            {"label": "Minggu 3", "start": now - datetime.timedelta(days=14), "end": now - datetime.timedelta(days=7)},
+            {"label": "Minggu 4", "start": now - datetime.timedelta(days=7), "end": now}
+        ]
+        
+        # Initialize data structure: { week_label: { source: volume } }
+        chart_data = {b["label"]: {"Minggu": b["label"]} for b in buckets}
+        
+        # Categorize records
+        for r in records:
+            try:
+                date_obj = datetime.datetime.fromisoformat(r["tarikh_terima"])
+                src = r.get("sumber_platform") or "Portal QR"
+                
+                # Find bucket
+                for b in buckets:
+                    # Very simple grouping
+                    if b["start"].replace(tzinfo=None) <= date_obj.replace(tzinfo=None) <= b["end"].replace(tzinfo=None):
+                        week_label = b["label"]
+                        # Init source if not exists
+                        if src not in chart_data[week_label]:
+                            chart_data[week_label][src] = 0
+                        chart_data[week_label][src] += 1
+                        break
+            except Exception:
+                pass
+                
+        # Format into array for Tremor
+        return list(chart_data.values())
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
