@@ -1,0 +1,187 @@
+import React, { forwardRef } from "react";
+import { Utensils, TrendingUp, Star, MessageSquare } from "lucide-react";
+
+interface PDFData {
+  premis: any;
+  bulan: str;
+  stats: any;
+  source_stats: any;
+  recent: any[];
+}
+
+export const LaporanPDFTemplate = forwardRef<HTMLDivElement, { data: PDFData | null }>(
+  ({ data }, ref) => {
+    if (!data) return null;
+
+    const { premis, bulan, stats, source_stats, recent } = data;
+
+    // Helper to color sentiment
+    const getSentimentColor = (s: string) => {
+      if (s === "Positif") return "bg-green-100 text-green-700 border-green-200";
+      if (s === "Neutral") return "bg-yellow-100 text-yellow-700 border-yellow-200";
+      return "bg-red-100 text-red-700 border-red-200";
+    };
+
+    return (
+      <div ref={ref} className="w-[794px] min-h-[1123px] bg-slate-50 text-slate-800 font-sans absolute -left-[9999px] top-0">
+        
+        {/* --- PAGE 1: COVER & EXECUTIVE SUMMARY --- */}
+        <div className="w-[794px] h-[1123px] bg-white relative overflow-hidden flex flex-col p-12">
+          
+          {/* Header Graphic */}
+          <div className="absolute top-0 left-0 w-full h-64 bg-slate-900 rounded-b-[48px] -z-10" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500 rounded-bl-[100px] opacity-90 -z-10" />
+
+          {/* Header Content */}
+          <div className="flex justify-between items-start pt-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl">
+                <Utensils className="w-8 h-8 text-orange-500" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-black text-white tracking-tight leading-none">FoodLytics</h1>
+                <p className="text-orange-400 font-bold tracking-widest text-sm uppercase mt-1">Enterprise Report</p>
+              </div>
+            </div>
+            <div className="text-right text-white">
+              <p className="font-bold text-xl">{bulan}</p>
+              <p className="text-sm text-slate-300 opacity-80 mt-1">Sistem Analitik AI</p>
+            </div>
+          </div>
+
+          {/* Premise Details Card */}
+          <div className="mt-20 bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-slate-100">
+            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Laporan Prestasi Pintar Cawangan</h2>
+            <p className="text-3xl font-black text-slate-800">{premis?.nama_premis || "Cawangan Restoran"}</p>
+            <p className="text-slate-500 mt-2 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span> 
+              {premis?.alamat_premis || "Alamat tidak ditetapkan"}
+            </p>
+          </div>
+
+          {/* Executive Summary */}
+          <div className="mt-12">
+            <h3 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-3">
+              <TrendingUp className="w-6 h-6 text-orange-500" /> 
+              Ringkasan Eksekutif
+            </h3>
+            
+            <div className="grid grid-cols-3 gap-6">
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                </div>
+                <p className="text-slate-500 font-semibold text-sm">Jumlah Ulasan</p>
+                <p className="text-4xl font-black text-slate-800 mt-1">{stats?.total || 0}</p>
+              </div>
+              
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                  <Star className="w-5 h-5 text-yellow-600" />
+                </div>
+                <p className="text-slate-500 font-semibold text-sm">Purata Penilaian</p>
+                <p className="text-4xl font-black text-slate-800 mt-1">{stats?.purata_bintang || 0} <span className="text-xl text-slate-400">/ 5.0</span></p>
+              </div>
+              
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                </div>
+                <p className="text-slate-500 font-semibold text-sm">Pertumbuhan 30 Hari</p>
+                <p className="text-4xl font-black text-slate-800 mt-1">+{stats?.pertumbuhan || 0}%</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Breakdown Scores */}
+          <div className="mt-10">
+            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Pecahan Aspek Penilaian</h4>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="flex justify-between items-center bg-white border-2 border-slate-100 p-4 rounded-xl">
+                <span className="font-bold text-slate-700">Kualiti Makanan</span>
+                <span className="font-black text-orange-500 bg-orange-50 px-3 py-1 rounded-lg">{stats?.pecahan_rating?.makanan || 0}</span>
+              </div>
+              <div className="flex justify-between items-center bg-white border-2 border-slate-100 p-4 rounded-xl">
+                <span className="font-bold text-slate-700">Layanan Pekerja</span>
+                <span className="font-black text-orange-500 bg-orange-50 px-3 py-1 rounded-lg">{stats?.pecahan_rating?.layanan || 0}</span>
+              </div>
+              <div className="flex justify-between items-center bg-white border-2 border-slate-100 p-4 rounded-xl">
+                <span className="font-bold text-slate-700">Suasana Kedai</span>
+                <span className="font-black text-orange-500 bg-orange-50 px-3 py-1 rounded-lg">{stats?.pecahan_rating?.suasana || 0}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Page 1 */}
+          <div className="mt-auto border-t border-slate-200 pt-6 flex justify-between items-center text-xs text-slate-400 font-bold">
+            <p>FoodLytics Enterprise Analytics Engine</p>
+            <p>Mukasurat 1</p>
+          </div>
+        </div>
+
+
+        {/* --- PAGE 2: DETAILED LOGS --- */}
+        <div className="w-[794px] min-h-[1123px] bg-white p-12 flex flex-col">
+          <div className="border-b border-slate-200 pb-6 mb-8 flex justify-between items-end">
+            <div>
+              <h3 className="text-2xl font-black text-slate-800">Log Maklum Balas AI</h3>
+              <p className="text-slate-500 mt-1">Senarai 20 maklum balas terkini yang dianalisis oleh enjin AI.</p>
+            </div>
+            <div className="text-slate-400 font-bold text-sm">
+              {bulan}
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="border border-slate-200 rounded-2xl overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-900 text-white">
+                  <th className="py-4 px-6 text-sm font-bold w-24">Tarikh</th>
+                  <th className="py-4 px-6 text-sm font-bold w-16">Skor</th>
+                  <th className="py-4 px-6 text-sm font-bold w-32">Sentimen AI</th>
+                  <th className="py-4 px-6 text-sm font-bold">Ulasan Pelanggan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent?.map((item, idx) => (
+                  <tr key={idx} className={`border-b border-slate-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                    <td className="py-4 px-6 text-sm text-slate-500 font-medium align-top">
+                      {item.tarikh_terima ? item.tarikh_terima.split("T")[0] : "N/A"}
+                    </td>
+                    <td className="py-4 px-6 align-top">
+                      <span className="bg-slate-200 text-slate-700 font-bold px-2 py-1 rounded-md text-xs flex items-center gap-1 w-min">
+                        {item.bilangan_bintang || "-"} <Star className="w-3 h-3" />
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 align-top">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getSentimentColor(item.sentimen)}`}>
+                        {item.sentimen || "Neutral"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-slate-700 align-top leading-relaxed pr-8">
+                      "{item.ulasan_teks}"
+                    </td>
+                  </tr>
+                ))}
+                {(!recent || recent.length === 0) && (
+                  <tr>
+                    <td colSpan={4} className="py-12 text-center text-slate-500">Tiada rekod maklum balas.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="mt-auto pt-12 border-t border-transparent flex justify-between items-center text-xs text-slate-400 font-bold">
+            <p>FoodLytics Enterprise Analytics Engine</p>
+            <p>Mukasurat 2</p>
+          </div>
+        </div>
+
+      </div>
+    );
+  }
+);
+
+LaporanPDFTemplate.displayName = "LaporanPDFTemplate";
