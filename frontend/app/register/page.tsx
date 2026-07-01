@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { TextInput, Button } from "@tremor/react";
-import { User, Mail, MapPin, Map, Share2, Lock, Plus, Search, Building2, X, ArrowRight, Phone } from "lucide-react";
+import { User, Mail, MapPin, Map, Share2, Lock, Plus, Search, Building2, X, ArrowRight, Phone, Sparkles, ShieldCheck, Utensils, Activity } from "lucide-react";
 
 export default function RegisterPremise() {
   const router = useRouter();
@@ -79,166 +78,337 @@ export default function RegisterPremise() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col justify-center items-center font-sans text-slate-900 bg-gradient-to-br from-orange-50/60 via-white to-blue-50/40 relative overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
-      {/* Background Decor */}
-      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-orange-100/60 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-blue-100/50 blur-[120px] rounded-full pointer-events-none" />
+    <div className="min-h-screen w-full flex font-sans bg-[#030712] text-slate-100 overflow-hidden relative">
+      {/* Global Background Glows */}
+      <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-orange-500/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
+      
+      {/* Decorative Grid */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
 
-      <div className="max-w-2xl w-full relative z-10">
-        {/* Header Section */}
-        <div className="space-y-3 mb-10 text-center">
-          <div className="inline-flex items-center justify-center p-3 bg-orange-100/80 rounded-2xl mb-2 shadow-sm border border-orange-200/50">
-            <Building2 className="w-6 h-6 text-orange-600" />
+      {/* LEFT PANEL: Enterprise Branding */}
+      <div className="hidden lg:flex w-[40%] relative flex-col justify-between pt-16 px-16 pb-10 xl:pt-20 xl:px-20 xl:pb-12 border-r border-white/5 z-10">
+        
+        {/* Top Header */}
+        <div className="relative flex items-center gap-4 group cursor-pointer">
+          <div className="p-3 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl shadow-[0_0_40px_rgba(249,115,22,0.4)] group-hover:shadow-[0_0_60px_rgba(249,115,22,0.6)] transition-all duration-500">
+            <Utensils className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-slate-900">
-            Mula bersama <span className="text-orange-600">FoodLytics</span>
-          </h1>
-          <p className="text-slate-500 font-medium max-w-sm mx-auto">
-            Urus premis dan analisa data pelanggan dengan satu platform pintar.
-          </p>
+          <span className="text-3xl font-black tracking-tight text-white drop-shadow-md">
+            Food<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Lytics</span>
+          </span>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 rounded-[2.5rem] relative overflow-hidden p-8 sm:p-10">
-          <form onSubmit={handleSubmit} className="relative space-y-10">
-            {/* Role Switcher */}
-            <div className="space-y-4">
-              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-600 ml-1">
-                Pilih Peranan Pengguna
-              </label>
-              <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-100/80 rounded-[1.5rem]">
-                <button
-                  type="button"
-                  onClick={() => setPeranan("Pengurus")}
-                  className={`py-4 rounded-[1.2rem] transition-all duration-300 font-bold text-sm flex flex-col items-center gap-1 ${peranan === "Pengurus" ? "bg-white text-orange-600 shadow-md scale-[1.02]" : "text-slate-500 hover:bg-white/50"}`}
-                >
-                  Pengurus
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPeranan("Staf Operasi")}
-                  className={`py-4 rounded-[1.2rem] transition-all duration-300 font-bold text-sm flex flex-col items-center gap-1 ${peranan === "Staf Operasi" ? "bg-white text-orange-600 shadow-md scale-[1.02]" : "text-slate-500 hover:bg-white/50"}`}
-                >
-                  Staf Operasi
-                </button>
-              </div>
-            </div>
+        {/* Content Showcase */}
+        <div className="relative space-y-10 max-w-xl my-auto pt-2">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-white/5 text-orange-300 border border-orange-500/30 backdrop-blur-md shadow-[0_0_20px_rgba(249,115,22,0.15)]">
+            <Sparkles className="w-4 h-4 text-orange-400" />
+            <span className="tracking-wide uppercase">Join The Network</span>
+          </div>
+          
+          <div className="space-y-6">
+            <h2 className="text-5xl xl:text-6xl font-black leading-[1.1] tracking-tight text-white drop-shadow-lg">
+              Mulakan <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300">Evolusi</span><br/> Operasi Premis.
+            </h2>
+            <p className="text-slate-300 leading-relaxed text-lg font-medium max-w-lg drop-shadow">
+              Daftar kafe atau cawangan anda, tambah staf operasi, dan pautkan sistem maklum balas pintar ini ke dalam aliran kerja harian anda secara nyata.
+            </p>
+          </div>
 
-            {/* Form Sections */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">Nama Penuh</label>
-                <TextInput
-                  icon={User}
-                  placeholder="Joshua Frankie"
-                  value={namaPenuh}
-                  onChange={(e) => setNamaPenuh(e.target.value)}
-                  className="rounded-2xl border-none bg-slate-100/50 hover:bg-slate-100 focus:bg-white transition-all h-12 shadow-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">E-mel Peribadi</label>
-                <TextInput
-                  icon={Mail}
-                  placeholder="joshua@ukm.edu.my"
-                  value={emel}
-                  onChange={(e) => setEmel(e.target.value)}
-                  className="rounded-2xl border-none bg-slate-100/50 hover:bg-slate-100 focus:bg-white transition-all h-12 shadow-sm"
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">Nombor Telefon</label>
-                <TextInput
-                  icon={Phone}
-                  placeholder="0123456789"
-                  value={noTelefon}
-                  onChange={(e) => setNoTelefon(e.target.value)}
-                  className="rounded-2xl border-none bg-slate-100/50 hover:bg-slate-100 focus:bg-white transition-all h-12 shadow-sm"
-                />
-              </div>
+          {/* Bullet Points */}
+          <div className="grid grid-cols-2 gap-6 pt-8 border-t border-white/10">
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
+              <ShieldCheck className="w-8 h-8 text-orange-400 mb-4" />
+              <h4 className="font-bold text-base text-white mb-2">SOP Automatik Pintar</h4>
+              <p className="text-sm text-slate-400 leading-relaxed">Janji kelulusan tindakan pantas pengurus ke staf.</p>
             </div>
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
+              <Activity className="w-8 h-8 text-orange-400 mb-4" />
+              <h4 className="font-bold text-base text-white mb-2">Analitik Sentimen Proaktif</h4>
+              <p className="text-sm text-slate-400 leading-relaxed">Pantau Google Review, media sosial & kod QR dari satu hab berpusat.</p>
+            </div>
+          </div>
+        </div>
 
-            {/* Contextual Section */}
-            {peranan === "Staf Operasi" ? (
-              <div className="p-6 rounded-[2rem] bg-orange-600 text-white shadow-xl shadow-orange-200 animate-in fade-in zoom-in-95 duration-500">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white/20 rounded-2xl">
-                    <Building2 className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Kod Akses Perniagaan</label>
+        {/* Footer */}
+        <div className="relative text-sm text-slate-500 font-semibold tracking-wide">
+          © {new Date().getFullYear()} FoodLytics System. Built for Enterprise.
+        </div>
+      </div>
+
+      {/* RIGHT PANEL: Registration Form */}
+      <div className="w-full lg:w-[60%] flex items-center justify-center p-6 sm:p-12 relative z-10 overflow-y-auto">
+        <div className="w-full max-w-xl space-y-10 relative">
+          
+          {/* Mobile Header */}
+          <div className="text-center space-y-4 lg:hidden">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl shadow-[0_0_40px_rgba(249,115,22,0.4)] mx-auto">
+              <Utensils className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-md">
+              Akaun Baru
+            </h1>
+            <p className="text-slate-300 font-medium text-base">
+              Lengkapkan pendaftaran korporat anda.
+            </p>
+          </div>
+
+          <div className="hidden lg:block space-y-3">
+             <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-md">
+              Pendaftaran Akaun
+            </h1>
+            <p className="text-slate-300 font-medium text-base">
+              Sila pilih peranan dan isikan butiran untuk mula mengakses ekosistem.
+            </p>
+          </div>
+
+          {/* Form Card */}
+          <div className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[2rem] p-6 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+
+            <form onSubmit={handleSubmit} className="relative space-y-8 z-10">
+              
+              {/* Role Switcher */}
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-300 ml-1 drop-shadow-sm">Pilih Peranan</label>
+                <div className="grid grid-cols-2 gap-3 p-2 bg-black/40 border border-white/10 rounded-[1.5rem]">
+                  <button
+                    type="button"
+                    onClick={() => setPeranan("Pengurus")}
+                    className={`py-4 rounded-xl transition-all duration-300 font-bold text-sm ${peranan === "Pengurus" ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-[0_0_15px_rgba(249,115,22,0.4)] scale-[1.02]" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                  >
+                    Pengurus Premis
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPeranan("Staf Operasi")}
+                    className={`py-4 rounded-xl transition-all duration-300 font-bold text-sm ${peranan === "Staf Operasi" ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-[0_0_15px_rgba(249,115,22,0.4)] scale-[1.02]" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                  >
+                    Staf Operasi
+                  </button>
+                </div>
+              </div>
+
+              {/* Basic Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="space-y-2.5">
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-300 ml-1 drop-shadow-sm">Nama Penuh</label>
+                  <div className="relative group">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
                     <input
-                      className="bg-transparent border-b-2 border-white/30 focus:border-white outline-none w-full py-2 font-bold text-lg placeholder:text-white/50 transition-colors"
-                      placeholder="Masukkan Kod (e.g. UKM-001)"
-                      value={kodPerniagaan}
-                      onChange={(e) => setKodPerniagaan(e.target.value)}
+                      type="text"
+                      placeholder="Joshua Frankie"
+                      value={namaPenuh}
+                      onChange={(e) => setNamaPenuh(e.target.value)}
+                      required
+                      className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 focus:bg-black/60 transition-all text-sm font-semibold shadow-inner"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-300 ml-1 drop-shadow-sm">E-mel Peribadi</label>
+                  <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                    <input
+                      type="email"
+                      placeholder="nama@syarikat.com"
+                      value={emel}
+                      onChange={(e) => setEmel(e.target.value)}
+                      required
+                      className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 focus:bg-black/60 transition-all text-sm font-semibold shadow-inner"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2.5 sm:col-span-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-300 ml-1 drop-shadow-sm">Nombor Telefon</label>
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                    <input
+                      type="text"
+                      placeholder="0123456789"
+                      value={noTelefon}
+                      onChange={(e) => setNoTelefon(e.target.value)}
+                      required
+                      className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 focus:bg-black/60 transition-all text-sm font-semibold shadow-inner"
                     />
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="space-y-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500 hover:shadow-md transition-shadow">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <ArrowRight className="w-3 h-3" /> Info Premis & Perniagaan
-                </h3>
-                <div className="space-y-4">
-                  <TextInput icon={Search} placeholder="Nama Kafe / Restoran" value={namaPremis} onChange={(e) => setNamaPremis(e.target.value)} className="rounded-2xl border-none bg-white h-12 shadow-sm" />
-                  <TextInput icon={MapPin} placeholder="Alamat Lokasi" value={alamatPremis} onChange={(e) => setAlamatPremis(e.target.value)} className="rounded-2xl border-none bg-white h-12 shadow-sm" />
-                  <TextInput icon={Map} placeholder="Pautan Google Maps" value={pautanGmaps} onChange={(e) => setPautanGmaps(e.target.value)} className="rounded-2xl border-none bg-white h-12 shadow-sm" />
-                  <div className="pt-2">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-sm font-bold text-slate-700">Pautan Media Sosial</span>
-                      <button type="button" onClick={handleAddMedsos} className="p-2 bg-orange-100 text-orange-600 rounded-xl hover:bg-orange-200 transition-colors">
-                        <Plus className="w-4 h-4" />
-                      </button>
+
+              {/* Contextual Section */}
+              {peranan === "Staf Operasi" ? (
+                <div className="p-6 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-[0_0_30px_rgba(249,115,22,0.3)] animate-in fade-in zoom-in-95 duration-500 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
+                  <div className="flex items-center gap-5 relative z-10">
+                    <div className="p-4 bg-white/20 rounded-xl backdrop-blur-md">
+                      <Building2 className="w-6 h-6 text-white" />
                     </div>
-                    {medsos.map((item, i) => (
-                      <div key={i} className="flex gap-2 mb-2 animate-in fade-in slide-in-from-right-2">
-                        <TextInput placeholder="IG" value={item.platform} onChange={(e) => handleUpdateMedsos(i, 'platform', e.target.value)} className="w-24 rounded-xl border-none bg-white shadow-sm" />
-                        <TextInput icon={Share2} placeholder="URL" value={item.url} onChange={(e) => handleUpdateMedsos(i, 'url', e.target.value)} className="flex-1 rounded-xl border-none bg-white shadow-sm" />
-                        {medsos.length > 1 && (
-                          <button type="button" onClick={() => handleRemoveMedsos(i)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                            <X className="w-4 h-4" />
-                          </button>
-                        )}
+                    <div className="flex-1">
+                      <label className="block text-[11px] font-black uppercase tracking-wider opacity-90 mb-1.5 drop-shadow-md">Kod Akses Perniagaan</label>
+                      <input
+                        className="bg-transparent border-b-2 border-white/30 focus:border-white outline-none w-full py-2 font-black text-xl tracking-widest placeholder:text-white/50 transition-colors drop-shadow"
+                        placeholder="e.g. UKM-001"
+                        value={kodPerniagaan}
+                        onChange={(e) => setKodPerniagaan(e.target.value)}
+                        required={peranan === "Staf Operasi"}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-5 bg-black/20 p-6 rounded-[2rem] border border-white/10 animate-in fade-in duration-500">
+                  <h3 className="text-xs font-black text-orange-400 uppercase tracking-widest flex items-center gap-2 drop-shadow-sm">
+                    <ArrowRight className="w-4 h-4" /> Info Premis & Perniagaan
+                  </h3>
+
+                  <div className="space-y-4">
+                    <div className="relative group">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                      <input
+                        type="text"
+                        placeholder="Nama Kafe / Restoran"
+                        value={namaPremis}
+                        onChange={(e) => setNamaPremis(e.target.value)}
+                        required={peranan === "Pengurus"}
+                        className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all text-sm font-semibold shadow-inner"
+                      />
+                    </div>
+
+                    <div className="relative group">
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                      <input
+                        type="text"
+                        placeholder="Alamat Lokasi Kafe"
+                        value={alamatPremis}
+                        onChange={(e) => setAlamatPremis(e.target.value)}
+                        required={peranan === "Pengurus"}
+                        className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all text-sm font-semibold shadow-inner"
+                      />
+                    </div>
+
+                    <div className="relative group">
+                      <Map className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                      <input
+                        type="text"
+                        placeholder="Pautan Google Maps"
+                        value={pautanGmaps}
+                        onChange={(e) => setPautanGmaps(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all text-sm font-semibold shadow-inner"
+                      />
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-xs font-black uppercase text-slate-300 tracking-widest drop-shadow-sm">Integrasi Media Sosial</span>
+                        <button
+                          type="button"
+                          onClick={handleAddMedsos}
+                          className="px-3 py-1.5 bg-white/5 border border-white/10 text-orange-400 rounded-xl hover:bg-white/10 hover:border-orange-500/50 transition-all font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Tambah Pautan
+                        </button>
                       </div>
-                    ))}
+
+                      {medsos.map((item, i) => (
+                        <div key={i} className="flex gap-3 mb-3 animate-in fade-in slide-in-from-right-2">
+                          <input
+                            type="text"
+                            placeholder="IG / FB"
+                            value={item.platform}
+                            onChange={(e) => handleUpdateMedsos(i, 'platform', e.target.value)}
+                            className="w-24 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-sm font-bold shadow-inner text-center"
+                          />
+                          <div className="relative flex-1 group">
+                            <Share2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                            <input
+                              type="text"
+                              placeholder="Pautan URL Rasmi"
+                              value={item.url}
+                              onChange={(e) => handleUpdateMedsos(i, 'url', e.target.value)}
+                              className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-sm font-semibold shadow-inner"
+                            />
+                          </div>
+                          {medsos.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMedsos(i)}
+                              className="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 transition-all shrink-0 shadow-sm"
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Password Section */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
+                <div className="space-y-2.5">
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-300 ml-1 drop-shadow-sm">Kata Laluan</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={kataLaluan}
+                      onChange={(e) => setKataLaluan(e.target.value)}
+                      required
+                      className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 focus:bg-black/60 transition-all text-base font-semibold shadow-inner tracking-widest"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-300 ml-1 drop-shadow-sm">Sahkan Laluan</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={sahkanKataLaluan}
+                      onChange={(e) => setSahkanKataLaluan(e.target.value)}
+                      required
+                      className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 focus:bg-black/60 transition-all text-base font-semibold shadow-inner tracking-widest"
+                    />
                   </div>
                 </div>
               </div>
-            )}
 
-            {/* Security Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">Kata Laluan</label>
-                <TextInput icon={Lock} type="password" placeholder="••••••••" value={kataLaluan} onChange={(e) => setKataLaluan(e.target.value)} className="rounded-2xl border-none bg-slate-100/50 hover:bg-slate-100 focus:bg-white transition-all h-12 shadow-sm" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">Sahkan</label>
-                <TextInput icon={Lock} type="password" placeholder="••••••••" value={sahkanKataLaluan} onChange={(e) => setSahkanKataLaluan(e.target.value)} className="rounded-2xl border-none bg-slate-100/50 hover:bg-slate-100 focus:bg-white transition-all h-12 shadow-sm" />
-              </div>
-            </div>
-
-            {/* Submit */}
-            <div className="pt-6">
-              <Button type="submit" loading={loading} className="w-full h-16 bg-slate-900 hover:bg-black text-white border-none rounded-[1.5rem] text-lg font-black shadow-xl shadow-slate-900/20 transition-all hover:scale-[1.01] active:scale-[0.98]">
-                Daftar Sekarang
-              </Button>
               {message && (
-                <div className={`mt-4 p-4 rounded-2xl text-sm font-bold text-center border animate-in fade-in slide-in-from-top-2 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                <div className={`p-4 rounded-2xl text-sm font-bold text-center border backdrop-blur-md animate-in fade-in slide-in-from-top-2 ${message.type === 'success' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/50' : 'bg-red-500/20 text-red-200 border-red-500/50'}`}>
                   {message.text}
                 </div>
               )}
-            </div>
-          </form>
-        </div>
 
-        <p className="mt-8 text-center text-slate-500 font-medium">
-          Dah ada akaun?{" "}
-          <a href="/login" className="text-orange-600 font-bold hover:underline">
-            Log masuk di sini
-          </a>
-        </p>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-2xl text-base font-black shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:shadow-[0_0_30px_rgba(249,115,22,0.6)] transition-all active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 disabled:active:scale-100 mt-4"
+              >
+                {loading ? (
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    Daftar Akaun Baru <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          <p className="text-center text-base text-slate-400 font-medium">
+            Dah ada akaun?{" "}
+            <a href="/login" className="text-orange-400 font-black hover:text-orange-300 hover:underline transition-colors drop-shadow">
+              Log masuk di sini
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -246,23 +246,25 @@ export default function PengurusDashboard() {
         </div>
 
         {/* Breakdown */}
-        <div className="glass-light rounded-3xl p-5 md:col-span-2 lg:col-span-1 space-y-2.5">
-          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">Pecahan Kategori</p>
-          {[
-            { label: "Makanan", val: pecahanRating.makanan, color: "bg-orange-500" },
-            { label: "Layanan", val: pecahanRating.layanan, color: "bg-blue-500" },
-            { label: "Suasana", val: pecahanRating.suasana, color: "bg-indigo-500" },
-          ].map((item) => (
-            <div key={item.label}>
-              <div className="flex justify-between text-[11px] font-bold mb-1">
-                <span className="text-slate-500">{item.label}</span>
-                <span className="text-slate-800">{item.val} / 5.0</span>
+        <div className="glass-light rounded-3xl p-6 md:col-span-2 lg:col-span-1 flex flex-col justify-center h-full w-full">
+          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3 w-full">Pecahan Kategori</p>
+          <div className="space-y-3 w-full">
+            {[
+              { label: "Makanan", val: pecahanRating.makanan, color: "bg-orange-500" },
+              { label: "Layanan", val: pecahanRating.layanan, color: "bg-blue-500" },
+              { label: "Suasana", val: pecahanRating.suasana, color: "bg-indigo-500" },
+            ].map((item) => (
+              <div key={item.label} className="w-full">
+                <div className="flex justify-between items-center text-[11px] font-bold mb-1.5 w-full">
+                  <span className="text-slate-500">{item.label}</span>
+                  <span className="text-slate-800">{item.val} / 5.0</span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.val / 5) * 100}%` }} />
+                </div>
               </div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.val / 5) * 100}%` }} />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 

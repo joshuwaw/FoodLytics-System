@@ -218,8 +218,10 @@ function TopicsAnalysisContent() {
               return displayTopics.map((t) => {
                 const isSelected = selectedTopic === t.label_topik;
                 const displayCount = activeFilter === "Semua" ? t.kekerapan : t.sentimen_breakdown[activeFilter];
-                const displaySentiment = activeFilter === "Semua" ? t.sentimen_dominan : activeFilter;
-                const percent = Math.round((displayCount / t.kekerapan) * 100) || 0;
+
+                const pctPos = Math.round((t.sentimen_breakdown.Positif / t.kekerapan) * 100) || 0;
+                const pctNeu = Math.round((t.sentimen_breakdown.Neutral / t.kekerapan) * 100) || 0;
+                const pctNeg = Math.round((t.sentimen_breakdown.Negatif / t.kekerapan) * 100) || 0;
 
                 return (
                   <div
@@ -237,73 +239,64 @@ function TopicsAnalysisContent() {
                         {getTopicIcon(t.label_topik)}
                       </div>
 
-                      <div className={`px-2.5 py-1 rounded-xl border flex items-center gap-1 text-[10px] uppercase font-black tracking-widest
-                        ${displaySentiment === 'Positif' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
-                          displaySentiment === 'Negatif' ? 'bg-rose-50 border-rose-100 text-rose-600' :
-                            'bg-slate-50 border-slate-100 text-slate-600'}`}>
-                        {displaySentiment === 'Negatif' ? "↓" : "↑"} {percent}%
-                      </div>
+                      {/* Premium Donut Chart representing sentiment ratio with total reviews inside */}
+                      {t.kekerapan > 0 && (
+                        <div className="relative flex items-center justify-center shrink-0" title={`${pctPos}% Positif, ${pctNeu}% Neutral, ${pctNeg}% Negatif`}>
+                          <svg width="44" height="44" viewBox="0 0 36 36" className="transform -rotate-90">
+                            <circle cx="18" cy="18" r="15.9155" fill="transparent" stroke="#e2e8f0" strokeWidth="4.5" />
+                            {pctPos > 0 && (
+                              <circle
+                                cx="18"
+                                cy="18"
+                                r="15.9155"
+                                fill="transparent"
+                                stroke="#10b981"
+                                strokeWidth="4.5"
+                                strokeDasharray={`${pctPos} ${100 - pctPos}`}
+                                strokeDashoffset="0"
+                              />
+                            )}
+                            {pctNeu > 0 && (
+                              <circle
+                                cx="18"
+                                cy="18"
+                                r="15.9155"
+                                fill="transparent"
+                                stroke="#94a3b8"
+                                strokeWidth="4.5"
+                                strokeDasharray={`${pctNeu} ${100 - pctNeu}`}
+                                strokeDashoffset={-pctPos}
+                              />
+                            )}
+                            {pctNeg > 0 && (
+                              <circle
+                                cx="18"
+                                cy="18"
+                                r="15.9155"
+                                fill="transparent"
+                                stroke="#f43f5e"
+                                strokeWidth="4.5"
+                                strokeDasharray={`${pctNeg} ${100 - pctNeg}`}
+                                strokeDashoffset={-(pctPos + pctNeu)}
+                              />
+                            )}
+                          </svg>
+                          <div className="absolute text-[10px] font-black text-slate-800">
+                            {t.kekerapan}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex-1">
                       <h3 className="text-xl font-black text-slate-900 tracking-tight">{t.label_topik}</h3>
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                        {displayCount} Ulasan Dikesan
-                      </p>
-                      
-                      {/* Platform Pills */}
-                      {t.platform_breakdown && Object.keys(t.platform_breakdown).length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-3">
-                          {Object.entries(t.platform_breakdown).map(([platform, count]) => (
-                            <button
-                              key={platform}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedPlatform(platform);
-                                fetchDrilldown(t.label_topik);
-                              }}
-                              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[10px] font-black transition-all ${getPlatformColor(platform)} ${selectedPlatform === platform && isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
-                            >
-                              <span>{getPlatformIcon(platform)}</span>
-                              <span>{count}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {/* Sentiment Distribution Mini-Bar */}
-                      {t.kekerapan > 0 && (
-                        <div className="mt-3 space-y-1">
-                          <div className="flex h-1.5 rounded-full overflow-hidden bg-slate-100">
-                            {t.sentimen_breakdown.Positif > 0 && (
-                              <div 
-                                className="bg-emerald-500 transition-all duration-500" 
-                                style={{ width: `${(t.sentimen_breakdown.Positif / t.kekerapan) * 100}%` }}
-                                title={`Positif: ${t.sentimen_breakdown.Positif}`}
-                              />
-                            )}
-                            {t.sentimen_breakdown.Neutral > 0 && (
-                              <div 
-                                className="bg-slate-400 transition-all duration-500" 
-                                style={{ width: `${(t.sentimen_breakdown.Neutral / t.kekerapan) * 100}%` }}
-                                title={`Neutral: ${t.sentimen_breakdown.Neutral}`}
-                              />
-                            )}
-                            {t.sentimen_breakdown.Negatif > 0 && (
-                              <div 
-                                className="bg-rose-500 transition-all duration-500" 
-                                style={{ width: `${(t.sentimen_breakdown.Negatif / t.kekerapan) * 100}%` }}
-                                title={`Negatif: ${t.sentimen_breakdown.Negatif}`}
-                              />
-                            )}
-                          </div>
-                          <div className="flex justify-between text-[8px] font-bold tracking-wider">
-                            <span className="text-emerald-600">{t.sentimen_breakdown.Positif}P</span>
-                            <span className="text-slate-400">{t.sentimen_breakdown.Neutral}N</span>
-                            <span className="text-rose-500">{t.sentimen_breakdown.Negatif}A</span>
-                          </div>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-slate-450 uppercase tracking-wider">
+                        <span>{displayCount} Ulasan</span>
+                        <span>•</span>
+                        <span className="text-emerald-600">{pctPos}% Positif</span>
+                        <span>•</span>
+                        <span className="text-rose-500">{pctNeg}% Negatif</span>
+                      </div>
                     </div>
                   </div>
                 );

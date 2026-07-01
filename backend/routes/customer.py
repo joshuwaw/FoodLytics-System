@@ -430,3 +430,21 @@ def get_trend_data(premise_id: int):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@router.get("/feedback/history/{premise_id}")
+def search_feedback_history(premise_id: int, q: str = ""):
+    """
+    Search historical feedback by text.
+    """
+    try:
+        query = supabase.table("tbl_maklumbalas") \
+            .select("id_maklum_balas, ulasan_teks, bilangan_bintang, tarikh_terima, sumber_platform") \
+            .eq("id_premis", premise_id)
+            
+        if q:
+            query = query.ilike("ulasan_teks", f"%{q}%")
+            
+        res = query.order("tarikh_terima", desc=True).limit(50).execute()
+        return res.data or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

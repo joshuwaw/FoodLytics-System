@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import admin, customer, analytics, ingestion, prescriptive
+from routes import admin, customer, analytics, ingestion, prescriptive, laporan
 
 app = FastAPI(title="FoodLytics API", version="1.0.0")
 
@@ -20,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(laporan.router, prefix="/api/laporan", tags=["laporan"])
 app.include_router(customer.router, prefix="/api/customer", tags=["customer"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 app.include_router(ingestion.router, prefix="/api/ingestion", tags=["ingestion"])

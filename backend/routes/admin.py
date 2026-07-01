@@ -135,3 +135,89 @@ def register_premise(request: AccountRegisterRequest):
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@router.get("/profile/{id_pengguna}")
+def get_user_profile(id_pengguna: int):
+    try:
+        user_res = supabase.table("tbl_pengguna").select("nama, emel, peranan").eq("id_pengguna", id_pengguna).execute()
+        if not user_res.data:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+        user = user_res.data[0]
+        peranan = user.get("peranan")
+        if peranan == "Staf":
+            peranan = "Staf Operasi"
+            
+        no_telefon = ""
+        premis = None
+        
+        if peranan == "Pengurus":
+            role_res = supabase.table("tbl_pengurus").select("no_telefon").eq("id_pengguna", id_pengguna).execute()
+            if role_res.data:
+                no_telefon = role_res.data[0].get("no_telefon") or ""
+                
+            premis_res = supabase.table("tbl_premis").select("nama_premis, alamat_premis, id_premis").eq("id_pengurus", id_pengguna).execute()
+            if premis_res.data:
+                premis = premis_res.data[0]
+                
+        elif peranan == "Staf Operasi":
+            role_res = supabase.table("tbl_staf_operasi").select("no_telefon, id_premis").eq("id_pengguna", id_pengguna).execute()
+            if role_res.data:
+                no_telefon = role_res.data[0].get("no_telefon") or ""
+                id_premis = role_res.data[0].get("id_premis")
+                
+                if id_premis:
+                    premis_res = supabase.table("tbl_premis").select("nama_premis, alamat_premis, id_premis").eq("id_premis", id_premis).execute()
+                    if premis_res.data:
+                        premis = premis_res.data[0]
+                        
+        return {
+            "nama": user.get("nama"),
+            "emel": user.get("emel"),
+            "peranan": peranan,
+            "no_telefon": no_telefon,
+            "premis": premis
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+from pydantic import BaseModel
+class ProfilUpdate(BaseModel):
+    nama: str = None
+    emel: str = None
+    no_telefon: str = None
+    premis: dict = None
+
+@router.put("/profile/{id_pengguna}")
+def update_user_profile(id_pengguna: int, payload: ProfilUpdate):
+    try:
+        user_res = supabase.table("tbl_pengguna").select("peranan").eq("id_pengguna", id_pengguna).execute()
+        if not user_res.data:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+        peranan = user_res.data[0].get("peranan")
+        
+        base_update = {}
+        if payload.nama: base_update["nama"] = payload.nama
+        if payload.emel: base_update["emel"] = payload.emel
+        
+        if base_update:
+            supabase.table("tbl_pengguna").update(base_update).eq("id_pengguna", id_pengguna).execute()
+            
+        if payload.no_telefon:
+            table_name = "tbl_pengurus" if peranan == "Pengurus" else "tbl_staf_operasi"
+            supabase.table(table_name).update({"no_telefon": payload.no_telefon}).eq("id_pengguna", id_pengguna).execute()
+            
+        if peranan == "Pengurus" and payload.premis and "id_premis" in payload.premis:
+            premis_id = payload.premis["id_premis"]
+            premis_update = {}
+            if "nama_premis" in payload.premis: premis_update["nama_premis"] = payload.premis["nama_premis"]
+            if "alamat_premis" in payload.premis: premis_update["alamat_premis"] = payload.premis["alamat_premis"]
+            if premis_update:
+                supabase.table("tbl_premis").update(premis_update).eq("id_premis", premis_id).execute()
+            
+        return {"message": "Profile updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

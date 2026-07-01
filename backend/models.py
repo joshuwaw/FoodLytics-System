@@ -116,3 +116,4 @@ class CadanganUpdate(BaseModel):
     status_kelulusan: Optional[str] = None
     status_pelaksanaan: Optional[str] = None
     saranan_strategik: Optional[str] = None
+    id_pengurus_lulus: Optional[int] = None
