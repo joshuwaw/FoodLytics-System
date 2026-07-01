@@ -20,7 +20,9 @@
     "react-easy-crop": "^5.2.0",
     "swr": "^2.3.0",
     "sonner": "^1.7.1",
-    "recharts": "^2.15.0"
+    "recharts": "^2.15.0",
+    "dom-to-image-more": "^3.5.0",
+    "jspdf": "^2.5.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
