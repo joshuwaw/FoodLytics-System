@@ -156,7 +156,7 @@ def get_user_profile(id_pengguna: int):
             if role_res.data:
                 no_telefon = role_res.data[0].get("no_telefon") or ""
                 
-            premis_res = supabase.table("tbl_premis").select("nama_premis, alamat_premis, id_premis").eq("id_pengurus", id_pengguna).execute()
+            premis_res = supabase.table("tbl_premis").select("nama_premis, alamat_premis, id_premis, kod_perniagaan").eq("id_pengurus", id_pengguna).execute()
             if premis_res.data:
                 premis = premis_res.data[0]
                 
@@ -167,7 +167,7 @@ def get_user_profile(id_pengguna: int):
                 id_premis = role_res.data[0].get("id_premis")
                 
                 if id_premis:
-                    premis_res = supabase.table("tbl_premis").select("nama_premis, alamat_premis, id_premis").eq("id_premis", id_premis).execute()
+                    premis_res = supabase.table("tbl_premis").select("nama_premis, alamat_premis, id_premis, kod_perniagaan").eq("id_premis", id_premis).execute()
                     if premis_res.data:
                         premis = premis_res.data[0]
                         

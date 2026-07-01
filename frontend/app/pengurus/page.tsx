@@ -9,7 +9,7 @@ import {
 } from "recharts";
 import {
   QrCode, MapPin, Building2, ArrowRight,
-  Star, MessageSquare, TrendingUp, CheckCircle2,
+  Star, MessageSquare, TrendingUp, CheckCircle2, BrainCircuit,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -82,6 +82,7 @@ export default function PengurusDashboard() {
   const [purataBintang, setPurataBintang] = useState(0);
   const [recentFeedback, setRecentFeedback] = useState<any[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
+  const [topTopics, setTopTopics] = useState<any[]>([]);
   const [pecahanRating, setPecahanRating] = useState({ makanan: 0, layanan: 0, suasana: 0 });
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [dataSources, setDataSources] = useState<DataSrc[]>([]);
@@ -125,6 +126,16 @@ export default function PengurusDashboard() {
       .then((d) => setWeeklyData(Array.isArray(d) ? d : []))
       .catch(() => {});
 
+    // Fetch top topics
+    fetch(`${API_URL}/analytics/topics/${user.id_premis}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.topics && Array.isArray(d.topics)) {
+          setTopTopics(d.topics.slice(0, 6)); // Take top 6
+        }
+      })
+      .catch(() => {});
+
     // Fetch data sources
     fetch(`${API_URL}/ingestion/sources/${user.id_premis}`)
       .then((r) => r.json())
@@ -164,36 +175,44 @@ export default function PengurusDashboard() {
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* ── Header ── */}
-      <div>
-        <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
-          Selamat datang,{" "}
-          <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
-            {user?.nama}
-          </span>
-        </h2>
-        <p className="text-slate-400 mt-1.5 text-sm mono-accent">
-          {new Date().toLocaleDateString("ms-MY", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/40 pb-5">
+        <div>
+          <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            Selamat datang,{" "}
+            <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+              {user?.nama}
+            </span>
+            <span className="animate-bounce">👋</span>
+          </h2>
+          <p className="text-slate-400 mt-1 text-sm font-bold tracking-wider uppercase flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            Live Dashboard • {new Date().toLocaleDateString("ms-MY", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 bg-white/60 border border-slate-200/50 rounded-2xl p-1.5 shadow-sm">
+          <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse ml-2" />
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pr-2">Pengurusan Aktif</span>
+        </div>
       </div>
 
       {/* ── Row 1: Stat cards + Premise ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Premise Info */}
-        <div className="glass-light rounded-3xl p-5 space-y-3 md:col-span-2 glow-orange">
+        <div className="glass-light rounded-3xl p-5 space-y-4 md:col-span-2 border-l-4 border-l-orange-500 shadow-md shadow-orange-500/5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-md shadow-orange-400/20">
-                <Building2 className="w-4 h-4 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <Building2 className="w-5 h-5 text-white" />
               </div>
               <h3 className="font-black text-slate-800 tracking-tight">Info Premis</h3>
             </div>
             {premis?.pautan_gmaps && (
               <a href={premis.pautan_gmaps} target="_blank" rel="noopener noreferrer"
-                className="text-xs font-bold text-orange-500 flex items-center gap-1 spring-hover">
-                Maps <ArrowRight className="w-3 h-3" />
+                className="text-xs font-bold text-orange-500 hover:text-pink-500 flex items-center gap-1 px-3 py-1.5 bg-orange-50 rounded-xl transition-all duration-200 shadow-sm border border-orange-100 hover:scale-105 active:scale-95">
+                Maps <ArrowRight className="w-3.5 h-3.5" />
               </a>
             )}
           </div>
@@ -203,15 +222,18 @@ export default function PengurusDashboard() {
               <div className="h-3 bg-slate-100/60 rounded-full animate-pulse w-1/2" />
             </div>
           ) : premis ? (
-            <div>
+            <div className="space-y-2">
               <p className="text-xl font-black text-slate-900">{premis.nama_premis}</p>
-              <div className="flex items-start gap-1.5 text-slate-400 mt-1">
-                <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-orange-400" />
+              <div className="flex items-start gap-2 text-slate-500">
+                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-orange-500" />
                 <p className="text-xs leading-relaxed">{premis.alamat_premis}</p>
               </div>
-              <div className="mt-3 pt-2 border-t border-slate-100/60">
-                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Kod Perniagaan</p>
-                <p className="text-lg font-black mono-accent text-slate-800">{premis.kod_perniagaan}</p>
+              <div className="mt-4 pt-3 border-t border-slate-200/30 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Kod Perniagaan</p>
+                  <p className="text-sm font-black mono-accent text-slate-800">{premis.kod_perniagaan}</p>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-lg">Verified</span>
               </div>
             </div>
           ) : (
@@ -220,47 +242,57 @@ export default function PengurusDashboard() {
         </div>
 
         {/* Rating */}
-        <div className="glass-light rounded-3xl p-5 spring-hover">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-amber-100/80 rounded-xl flex items-center justify-center">
-              <Star className="w-4 h-4 text-amber-500" />
+        <div className="glass-light rounded-3xl p-5 border-l-4 border-l-amber-500 shadow-md shadow-amber-500/5 flex flex-col justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center shadow-sm">
+              <Star className="w-4 h-4 text-amber-500 fill-current" />
             </div>
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Purata Rating</p>
           </div>
-          <p className="text-4xl font-black text-slate-900 mono-accent">{purataBintang > 0 ? purataBintang : "—"}</p>
-          <p className="text-xs text-slate-400 mt-1">daripada 5.0 ⭐</p>
+          <div className="mt-4">
+            <p className="text-4xl font-black text-slate-900 mono-accent flex items-baseline gap-1">
+              {purataBintang > 0 ? purataBintang : "—"}
+              <span className="text-xs font-semibold text-slate-400">/ 5.0</span>
+            </p>
+            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Terima Kasih ⭐ Pelanggan</p>
+          </div>
         </div>
 
         {/* Feedback */}
-        <div className="glass-light rounded-3xl p-5 spring-hover">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-emerald-100/80 rounded-xl flex items-center justify-center">
+        <div className="glass-light rounded-3xl p-5 border-l-4 border-l-emerald-500 shadow-md shadow-emerald-500/5 flex flex-col justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center shadow-sm">
               <MessageSquare className="w-4 h-4 text-emerald-500" />
             </div>
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Jumlah Ulasan</p>
           </div>
-          <p className="text-4xl font-black text-slate-900 mono-accent">{totalUlasan}</p>
-          <p className={`text-xs font-bold mt-1 flex items-center gap-1 ${pertumbuhan >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-            <TrendingUp className="w-3 h-3" /> {pertumbuhan >= 0 ? '+' : ''}{pertumbuhan}% bulan ini
-          </p>
+          <div className="mt-4">
+            <p className="text-4xl font-black text-slate-900 mono-accent">{totalUlasan}</p>
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-lg flex items-center gap-0.5 ${pertumbuhan >= 0 ? 'bg-emerald-50 border border-emerald-100 text-emerald-600' : 'bg-rose-50 border border-rose-100 text-rose-600'}`}>
+                <TrendingUp className="w-3 h-3" /> {pertumbuhan >= 0 ? '+' : ''}{pertumbuhan}%
+              </span>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">bulan ini</span>
+            </div>
+          </div>
         </div>
 
         {/* Breakdown */}
-        <div className="glass-light rounded-3xl p-6 md:col-span-2 lg:col-span-1 flex flex-col justify-center h-full w-full">
-          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3 w-full">Pecahan Kategori</p>
-          <div className="space-y-3 w-full">
+        <div className="glass-light rounded-3xl p-5 md:col-span-2 lg:col-span-4 flex flex-col justify-center border-l-4 border-l-indigo-500 shadow-md shadow-indigo-500/5">
+          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-4 w-full">Pecahan Prestasi Kategori</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
             {[
-              { label: "Makanan", val: pecahanRating.makanan, color: "bg-orange-500" },
-              { label: "Layanan", val: pecahanRating.layanan, color: "bg-blue-500" },
-              { label: "Suasana", val: pecahanRating.suasana, color: "bg-indigo-500" },
+              { label: "Makanan & Minuman", val: pecahanRating.makanan, color: "from-orange-500 to-pink-500", glow: "shadow-orange-500/20" },
+              { label: "Layanan & Servis", val: pecahanRating.layanan, color: "from-blue-500 to-indigo-500", glow: "shadow-blue-500/20" },
+              { label: "Suasana Premis", val: pecahanRating.suasana, color: "from-indigo-500 to-purple-500", glow: "shadow-indigo-500/20" },
             ].map((item) => (
-              <div key={item.label} className="w-full">
-                <div className="flex justify-between items-center text-[11px] font-bold mb-1.5 w-full">
-                  <span className="text-slate-500">{item.label}</span>
-                  <span className="text-slate-800">{item.val} / 5.0</span>
+              <div key={item.label} className="w-full bg-white/30 border border-slate-100/60 p-3.5 rounded-2xl hover:border-indigo-100 transition-all duration-200">
+                <div className="flex justify-between items-center text-xs font-black mb-2 w-full">
+                  <span className="text-slate-600">{item.label}</span>
+                  <span className="text-slate-800 mono-accent bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg">{item.val} / 5.0</span>
                 </div>
-                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.val / 5) * 100}%` }} />
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                  <div className={`h-full bg-gradient-to-r ${item.color} rounded-full transition-all duration-1000 shadow-md ${item.glow}`} style={{ width: `${(item.val / 5) * 100}%` }} />
                 </div>
               </div>
             ))}
@@ -269,15 +301,15 @@ export default function PengurusDashboard() {
       </div>
 
       {/* ── Row 2: Donut + Data Sources ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* ─ Sentiment Donut (Custom Recharts) ─ */}
-        <div className="glass-light rounded-3xl p-6">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="glass-light rounded-3xl p-6 flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-6">
             <TrendingUp className="w-4 h-4 text-emerald-500" />
             <h3 className="font-black text-slate-800 text-sm tracking-tight">Ringkasan Sentimen Pelanggan</h3>
           </div>
-          <div className="flex items-center gap-8">
+          <div className="flex flex-col sm:flex-row items-center gap-8 flex-1 justify-center">
             {/* Donut with SVG defs for glow */}
             <div className="relative flex-shrink-0">
               <svg width="0" height="0">
@@ -292,12 +324,12 @@ export default function PengurusDashboard() {
                   </filter>
                 </defs>
               </svg>
-              <PieChart width={160} height={160}>
+              <PieChart width={170} height={170}>
                 <Pie
                   data={sentimentData}
-                  innerRadius={50}
-                  outerRadius={72}
-                  paddingAngle={3}
+                  innerRadius={54}
+                  outerRadius={78}
+                  paddingAngle={4}
                   dataKey="value"
                   startAngle={90}
                   endAngle={-270}
@@ -310,10 +342,10 @@ export default function PengurusDashboard() {
                       key={i}
                       fill={entry.color}
                       style={{
-                        filter: i === 0 ? "drop-shadow(0 0 6px rgba(16,185,129,0.4))" : i === 2 ? "drop-shadow(0 0 4px rgba(244,63,94,0.3))" : undefined,
+                        filter: i === 0 ? "drop-shadow(0 0 8px rgba(16,185,129,0.35))" : i === 2 ? "drop-shadow(0 0 6px rgba(244,63,94,0.25))" : undefined,
                         cursor: 'pointer',
                         opacity: activeIndex === null || activeIndex === i ? 1 : 0.6,
-                        transition: 'opacity 0.2s ease'
+                        transition: 'all 0.3s ease'
                       }}
                     />
                   ))}
@@ -322,7 +354,7 @@ export default function PengurusDashboard() {
               </PieChart>
               {/* Centre label - hide when hovering to avoid overlap */}
               <div className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-200 ${activeIndex !== null ? 'opacity-0' : 'opacity-100'}`}>
-                <p className="text-2xl font-black mono-accent" style={{ color: "#10b981", textShadow: "0 0 12px rgba(16,185,129,0.4)" }}>
+                <p className="text-3xl font-black mono-accent" style={{ color: "#10b981", textShadow: "0 0 16px rgba(16,185,129,0.3)" }}>
                   {sentimentData[0]?.value ?? 0}%
                 </p>
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Positif</p>
@@ -330,21 +362,21 @@ export default function PengurusDashboard() {
             </div>
 
             {/* Legend */}
-            <div className="space-y-4 flex-1">
+            <div className="space-y-4 flex-1 w-full">
               {sentimentData.map(({ name, value, color }) => (
-                <div key={name}>
-                  <div className="flex justify-between items-center mb-1">
+                <div key={name} className="bg-white/30 border border-slate-100/50 p-2.5 rounded-xl hover:border-slate-200 transition-colors">
+                  <div className="flex justify-between items-center mb-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }} />
-                      <span className="text-xs font-semibold text-slate-500">{name}</span>
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}` }} />
+                      <span className="text-xs font-bold text-slate-500">{name}</span>
                     </div>
-                    <span className="text-sm font-black mono-accent text-slate-800">{value}%</span>
+                    <span className="text-xs font-black mono-accent text-slate-800">{value}%</span>
                   </div>
                   {/* Progress bar */}
                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${value}%`, backgroundColor: color, boxShadow: `0 0 6px ${color}80` }}
+                      style={{ width: `${value}%`, backgroundColor: color, boxShadow: `0 0 6px ${color}60` }}
                     />
                   </div>
                 </div>
@@ -354,7 +386,7 @@ export default function PengurusDashboard() {
         </div>
 
         {/* Data Sources */}
-        <div className="glass-light rounded-3xl p-6 flex flex-col">
+        <div className="glass-light rounded-3xl p-6 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-black text-slate-800 text-sm tracking-tight">
               Integrasi Sumber Data Luaran
@@ -362,38 +394,38 @@ export default function PengurusDashboard() {
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold spring-hover hover:text-orange-500 hover:border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-black spring-hover hover:text-orange-500 hover:border-orange-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
               {syncing ? 'Menyegerak...' : 'Segerak Sekarang'}
             </button>
           </div>
-          <div className="space-y-3 flex-1 overflow-y-auto">
+          <div className="space-y-3 flex-1 overflow-y-auto max-h-72 custom-scrollbar pr-1">
             {dataSources.length === 0 ? (
               <p className="text-sm text-slate-400 italic">Memuatkan sumber data...</p>
             ) : (
               dataSources.map((src) => {
-                let icon = "⊞"; let iconBg = "bg-slate-100 text-slate-600";
-                if (src.platform.includes("Google")) { icon = "G"; iconBg = "bg-blue-100 text-blue-700"; }
-                if (src.platform.includes("Social") || src.platform.includes("X") || src.platform.includes("Instagram")) { icon = "◎"; iconBg = "bg-indigo-100 text-indigo-700"; }
-                
+                let icon = "⊞"; let iconBg = "bg-slate-100 text-slate-600 border-slate-200/50";
+                if (src.platform.includes("Google")) { icon = "G"; iconBg = "bg-blue-50 text-blue-600 border-blue-100"; }
+                if (src.platform.includes("Social") || src.platform.includes("X") || src.platform.includes("Instagram")) { icon = "◎"; iconBg = "bg-indigo-50 text-indigo-600 border-indigo-100"; }
+
                 return (
                   <div key={src.platform}
                     onClick={() => router.push(`/pengurus/topics?platform=${encodeURIComponent(src.platform)}`)}
-                    className="group flex items-center gap-4 p-3.5 bg-white/50 rounded-2xl border border-slate-100/60 spring-hover cursor-pointer hover:border-orange-200">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm ${iconBg}`}>
+                    className="group flex items-center gap-4 p-3.5 bg-white/40 rounded-2xl border border-slate-100/60 spring-hover cursor-pointer hover:bg-white/80 hover:border-orange-200 shadow-sm transition-all duration-200">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border ${iconBg} shadow-sm`}>
                       {icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black text-slate-800">{src.platform}</p>
-                      <p className="text-xs text-slate-400 mono-accent">
+                      <p className="text-[11px] text-slate-400 mono-accent">
                         {src.last_sync === "Live" ? "Sentiasa aktif" : src.last_sync ? `Terakhir: ${new Date(src.last_sync).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : "Belum disegerak"} • {src.jumlah_ulasan} rekod
                       </p>
                     </div>
                     {src.connected ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-lg">Connected</span>
                     ) : (
-                      <div className="w-2 h-2 rounded-full bg-slate-300" />
+                      <span className="text-[10px] font-bold text-slate-400 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg">Offline</span>
                     )}
                     <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-orange-500 transition-colors flex-shrink-0" />
                   </div>
@@ -406,7 +438,7 @@ export default function PengurusDashboard() {
 
       {/* ── Row 3: Area Chart ── */}
       <div className="glass-light rounded-3xl p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-500" />
             <h3 className="font-black text-slate-800 text-sm tracking-tight">
@@ -416,7 +448,7 @@ export default function PengurusDashboard() {
           <div className="flex items-center gap-5">
             {[{ color: "#3b82f6", label: "Volume Ulasan" }, { color: "#10b981", label: "Skor Sentimen" }].map(({ color, label }) => (
               <div key={label} className="flex items-center gap-1.5">
-                <span className="w-3 h-[2px] rounded-full inline-block" style={{ backgroundColor: color }} />
+                <span className="w-3.5 h-1 rounded-full inline-block" style={{ backgroundColor: color }} />
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
               </div>
             ))}
@@ -427,16 +459,16 @@ export default function PengurusDashboard() {
           <AreaChart data={weeklyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             <defs>
               <linearGradient id="gradVolume" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.18} />
+                <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.15} />
                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gradSentimen" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#10b981" stopOpacity={0.18} />
+                <stop offset="5%"  stopColor="#10b981" stopOpacity={0.15} />
                 <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="4 4" stroke="rgba(148,163,184,0.15)" vertical={false} />
+            <CartesianGrid strokeDasharray="4 4" stroke="rgba(148,163,184,0.08)" vertical={false} />
 
             <XAxis
               dataKey="hari"
@@ -452,91 +484,68 @@ export default function PengurusDashboard() {
               dx={-4}
             />
 
-            <ReTooltip content={<LineTooltip />} cursor={{ stroke: "rgba(148,163,184,0.2)", strokeWidth: 1 }} />
+            <ReTooltip content={<LineTooltip />} cursor={{ stroke: "rgba(148,163,184,0.15)", strokeWidth: 1.5 }} />
 
             <Area
               type="monotone"
               dataKey="volume"
               name="Volume Ulasan"
               stroke="#3b82f6"
-              strokeWidth={2.5}
+              strokeWidth={3}
               fill="url(#gradVolume)"
               dot={false}
-              activeDot={{ r: 5, fill: "#3b82f6", strokeWidth: 0, style: { filter: "drop-shadow(0 0 6px #3b82f6)" } }}
-              style={{ filter: "drop-shadow(0 0 4px rgba(59,130,246,0.4))" }}
+              activeDot={{ r: 6, fill: "#3b82f6", strokeWidth: 0, style: { filter: "drop-shadow(0 0 8px #3b82f6)" } }}
+              style={{ filter: "drop-shadow(0 2px 4px rgba(59,130,246,0.25))" }}
             />
             <Area
               type="monotone"
               dataKey="sentimen"
               name="Skor Sentimen"
               stroke="#10b981"
-              strokeWidth={2.5}
+              strokeWidth={3}
               fill="url(#gradSentimen)"
               dot={false}
-              activeDot={{ r: 5, fill: "#10b981", strokeWidth: 0, style: { filter: "drop-shadow(0 0 6px #10b981)" } }}
-              style={{ filter: "drop-shadow(0 0 4px rgba(16,185,129,0.4))" }}
+              activeDot={{ r: 6, fill: "#10b981", strokeWidth: 0, style: { filter: "drop-shadow(0 0 8px #10b981)" } }}
+              style={{ filter: "drop-shadow(0 2px 4px rgba(16,185,129,0.25))" }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      {/* ── Row 4: Recent Feedback ── */}
+      {/* ── Row 4: Topic Clusters (Replaced Ulasan Terkini to reduce clutter) ── */}
       <div className="glass-light rounded-3xl p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <MessageSquare className="w-4 h-4 text-orange-500" />
-          <h3 className="font-black text-slate-800 text-sm tracking-tight">
-            Ulasan Terkini
-          </h3>
+        <div className="flex items-center justify-between mb-6 border-b border-slate-200/20 pb-4">
+          <div className="flex items-center gap-2">
+            <BrainCircuit className="w-4 h-4 text-orange-500" />
+            <h3 className="font-black text-slate-800 text-sm tracking-tight">
+              Kluster Topik Perbincangan Utama Pelanggan
+            </h3>
+          </div>
+          <Link href="/pengurus/topics" className="text-xs font-bold text-orange-500 hover:text-orange-600 flex items-center gap-1">
+            Lihat Analisis Penuh <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
-        <div className="space-y-4">
-          {recentFeedback.length === 0 ? (
-            <p className="text-sm text-slate-400 italic">Tiada ulasan lagi.</p>
+        
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {topTopics.length === 0 ? (
+            <p className="text-sm text-slate-400 italic">Tiada topik dijumpai.</p>
           ) : (
-            recentFeedback.map((feedback, idx) => (
-              <div key={idx} className="bg-white/50 border border-slate-100/60 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 sm:items-center spring-hover">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="flex items-center text-amber-400">
-                      {Array.from({ length: feedback.bilangan_bintang }).map((_, i) => (
-                        <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                      ))}
-                    </div>
-                    <span className="text-xs text-slate-400 mono-accent">
-                      {new Date(feedback.tarikh_terima).toLocaleDateString("ms-MY", { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <p className="text-sm font-semibold text-slate-700 italic mb-2">"{feedback.ulasan_teks}"</p>
-                  <div className="flex justify-between items-end mt-3">
-                    <div className="flex gap-3">
-                      {[
-                        { l: "F", v: feedback.rating_makanan, c: "text-orange-500" },
-                        { l: "S", v: feedback.rating_layanan, c: "text-blue-500" },
-                        { l: "A", v: feedback.rating_suasana, c: "text-indigo-500" }
-                      ].map((r, i) => (
-                        <div key={i} className="flex items-center gap-1">
-                          <span className={`text-[10px] font-black ${r.c}`}>{r.l}</span>
-                          <div className="flex text-[8px] text-amber-400">
-                             {Array.from({ length: r.v }).map((_, j) => <Star key={j} className="w-2 h-2 fill-current" />)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {feedback.sumber_platform && (
-                      <div className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
-                        {feedback.sumber_platform}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className={`px-3 py-1.5 rounded-xl border flex items-center justify-center gap-1.5 text-xs font-bold w-fit sm:w-28
-                  ${feedback.sentimen === 'Positif' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
-                    feedback.sentimen === 'Negatif' ? 'bg-rose-50 border-rose-100 text-rose-600' :
-                      'bg-slate-50 border-slate-100 text-slate-600'
+            topTopics.map((topic, idx) => (
+              <div key={idx} className="bg-white/40 border border-slate-100/60 rounded-2xl p-5 spring-hover hover:bg-white/85 hover:border-orange-100 shadow-sm transition-all duration-200 cursor-pointer" onClick={() => router.push(`/pengurus/topics?topic=${encodeURIComponent(topic.label_topik)}`)}>
+                <div className="flex justify-between items-start mb-3.5">
+                  <h4 className="font-black text-slate-800 text-sm tracking-tight">{topic.label_topik}</h4>
+                  <span className={`px-2 py-0.5 border rounded-lg text-[9px] font-black uppercase tracking-widest ${
+                    topic.sentimen_dominan === "Positif" ? "bg-emerald-50 border-emerald-100 text-emerald-600" :
+                    topic.sentimen_dominan === "Negatif" ? "bg-rose-50 border-rose-100 text-rose-600" :
+                    "bg-slate-50 border-slate-100 text-slate-600"
                   }`}>
-                  {feedback.sentimen === 'Positif' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
-                  {feedback.sentimen === 'Negatif' && <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />}
-                  {feedback.sentimen === 'Neutral' && <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />}
-                  {feedback.sentimen}
+                    {topic.sentimen_dominan}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
+                  <MessageSquare className="w-3.5 h-3.5 text-slate-300" />
+                  <span className="text-slate-700 mono-accent bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded-md text-[10px]">{topic.kekerapan}</span>
+                  <span>sebutan ulasan</span>
                 </div>
               </div>
             ))
@@ -546,18 +555,21 @@ export default function PengurusDashboard() {
 
       {/* ── QR Shortcut ── */}
       <Link href="/pengurus/qr"
-        className="group relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 flex items-center justify-between text-white spring-hover shadow-2xl shadow-slate-900/20">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+        className="group relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-3xl p-6 flex items-center justify-between text-white spring-hover shadow-xl hover:shadow-2xl transition-all duration-300">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative flex items-center gap-4">
-          <div className="w-12 h-12 glass rounded-2xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
             <QrCode className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-black tracking-tight">Jana Kod QR</h3>
-            <p className="text-slate-400 text-sm">Jana & muat turun kod QR untuk premis anda.</p>
+            <h3 className="text-lg font-black tracking-tight flex items-center gap-2">
+              Jana Kod QR Maklum Balas
+              <span className="text-xs font-bold text-orange-400 bg-orange-400/20 border border-orange-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider">Quick Link</span>
+            </h3>
+            <p className="text-slate-400 text-sm mt-0.5">Jana, hias dan muat turun kod QR untuk diletakkan di meja makan premis anda.</p>
           </div>
         </div>
-        <div className="relative flex items-center gap-2 text-orange-400 font-bold text-sm group-hover:gap-3 transition-all">
+        <div className="relative flex items-center gap-2 text-orange-400 font-bold text-sm group-hover:gap-3.5 transition-all">
           Buka <ArrowRight className="w-4 h-4" />
         </div>
       </Link>
