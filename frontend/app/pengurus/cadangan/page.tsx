@@ -58,11 +58,11 @@ const formatIsu = (text: string) => {
   }
 
   const lines = text.split(/\r?\n|(?=\d\.\s*(?:Mengapa|Kenapa|Bagaimana|Siapa|Bila|Apa))/g);
+  const filteredLines = lines.filter(line => line.trim()).slice(0, 5);
   return (
     <div className="space-y-2 text-xs md:text-sm">
-      {lines.map((line, i) => {
+      {filteredLines.map((line, i) => {
         const trimmedLine = line.trim();
-        if (!trimmedLine) return null;
         
         const qMarkIndex = trimmedLine.indexOf('?');
         if (qMarkIndex !== -1) {

@@ -147,35 +147,56 @@ Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
             punca = f"{clean_label} {dept}|||Isu dikesan daripada {count} aduan. Menjalankan analisis manual..."
             saranan = f"{dept} Siasat punca dan lakukan tindakan pembetulan."
             
-            try:
-                print(f"[Prescriptive] Calling HF API for {label} ({count} issues)...")
-                hf_res = httpx.post(API_URL, headers=headers, json=payload, timeout=25.0)
-                if hf_res.status_code == 200:
-                    data = hf_res.json()
-                    content = data["choices"][0]["message"]["content"]
-                    json_str = re.search(r'\{[\s\S]*\}', content)
-                    if json_str:
-                        # Clean up newlines and control characters that break json.loads
-                        cleaned_json = re.sub(r'[\r\n\t]+', ' ', json_str.group())
-                        ai_out = json.loads(cleaned_json)
-                        
-                        # Normalize keys of ai_out to support slight variations in case/format
-                        normalized_ai_out = {k.lower().replace(" ", "_"): v for k, v in ai_out.items()}
-                        
-                        if "isu_pendek" in normalized_ai_out and "isu_panjang" in normalized_ai_out:
-                            punca = f"{normalized_ai_out['isu_pendek']} {dept}|||{normalized_ai_out['isu_panjang']}"
+            attempts = 3
+            for attempt in range(attempts):
+                try:
+                    print(f"[Prescriptive] Calling HF API for {label} ({count} issues) - Attempt {attempt+1}/{attempts}...")
+                    hf_res = httpx.post(API_URL, headers=headers, json=payload, timeout=30.0)
+                    if hf_res.status_code == 200:
+                        data = hf_res.json()
+                        content = data["choices"][0]["message"]["content"]
+                        json_str = re.search(r'\{[\s\S]*\}', content)
+                        if json_str:
+                            # Clean up newlines and control characters that break json.loads
+                            cleaned_json = re.sub(r'[\r\n\t]+', ' ', json_str.group())
+                            ai_out = json.loads(cleaned_json)
                             
-                            # Bundle actions into a JSON string for saranan_strategik
-                            saranan = json.dumps({
-                                "tindakan_staf": normalized_ai_out.get("tindakan_staf", ""),
-                                "tindakan_pengurus": normalized_ai_out.get("tindakan_pengurus", ""),
-                                "kpi": normalized_ai_out.get("kpi", ""),
-                                "pantauan": normalized_ai_out.get("pantauan", "")
-                            })
-                else:
-                    print(f"[Prescriptive] HF API non-200: {hf_res.text}")
-            except Exception as e:
-                print(f"[Prescriptive] HF API error for {label}: {e}")
+                            # Normalize keys of ai_out to support slight variations in case/format
+                            normalized_ai_out = {k.lower().replace(" ", "_"): v for k, v in ai_out.items()}
+                            
+                            if "isu_pendek" in normalized_ai_out and "isu_panjang" in normalized_ai_out:
+                                raw_punca = normalized_ai_out.get("isu_panjang", "")
+                                lines = [line.strip() for line in re.split(r'\r?\n|(?=\d\.\s)', raw_punca) if line.strip()]
+                                filtered_lines = []
+                                for idx in range(1, 6):
+                                    prefix = f"{idx}."
+                                    matching_line = next((l for l in lines if l.startswith(prefix)), None)
+                                    if matching_line:
+                                        filtered_lines.append(matching_line)
+                                if not filtered_lines:
+                                    filtered_lines = lines[:5]
+                                clean_punca = "\n".join(filtered_lines)
+                                punca = f"{normalized_ai_out['isu_pendek']} {dept}|||{clean_punca}"
+                                
+                                # Bundle actions into a JSON string for saranan_strategik
+                                saranan = json.dumps({
+                                    "tindakan_staf": normalized_ai_out.get("tindakan_staf", ""),
+                                    "tindakan_pengurus": normalized_ai_out.get("tindakan_pengurus", ""),
+                                    "kpi": normalized_ai_out.get("kpi", ""),
+                                    "pantauan": normalized_ai_out.get("pantauan", "")
+                                })
+                                break
+                    elif hf_res.status_code in [429, 503]:
+                        print(f"[Prescriptive] HF API busy ({hf_res.status_code}). Retrying in 4 seconds...")
+                        import time
+                        time.sleep(4)
+                    else:
+                        print(f"[Prescriptive] HF API non-200: {hf_res.text}")
+                        break
+                except Exception as e:
+                    print(f"[Prescriptive] HF API error for {label} (Attempt {attempt+1}): {e}")
+                    import time
+                    time.sleep(2)
                 
                 # Smart Local Fallback based on topic
                 l = clean_label.lower()
