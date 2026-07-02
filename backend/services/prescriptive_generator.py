@@ -142,7 +142,9 @@ Sila berikan jawapan dalam format JSON yang mengandungi kunci berikut SAHAJA:
                     content = data["choices"][0]["message"]["content"]
                     json_str = re.search(r'\{[\s\S]*\}', content)
                     if json_str:
-                        ai_out = json.loads(json_str.group())
+                        # Clean up newlines and control characters that break json.loads
+                        cleaned_json = re.sub(r'[\r\n\t]+', ' ', json_str.group())
+                        ai_out = json.loads(cleaned_json)
                         if "isu_pendek" in ai_out and "isu_panjang" in ai_out and "saranan_strategik" in ai_out:
                             punca = f"{ai_out['isu_pendek']} {dept}|||{ai_out['isu_panjang']}"
                             saranan = ai_out["saranan_strategik"]
