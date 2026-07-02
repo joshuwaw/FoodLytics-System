@@ -122,15 +122,20 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
 Ulasan Pelanggan:
 - {texts_formatted}
 
-Sila berikan jawapan anda dalam format JSON yang sah (valid JSON) dengan kunci berikut SAHAJA. JANGAN letak sebarang teks penjelasan di luar JSON. Tulis keseluruhan kandungan di dalam Bahasa Melayu:
+Sila berikan jawapan anda dalam format JSON yang sah (valid JSON) dengan kunci berikut SAHAJA. JANGAN letak sebarang teks penjelasan di luar JSON. Tulis keseluruhan kandungan di dalam Bahasa Melayu.
+Mestilah mengikut format contoh berikut secara tepat (Nilai untuk 'isu_panjang' mestilah Teks Biasa berbaris baru, BUKAN list/array/dict):
+
+Contoh Format Jawapan:
 {{
-  "isu_pendek": "Frasa 3 hingga 5 perkataan dalam Bahasa Melayu menggambarkan masalah utama. Cth: 'Pelayan Kasar' atau 'Makanan Mentah'",
-  "isu_panjang": "Penjelasan punca akar (Root Cause Analysis) terperinci menggunakan kaedah 5 Whys dalam Bahasa Melayu. Senaraikan langkah demi langkah (1. Mengapa... 2. Mengapa... dll).",
-  "tindakan_staf": "Tindakan penyelesaian spesifik dalam Bahasa Melayu yang perlu diambil oleh staf operasi / pekerja barisan hadapan.",
-  "tindakan_pengurus": "Tindakan penyeliaan atau operasi dalam Bahasa Melayu yang perlu diambil oleh pihak pengurus.",
-  "kpi": "Petunjuk Prestasi Utama (KPI) dalam Bahasa Melayu untuk mengukur kejayaan tindakan ini.",
-  "pantauan": "Kaedah pemantauan berkala dalam Bahasa Melayu oleh pengurus untuk tindakan ini."
-}}"""
+  "isu_pendek": "Pelayan Kurang Sopan",
+  "isu_panjang": "1. Mengapa pelanggan mengadu pelayan kasar? Kerana pelayan menjawab soalan dengan nada tinggi.\\n2. Mengapa pelayan bernada tinggi? Kerana pelayan terlalu letih menghadapi pelanggan yang ramai.\\n3. Mengapa pelayan terlalu letih? Kerana jadual kerja tidak teratur pada waktu puncak.\\n4. Mengapa jadual tidak teratur? Kerana pengurus tidak menjadualkan staf tambahan.\\n5. Mengapa pengurus tidak menjadualkan staf tambahan? Kerana tiada ramalan permintaan puncak dilakukan.",
+  "tindakan_staf": "Sentiasa menjaga adab perkhidmatan dan menggunakan nada suara yang sopan ketika melayan pelanggan.",
+  "tindakan_pengurus": "Menjadualkan pusingan kerja dan menambah staf sokongan ketika waktu puncak.",
+  "kpi": "Tiada aduan kasar daripada pelanggan dalam tempoh 30 hari.",
+  "pantauan": "Pengurus melakukan penilaian harian secara langsung di kaunter pesanan."
+}}
+
+Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
 
             payload = {
                 "model": "meta-llama/Meta-Llama-3-8B-Instruct",

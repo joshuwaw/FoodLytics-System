@@ -57,17 +57,15 @@ const formatIsu = (text: string) => {
     }
   }
 
-  if (text.includes("1.") || text.includes("Kenapa") || text.includes("Mengapa")) {
-    const lines = text.split(/(?=\d\.\s*(?:Mengapa|Kenapa|Bagaimana))/g);
-    return (
-      <div className="space-y-1.5 text-xs md:text-sm">
-        {lines.map((line, i) => {
-          if (!line.trim()) return null;
-          return <p key={i} className="leading-relaxed text-slate-600 font-medium">{line.trim()}</p>;
-        })}
-      </div>
-    );
-  }
+  const lines = text.split(/\r?\n|(?=\d\.\s*(?:Mengapa|Kenapa|Bagaimana|Siapa|Bila|Apa))/g);
+  return (
+    <div className="space-y-1.5 text-xs md:text-sm">
+      {lines.map((line, i) => {
+        if (!line.trim()) return null;
+        return <p key={i} className="leading-relaxed text-slate-600 font-medium">{line.trim()}</p>;
+      })}
+    </div>
+  );
   return <p className="text-slate-600 text-xs md:text-sm leading-relaxed font-medium">{text}</p>;
 };
 
