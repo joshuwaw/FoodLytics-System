@@ -127,7 +127,7 @@ Sila berikan jawapan dalam format JSON yang mengandungi kunci berikut SAHAJA:
             payload = {
                 "model": "Qwen/Qwen2.5-7B-Instruct",
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 300,
+                "max_tokens": 800,
                 "temperature": 0.3
             }
             
