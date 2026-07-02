@@ -125,7 +125,7 @@ Sila berikan jawapan dalam format JSON yang mengandungi kunci berikut SAHAJA:
 {{"isu_pendek": "Frasa 3-5 perkataan masalah utama. Cth: 'Pelayan Kasar' atau 'Makanan Mentah'", "isu_panjang": "Penjelasan punca akar (Root Cause) menggunakan kaedah 5 Whys. Terangkan kenapa masalah ini berlaku secara sistematik.", "saranan_strategik": "Satu tindakan penyelesaian kekal (Permanent Corrective Action) berserta KPI untuk dipantau oleh pengurus."}}"""
 
             payload = {
-                "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                "model": "Qwen/Qwen2.5-7B-Instruct",
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": 300,
                 "temperature": 0.3
