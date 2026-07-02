@@ -116,16 +116,21 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
             texts_list = topic_examples_text[label][:5]
             texts_formatted = "\n- ".join(texts_list) if texts_list else "(Tiada teks spesifik dikesan)"
             
-            # Enterprise 5-Whys Prompt
-            prompt = f"""Sebagai Penganalisis Operasi Restoran Gred-Enterpris, jalankan analisis punca akar (Root Cause Analysis - 5 Whys) ke atas {count} aduan pelanggan mengenai '{clean_label}':
-Ulasan:
+            # Enterprise 5-Whys Prompt (Reinforced for Llama 3 / Malay)
+            prompt = f"""Sebagai Penganalisis Operasi Restoran Gred-Enterpris, jalankan analisis punca akar (Root Cause Analysis - 5 Whys) ke atas {count} aduan pelanggan mengenai '{clean_label}' dalam Bahasa Melayu.
+
+Ulasan Pelanggan:
 - {texts_formatted}
 
-Sila berikan jawapan dalam format JSON yang mengandungi kunci berikut SAHAJA:
-{{"isu_pendek": "Frasa 3-5 perkataan masalah utama. Cth: 'Pelayan Kasar' atau 'Makanan Mentah'", "isu_panjang": "Penjelasan punca akar (Root Cause) menggunakan kaedah 5 Whys. Terangkan kenapa masalah ini berlaku secara sistematik.", "saranan_strategik": "Satu tindakan penyelesaian kekal (Permanent Corrective Action) berserta KPI untuk dipantau oleh pengurus."}}"""
+Sila berikan jawapan anda dalam format JSON yang sah (valid JSON) dengan kunci berikut SAHAJA. JANGAN letak sebarang teks penjelasan di luar JSON. Tulis keseluruhan kandungan di dalam Bahasa Melayu:
+{{
+  "isu_pendek": "Frasa 3 hingga 5 perkataan dalam Bahasa Melayu menggambarkan masalah utama. Cth: 'Pelayan Kasar' atau 'Makanan Mentah'",
+  "isu_panjang": "Penjelasan punca akar (Root Cause Analysis) terperinci menggunakan kaedah 5 Whys dalam Bahasa Melayu. Senaraikan langkah demi langkah (1. Mengapa... 2. Mengapa... dll).",
+  "saranan_strategik": "Satu tindakan penyelesaian kekal (Permanent Corrective Action) berserta KPI dan kaedah pantauan untuk pengurus dalam Bahasa Melayu."
+}}"""
 
             payload = {
-                "model": "Qwen/Qwen2.5-7B-Instruct",
+                "model": "meta-llama/Meta-Llama-3-8B-Instruct",
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": 800,
                 "temperature": 0.3
