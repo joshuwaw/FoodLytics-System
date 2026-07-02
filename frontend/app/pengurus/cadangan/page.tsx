@@ -17,6 +17,25 @@ interface Cadangan {
 }
 
 const formatIsu = (text: string) => {
+  const trimmed = text.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith("'{") || trimmed.startsWith("\"{") || trimmed.startsWith("[{")) {
+    try {
+      const jsonLike = trimmed.replace(/'/g, '"');
+      const parsedDict = JSON.parse(jsonLike);
+      return (
+        <div className="space-y-2 text-xs md:text-sm">
+          {Object.keys(parsedDict).map((key, i) => (
+            <p key={i} className="leading-relaxed text-slate-600 font-medium">
+              <span className="font-extrabold text-slate-800">{key}:</span> {parsedDict[key]}
+            </p>
+          ))}
+        </div>
+      );
+    } catch (e) {
+      // Fallback
+    }
+  }
+
   if (text.includes("1.") || text.includes("Kenapa") || text.includes("Mengapa")) {
     const lines = text.split(/(?=\d\.\s*(?:Mengapa|Kenapa|Bagaimana))/g);
     return (
@@ -33,11 +52,18 @@ const formatIsu = (text: string) => {
 
 const formatSaranan = (sarananStr: string) => {
   try {
-    if (sarananStr.trim().startsWith('{')) {
-      const parsed = JSON.parse(sarananStr);
-      const tindakan = parsed.tindakan_penyelesaian || parsed.tindakan || parsed.saranan || "";
-      const kpi = parsed.kpi || parsed.KPI || "";
-      const pantauan = parsed.pantauan || parsed.pemantauan || "";
+    const trimmed = sarananStr.trim();
+    if (trimmed.startsWith('{')) {
+      const parsed = JSON.parse(trimmed);
+      const normalizedParsed: Record<string, string> = {};
+      Object.keys(parsed).forEach(key => {
+        const normKey = key.toLowerCase().replace(/[\s_-]/g, "");
+        normalizedParsed[normKey] = parsed[key];
+      });
+
+      const tindakan = normalizedParsed["tindakanpenyelesaian"] || normalizedParsed["tindakan"] || normalizedParsed["saranan"] || "";
+      const kpi = normalizedParsed["kpi"] || "";
+      const pantauan = normalizedParsed["kaedahpantauan"] || normalizedParsed["pantauan"] || normalizedParsed["pemantauan"] || "";
       
       return (
         <div className="space-y-2 text-xs md:text-sm leading-relaxed">
