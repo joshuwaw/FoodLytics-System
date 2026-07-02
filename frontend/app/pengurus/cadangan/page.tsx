@@ -16,6 +16,56 @@ interface Cadangan {
   tarikh_jana: string;
 }
 
+const formatIsu = (text: string) => {
+  if (text.includes("1.") || text.includes("Kenapa") || text.includes("Mengapa")) {
+    const lines = text.split(/(?=\d\.\s*(?:Mengapa|Kenapa|Bagaimana))/g);
+    return (
+      <div className="space-y-1.5 text-xs md:text-sm">
+        {lines.map((line, i) => {
+          if (!line.trim()) return null;
+          return <p key={i} className="leading-relaxed text-slate-600 font-medium">{line.trim()}</p>;
+        })}
+      </div>
+    );
+  }
+  return <p className="text-slate-600 text-xs md:text-sm leading-relaxed font-medium">{text}</p>;
+};
+
+const formatSaranan = (sarananStr: string) => {
+  try {
+    if (sarananStr.trim().startsWith('{')) {
+      const parsed = JSON.parse(sarananStr);
+      const tindakan = parsed.tindakan_penyelesaian || parsed.tindakan || parsed.saranan || "";
+      const kpi = parsed.kpi || parsed.KPI || "";
+      const pantauan = parsed.pantauan || parsed.pemantauan || "";
+      
+      return (
+        <div className="space-y-2 text-xs md:text-sm leading-relaxed">
+          {tindakan && (
+            <div>
+              <span className="font-extrabold text-emerald-800">Tindakan:</span> <span className="text-emerald-950 font-semibold">{tindakan}</span>
+            </div>
+          )}
+          {kpi && (
+            <div>
+              <span className="font-extrabold text-emerald-800">KPI:</span> <span className="text-emerald-900 font-medium">{kpi}</span>
+            </div>
+          )}
+          {pantauan && (
+            <div>
+              <span className="font-extrabold text-emerald-800">Pantauan:</span> <span className="text-emerald-900 font-medium">{pantauan}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+  } catch (e) {
+    // Fallback
+  }
+  const cleanStr = sarananStr.startsWith("Tindakan:") ? sarananStr.substring(9).trim() : sarananStr;
+  return <p className="text-emerald-950 text-xs md:text-sm leading-relaxed font-semibold">{cleanStr}</p>;
+};
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 export default function CadanganPage() {
@@ -200,9 +250,7 @@ export default function CadanganPage() {
                         <TrendingUp className="w-3.5 h-3.5 text-slate-400" />
                         Kenapa Isu Ini Dikesan?
                       </h4>
-                      <p className="text-slate-600 text-sm leading-relaxed">
-                        {isuPanjang}
-                      </p>
+                      {formatIsu(isuPanjang)}
                     </div>
 
                     {/* Right Block: Tindakan */}
@@ -212,9 +260,7 @@ export default function CadanganPage() {
                         <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
                         Tindakan Yang Dicadangkan:
                       </h4>
-                      <p className="text-emerald-950 text-sm leading-relaxed font-semibold">
-                        Tindakan: {draft.saranan_strategik}
-                      </p>
+                      {formatSaranan(draft.saranan_strategik)}
                     </div>
                   </div>
 
