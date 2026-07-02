@@ -59,14 +59,27 @@ const formatIsu = (text: string) => {
 
   const lines = text.split(/\r?\n|(?=\d\.\s*(?:Mengapa|Kenapa|Bagaimana|Siapa|Bila|Apa))/g);
   return (
-    <div className="space-y-1.5 text-xs md:text-sm">
+    <div className="space-y-2 text-xs md:text-sm">
       {lines.map((line, i) => {
-        if (!line.trim()) return null;
-        return <p key={i} className="leading-relaxed text-slate-600 font-medium">{line.trim()}</p>;
+        const trimmedLine = line.trim();
+        if (!trimmedLine) return null;
+        
+        const qMarkIndex = trimmedLine.indexOf('?');
+        if (qMarkIndex !== -1) {
+          const question = trimmedLine.substring(0, qMarkIndex + 1);
+          const answer = trimmedLine.substring(qMarkIndex + 1);
+          return (
+            <p key={i} className="leading-relaxed">
+              <span className="font-extrabold text-slate-800">{question}</span>
+              <span className="text-slate-600 font-medium">{answer}</span>
+            </p>
+          );
+        }
+        
+        return <p key={i} className="leading-relaxed text-slate-600 font-medium">{trimmedLine}</p>;
       })}
     </div>
   );
-  return <p className="text-slate-600 text-xs md:text-sm leading-relaxed font-medium">{text}</p>;
 };
 
 const formatSaranan = (sarananStr: string) => {
