@@ -17,6 +17,29 @@ interface Cadangan {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
+const formatStaffSaranan = (sarananStr: string) => {
+  try {
+    const trimmed = sarananStr.trim();
+    if (trimmed.startsWith('{')) {
+      const parsed = JSON.parse(trimmed);
+      const normalizedParsed: Record<string, string> = {};
+      Object.keys(parsed).forEach(key => {
+        const normKey = key.toLowerCase().replace(/[\s_-]/g, "");
+        normalizedParsed[normKey] = parsed[key];
+      });
+      // Extract ONLY tindakan staf
+      const tindakanStaf = normalizedParsed["tindakanstaf"] || normalizedParsed["tindakanpenyelesaian"] || normalizedParsed["tindakan"] || normalizedParsed["saranan"] || "";
+      if (tindakanStaf) {
+        return tindakanStaf;
+      }
+    }
+  } catch (e) {
+    // Fallback
+  }
+  const cleanStr = sarananStr.startsWith("Tindakan:") ? sarananStr.substring(9).trim() : sarananStr;
+  return cleanStr;
+};
+
 export default function ArahanKerjaPage() {
   const { user } = useAuth();
   const [workOrders, setWorkOrders] = useState<Cadangan[]>([]);
@@ -208,7 +231,7 @@ export default function ArahanKerjaPage() {
                                 ${isProses ? 'text-amber-700' : ''}
                                 ${isSelesai ? 'text-emerald-700' : ''}
                               `}>Tindakan:</span>
-                              <p className="text-sm font-semibold leading-relaxed">{wo.saranan_strategik}</p>
+                              <p className="text-sm font-semibold leading-relaxed">{formatStaffSaranan(wo.saranan_strategik)}</p>
                             </div>
                           </div>
 
