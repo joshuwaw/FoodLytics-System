@@ -8,6 +8,8 @@ import domtoimage from "dom-to-image-more";
 import { jsPDF } from "jspdf";
 import { LaporanPDFTemplate } from "@/components/LaporanPDFTemplate";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
 export default function LaporanPage() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,7 +36,7 @@ export default function LaporanPage() {
   const performSearch = async (query: string) => {
     setSearching(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/customer/feedback/history/${user?.id_premis}?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`${API_URL}/customer/feedback/history/${user?.id_premis}?q=${encodeURIComponent(query)}`);
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data);
@@ -52,7 +54,7 @@ export default function LaporanPage() {
     setGenerating(true);
     try {
       // 1. Fetch JSON data
-      const response = await fetch(`http://localhost:8000/api/laporan/generate/${user.id_premis}?bulan=${selectedMonth}`);
+      const response = await fetch(`${API_URL}/laporan/generate/${user.id_premis}?bulan=${selectedMonth}`);
       if (!response.ok) throw new Error("Gagal mengambil data laporan");
       const data = await response.json();
       

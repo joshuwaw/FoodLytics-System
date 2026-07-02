@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth";
 import { UserCircle, Store, Save, Loader2, Building, Phone, Mail, User, Camera, ShieldCheck } from "lucide-react";
 import Cropper from "react-easy-crop";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
 export default function StafProfilPage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
@@ -41,7 +43,7 @@ export default function StafProfilPage() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/admin/profile/${user?.id_pengguna}`);
+      const res = await fetch(`${API_URL}/admin/profile/${user?.id_pengguna}`);
       if (res.ok) {
         const data = await res.json();
         setProfile(data);
@@ -74,7 +76,7 @@ export default function StafProfilPage() {
         }
       };
       
-      const res = await fetch(`http://localhost:8000/api/admin/profile/${user?.id_pengguna}`, {
+      const res = await fetch(`${API_URL}/admin/profile/${user?.id_pengguna}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

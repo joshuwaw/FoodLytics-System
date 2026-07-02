@@ -15,6 +15,8 @@ interface Cadangan {
   id_pengurus_lulus: number;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
 export default function ArahanKerjaPage() {
   const { user } = useAuth();
   const [workOrders, setWorkOrders] = useState<Cadangan[]>([]);
@@ -29,7 +31,7 @@ export default function ArahanKerjaPage() {
 
   const fetchWorkOrders = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/prescriptive/${user?.id_premis}/work-orders`);
+      const res = await fetch(`${API_URL}/prescriptive/${user?.id_premis}/work-orders`);
       if (res.ok) {
         const data = await res.json();
         setWorkOrders(data);
@@ -44,7 +46,7 @@ export default function ArahanKerjaPage() {
   const handleUpdateStatus = async (id_cadangan: number, newStatus: string) => {
     setActionLoading(id_cadangan);
     try {
-      const res = await fetch(`http://localhost:8000/api/prescriptive/work-order/${id_cadangan}/status`, {
+      const res = await fetch(`${API_URL}/prescriptive/work-order/${id_cadangan}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status_pelaksanaan: newStatus }),

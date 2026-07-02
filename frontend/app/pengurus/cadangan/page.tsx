@@ -16,6 +16,8 @@ interface Cadangan {
   tarikh_jana: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
 export default function CadanganPage() {
   const { user } = useAuth();
   const [drafts, setDrafts] = useState<Cadangan[]>([]);
@@ -31,7 +33,7 @@ export default function CadanganPage() {
 
   const fetchDrafts = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/prescriptive/${user?.id_premis}/drafts`);
+      const res = await fetch(`${API_URL}/prescriptive/${user?.id_premis}/drafts`);
       if (res.ok) {
         const data = await res.json();
         setDrafts(data);
@@ -48,7 +50,7 @@ export default function CadanganPage() {
     setGenerating(true);
     try {
       // Calls the topic generator which cascades into the prescriptive generator in the background
-      const res = await fetch(`http://localhost:8000/api/analytics/topics/run/${user.id_premis}`, {
+      const res = await fetch(`${API_URL}/analytics/topics/run/${user.id_premis}`, {
         method: "POST"
       });
       if (res.ok) {
@@ -57,7 +59,7 @@ export default function CadanganPage() {
         const interval = setInterval(async () => {
           attempts++;
           try {
-            const draftsRes = await fetch(`http://localhost:8000/api/prescriptive/${user.id_premis}/drafts`);
+            const draftsRes = await fetch(`${API_URL}/prescriptive/${user.id_premis}/drafts`);
             if (draftsRes.ok) {
               const data = await draftsRes.json();
               if (data.length > 0 || attempts >= 12) {
@@ -86,7 +88,7 @@ export default function CadanganPage() {
   const handleAction = async (id_cadangan: number, action: "approve" | "reject" | "save") => {
     setActionLoading(id_cadangan);
     try {
-      const res = await fetch(`http://localhost:8000/api/prescriptive/${action}/${id_cadangan}`, {
+      const res = await fetch(`${API_URL}/prescriptive/${action}/${id_cadangan}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_pengurus_lulus: user?.id_pengguna }),

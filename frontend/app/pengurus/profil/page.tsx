@@ -8,6 +8,8 @@ import Cropper from "react-easy-crop";
 import useSWR from "swr";
 import { toast } from "sonner";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
 export default function PengurusProfilPage() {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -31,7 +33,7 @@ export default function PengurusProfilPage() {
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
   
   const { data: profile, isLoading, mutate } = useSWR(
-    user?.id_pengguna ? `http://localhost:8000/api/admin/profile/${user.id_pengguna}` : null,
+    user?.id_pengguna ? `${API_URL}/admin/profile/${user.id_pengguna}` : null,
     fetcher,
     {
       onSuccess: (data) => {
@@ -71,7 +73,7 @@ export default function PengurusProfilPage() {
         }
       };
       
-      const res = await fetch(`http://localhost:8000/api/admin/profile/${user?.id_pengguna}`, {
+      const res = await fetch(`${API_URL}/admin/profile/${user?.id_pengguna}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
