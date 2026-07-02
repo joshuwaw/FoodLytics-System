@@ -51,35 +51,54 @@ const formatIsu = (text: string) => {
 };
 
 const formatSaranan = (sarananStr: string) => {
+  const renderFieldVal = (val: any) => {
+    if (Array.isArray(val)) {
+      return (
+        <ul className="list-disc list-inside space-y-1 ml-2 mt-1">
+          {val.map((item, idx) => (
+            <li key={idx} className="text-slate-700 font-medium">{item}</li>
+          ))}
+        </ul>
+      );
+    }
+    return val;
+  };
+
   try {
     const trimmed = sarananStr.trim();
     if (trimmed.startsWith('{')) {
       const parsed = JSON.parse(trimmed);
-      const normalizedParsed: Record<string, string> = {};
+      const normalizedParsed: Record<string, any> = {};
       Object.keys(parsed).forEach(key => {
         const normKey = key.toLowerCase().replace(/[\s_-]/g, "");
         normalizedParsed[normKey] = parsed[key];
       });
 
-      const tindakan = normalizedParsed["tindakanpenyelesaian"] || normalizedParsed["tindakan"] || normalizedParsed["saranan"] || "";
+      const tindakanStaf = normalizedParsed["tindakanstaf"] || normalizedParsed["tindakanpenyelesaian"] || normalizedParsed["tindakan"] || normalizedParsed["saranan"] || "";
+      const tindakanPengurus = normalizedParsed["tindakanpengurus"] || "";
       const kpi = normalizedParsed["kpi"] || "";
       const pantauan = normalizedParsed["kaedahpantauan"] || normalizedParsed["pantauan"] || normalizedParsed["pemantauan"] || "";
       
       return (
-        <div className="space-y-2 text-xs md:text-sm leading-relaxed">
-          {tindakan && (
+        <div className="space-y-2.5 text-xs md:text-sm leading-relaxed">
+          {tindakanStaf && (
             <div>
-              <span className="font-extrabold text-emerald-800">Tindakan:</span> <span className="text-emerald-950 font-semibold">{tindakan}</span>
+              <span className="font-extrabold text-emerald-800">Tindakan Staf Operasi:</span> <span className="text-emerald-950 font-semibold">{renderFieldVal(tindakanStaf)}</span>
+            </div>
+          )}
+          {tindakanPengurus && (
+            <div>
+              <span className="font-extrabold text-emerald-800">Tindakan Pengurus:</span> <span className="text-emerald-950 font-semibold">{renderFieldVal(tindakanPengurus)}</span>
             </div>
           )}
           {kpi && (
             <div>
-              <span className="font-extrabold text-emerald-800">KPI:</span> <span className="text-emerald-900 font-medium">{kpi}</span>
+              <span className="font-extrabold text-emerald-800">KPI:</span> <span className="text-emerald-900 font-medium">{renderFieldVal(kpi)}</span>
             </div>
           )}
           {pantauan && (
             <div>
-              <span className="font-extrabold text-emerald-800">Pantauan:</span> <span className="text-emerald-900 font-medium">{pantauan}</span>
+              <span className="font-extrabold text-emerald-800">Pantauan:</span> <span className="text-emerald-900 font-medium">{renderFieldVal(pantauan)}</span>
             </div>
           )}
         </div>
