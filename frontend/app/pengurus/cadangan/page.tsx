@@ -18,15 +18,36 @@ interface Cadangan {
 
 const formatIsu = (text: string) => {
   const trimmed = text.trim();
-  if (trimmed.startsWith('{') || trimmed.startsWith("'{") || trimmed.startsWith("\"{") || trimmed.startsWith("[{")) {
+  if (trimmed.startsWith('{') || trimmed.startsWith("'{") || trimmed.startsWith("\"{") || trimmed.startsWith("[{") || trimmed.startsWith("'[{")) {
     try {
       const jsonLike = trimmed.replace(/'/g, '"');
-      const parsedDict = JSON.parse(jsonLike);
+      const parsedData = JSON.parse(jsonLike);
+      
+      if (Array.isArray(parsedData)) {
+        return (
+          <div className="space-y-3 text-xs md:text-sm">
+            {parsedData.map((item, index) => (
+              <div key={index} className="space-y-1 pl-2.5 border-l border-slate-200">
+                {typeof item === 'object' && item !== null ? (
+                  Object.keys(item).map((key) => (
+                    <p key={key} className="leading-relaxed text-slate-600 font-medium">
+                      <span className="font-extrabold text-slate-800">{key}:</span> {String(item[key])}
+                    </p>
+                  ))
+                ) : (
+                  <p className="leading-relaxed text-slate-600 font-medium">{String(item)}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
+
       return (
         <div className="space-y-2 text-xs md:text-sm">
-          {Object.keys(parsedDict).map((key, i) => (
+          {Object.keys(parsedData).map((key, i) => (
             <p key={i} className="leading-relaxed text-slate-600 font-medium">
-              <span className="font-extrabold text-slate-800">{key}:</span> {parsedDict[key]}
+              <span className="font-extrabold text-slate-800">{key}:</span> {String(parsedData[key])}
             </p>
           ))}
         </div>
