@@ -29,8 +29,9 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
     print(f"[Prescriptive] Generating drafts for premise {premise_id}...")
 
     try:
-        # Clear old drafts that haven't been approved yet so frontend polling doesn't stop early
-        supabase_client.table("tbl_cadangan_ai").delete().eq("id_premis", premise_id).eq("status_kelulusan", "Draf").execute()
+        # Load existing topic IDs that already have suggestions
+        existing_res = supabase_client.table("tbl_cadangan_ai").select("id_topik").eq("id_premis", premise_id).execute()
+        existing_topic_ids = {r["id_topik"] for r in existing_res.data or [] if r.get("id_topik") is not None}
 
         # 1. Fetch topics directly from this premise that are negative
         # We need to join tbl_topik -> tbl_enjin_ai -> tbl_maklumbalas to filter by premise
@@ -109,6 +110,10 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
                 continue
                 
             rep_topic = topic_examples[label][0]
+            if rep_topic["id_topik"] in existing_topic_ids:
+                print(f"[Prescriptive] Topic ID {rep_topic['id_topik']} ('{label}') already has a recommendation. Skipping generation.")
+                continue
+                
             dept = _get_department_routing(label)
             clean_label = label.replace(" (Negatif)", "")
             
