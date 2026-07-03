@@ -15,11 +15,11 @@ export default function StafLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (!isLoading) {
       if (!user) router.replace("/login");
-      else if (user.peranan !== "Staf Operasi") router.replace("/pengurus");
+      else if (user.peranan !== "Staf Operasi" && user.peranan !== "Staf") router.replace("/pengurus");
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || !user || user.peranan !== "Staf Operasi") {
+  if (isLoading || !user || (user.peranan !== "Staf Operasi" && user.peranan !== "Staf")) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />

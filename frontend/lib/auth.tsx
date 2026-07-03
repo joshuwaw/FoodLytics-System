@@ -6,7 +6,7 @@ export interface AuthUser {
   id_pengguna: number;
   nama: string;
   emel: string;
-  peranan: "Pengurus" | "Staf Operasi";
+  peranan: "Pengurus" | "Staf Operasi" | "Staf";
   id_premis: number | null;
 }
 

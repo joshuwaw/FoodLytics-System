@@ -215,7 +215,7 @@ export default function StafProfilPage() {
               <h1 className="text-3xl font-black text-slate-900 tracking-tight">{formData.nama || "Profil Saya"}</h1>
               <p className="text-slate-500 font-bold flex items-center gap-2 justify-center md:justify-start mt-1.5 text-sm">
                 <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                {user?.peranan === 'Staf Operasi' ? 'Staf Operasi' : 'Pengurus'} &bull; {formData.nama_premis || "Tiada Cawangan"}
+                {(user?.peranan === 'Staf Operasi' || user?.peranan === 'Staf') ? 'Staf Operasi' : 'Pengurus'} &bull; {formData.nama_premis || "Tiada Cawangan"}
               </p>
             </div>
           </div>
