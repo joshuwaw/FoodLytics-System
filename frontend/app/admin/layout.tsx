@@ -1,17 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth";
 import { QrCode, Store, LayoutDashboard, Utensils } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) router.replace("/login");
+      else if (user.peranan !== "Admin" && user.emel !== "admin@foodlytics.com") {
+        router.replace("/unauthorized");
+      }
+    }
+  }, [user, isLoading, router]);
 
   const navItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/register", label: "Daftar Premis", icon: Store },
     { href: "/admin/qr", label: "Penjana QR", icon: QrCode },
   ];
+
+  if (isLoading || !user || (user.peranan !== "Admin" && user.emel !== "admin@foodlytics.com")) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen font-sans mesh-dots bg-[#f1f5f9] p-4 gap-4 overflow-hidden relative">

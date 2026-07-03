@@ -15,7 +15,7 @@ export default function PengurusLayout({ children }: { children: React.ReactNode
   useEffect(() => {
     if (!isLoading) {
       if (!user) router.replace("/login");
-      else if (user.peranan !== "Pengurus") router.replace("/staf");
+      else if (user.peranan !== "Pengurus") router.replace("/unauthorized");
     }
   }, [user, isLoading, router]);
 

@@ -15,7 +15,7 @@ export default function StafLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (!isLoading) {
       if (!user) router.replace("/login");
-      else if (user.peranan !== "Staf Operasi" && user.peranan !== "Staf") router.replace("/pengurus");
+      else if (user.peranan !== "Staf Operasi" && user.peranan !== "Staf") router.replace("/unauthorized");
     }
   }, [user, isLoading, router]);
 
