@@ -181,7 +181,9 @@ export default function CadanganPage() {
         method: "POST"
       });
       if (res.ok) {
-        // Poll every 5 seconds for up to 60 seconds to wait for background task
+        // Capture the IDs of existing drafts before generation starts
+        const existingIds = new Set(drafts.map(d => d.id_cadangan));
+        
         let attempts = 0;
         const interval = setInterval(async () => {
           attempts++;
@@ -189,7 +191,10 @@ export default function CadanganPage() {
             const draftsRes = await fetch(`${API_URL}/prescriptive/${user.id_premis}/drafts`);
             if (draftsRes.ok) {
               const data = await draftsRes.json();
-              if (data.length > 0 || attempts >= 12) {
+              // Check if any new draft ID has appeared
+              const hasNewDrafts = data.some((d: any) => !existingIds.has(d.id_cadangan));
+              
+              if (hasNewDrafts || attempts >= 12) {
                 clearInterval(interval);
                 setDrafts(data);
                 setGenerating(false);
