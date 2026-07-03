@@ -507,12 +507,24 @@ def run_topic_analysis(premise_id: int, supabase_client) -> dict:
             bert_results[fid] = _rule_classify(doc) or "Lain-lain"
 
     # ── 5. Clear old topic data ───────────────────────────────────────────
+    referenced_log_ids = set()
     try:
         if log_map:
-            supabase_client.table("tbl_topik") \
-                .delete() \
+            # Find which log IDs are currently referenced by tbl_cadangan_ai
+            cad_res = supabase_client.table("tbl_cadangan_ai") \
+                .select("id_log_proses") \
                 .in_("id_log_proses", list(log_map.values())) \
                 .execute()
+            referenced_log_ids = {c["id_log_proses"] for c in cad_res.data or []}
+            
+            # Delete only topic rows whose log IDs are NOT referenced in tbl_cadangan_ai
+            logs_to_delete = [lid for lid in log_map.values() if lid not in referenced_log_ids]
+            
+            if logs_to_delete:
+                supabase_client.table("tbl_topik") \
+                    .delete() \
+                    .in_("id_log_proses", logs_to_delete) \
+                    .execute()
     except Exception as e:
         print(f"[TopicModel] Warning: Could not clear old topics: {e}")
 
@@ -537,11 +549,28 @@ def run_topic_analysis(premise_id: int, supabase_client) -> dict:
         else:
             skor = 0.70
             
-        rows_to_insert.append({
-            "id_log_proses": id_log_proses,
-            "label_topik": label,
-            "skor_topik": skor,
-        })
+        if id_log_proses in referenced_log_ids:
+            # Update the existing row in tbl_topik instead of inserting a duplicate
+            try:
+                # Find the existing topic ID for this log
+                existing_res = supabase_client.table("tbl_topik") \
+                    .select("id_topik") \
+                    .eq("id_log_proses", id_log_proses) \
+                    .execute()
+                if existing_res.data:
+                    for r in existing_res.data:
+                        supabase_client.table("tbl_topik") \
+                            .update({"label_topik": label, "skor_topik": skor}) \
+                            .eq("id_topik", r["id_topik"]) \
+                            .execute()
+            except Exception as e:
+                print(f"[TopicModel] Warning: Could not update referenced topic: {e}")
+        else:
+            rows_to_insert.append({
+                "id_log_proses": id_log_proses,
+                "label_topik": label,
+                "skor_topik": skor,
+            })
 
     if rows_to_insert:
         try:
