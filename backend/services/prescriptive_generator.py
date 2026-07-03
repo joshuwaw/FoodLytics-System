@@ -29,9 +29,12 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
     print(f"[Prescriptive] Generating drafts for premise {premise_id}...")
 
     try:
-        # Load existing topic IDs that already have suggestions
-        existing_res = supabase_client.table("tbl_cadangan_ai").select("id_topik").eq("id_premis", premise_id).execute()
-        existing_topic_ids = {r["id_topik"] for r in existing_res.data or [] if r.get("id_topik") is not None}
+        # Load existing process log IDs that already have recommendations
+        existing_res = supabase_client.table("tbl_cadangan_ai")\
+            .select("id_log_proses")\
+            .eq("id_premis", premise_id)\
+            .execute()
+        existing_log_ids = {r["id_log_proses"] for r in existing_res.data or [] if r.get("id_log_proses") is not None}
 
         # 1. Fetch topics directly from this premise that are negative
         # We need to join tbl_topik -> tbl_enjin_ai -> tbl_maklumbalas to filter by premise
@@ -105,13 +108,18 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
             "Content-Type": "application/json"
         }
         
+        MIN_REVIEW_THRESHOLD = 5
         for label, count in topic_counts.items():
             if "Lain-lain" in label:
                 continue
                 
+            if count < MIN_REVIEW_THRESHOLD:
+                print(f"[Prescriptive] Topic '{label}' only has {count} reviews (Threshold: {MIN_REVIEW_THRESHOLD}). Skipping recommendation.")
+                continue
+                
             rep_topic = topic_examples[label][0]
-            if rep_topic["id_topik"] in existing_topic_ids:
-                print(f"[Prescriptive] Topic ID {rep_topic['id_topik']} ('{label}') already has a recommendation. Skipping generation.")
+            if rep_topic["id_log_proses"] in existing_log_ids:
+                print(f"[Prescriptive] Log ID {rep_topic['id_log_proses']} ('{label}') already has a recommendation. Skipping.")
                 continue
                 
             dept = _get_department_routing(label)

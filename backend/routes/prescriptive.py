@@ -9,7 +9,11 @@ router = APIRouter()
 @router.get("/{premise_id}/drafts", response_model=List[CadanganResponse])
 def get_drafts(premise_id: int):
     try:
-        res = supabase.table("tbl_cadangan_ai").select("*").eq("id_premis", premise_id).in_("status_kelulusan", ["Draf", "Simpan"]).execute()
+        res = supabase.table("tbl_cadangan_ai")\
+            .select("*")\
+            .eq("id_premis", premise_id)\
+            .in_("status_kelulusan", ["Draf", "Simpan", "Lulus", "Tolak"])\
+            .execute()
         return res.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

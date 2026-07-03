@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { AlertTriangle, TrendingUp, CheckCircle, XCircle, Send, Loader2, Sparkles, Star, BrainCircuit } from "lucide-react";
+import { AlertTriangle, TrendingUp, CheckCircle, XCircle, Send, Loader2, Sparkles, Star, BrainCircuit, Clock } from "lucide-react";
 
 interface Cadangan {
   id_cadangan: number;
@@ -148,6 +148,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 export default function CadanganPage() {
   const { user } = useAuth();
   const [drafts, setDrafts] = useState<Cadangan[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("Draf");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -226,8 +227,9 @@ export default function CadanganPage() {
         body: JSON.stringify({ id_pengurus_lulus: user?.id_pengguna }),
       });
       if (res.ok) {
-        // Remove from list
-        setDrafts(drafts.filter((d) => d.id_cadangan !== id_cadangan));
+        // Update status in local state instead of deleting
+        const newStatus = action === "approve" ? "Lulus" : action === "reject" ? "Tolak" : "Simpan";
+        setDrafts(drafts.map((d) => d.id_cadangan === id_cadangan ? { ...d, status_kelulusan: newStatus } : d));
       }
     } catch (error) {
       console.error(`Failed to ${action} draft:`, error);
@@ -243,6 +245,8 @@ export default function CadanganPage() {
       </div>
     );
   }
+
+  const filteredDrafts = drafts.filter((d) => d.status_kelulusan === activeTab);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -274,26 +278,89 @@ export default function CadanganPage() {
         </button>
       </div>
 
+      {/* Tab Filter Navigation */}
+      <div className="flex flex-wrap gap-2.5 p-1.5 bg-slate-100/80 border border-slate-200/60 rounded-2xl max-w-2xl backdrop-blur-xs">
+        {[
+          { id: "Draf", label: "Semakan Baru", count: drafts.filter(d => d.status_kelulusan === "Draf").length, color: "text-amber-600 bg-amber-50/80 border-amber-200/50", icon: Clock },
+          { id: "Simpan", label: "Disimpan", count: drafts.filter(d => d.status_kelulusan === "Simpan").length, color: "text-blue-600 bg-blue-50/80 border-blue-200/50", icon: Star },
+          { id: "Lulus", label: "Diluluskan", count: drafts.filter(d => d.status_kelulusan === "Lulus").length, color: "text-emerald-600 bg-emerald-50/80 border-emerald-200/50", icon: Send },
+          { id: "Tolak", label: "Ditolak", count: drafts.filter(d => d.status_kelulusan === "Tolak").length, color: "text-rose-600 bg-rose-50/80 border-rose-200/50", icon: XCircle },
+        ].map(tab => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all duration-300 cursor-pointer border ${
+                isActive 
+                  ? "bg-slate-900 text-white border-slate-900 shadow-md shadow-slate-900/10 scale-[1.02]" 
+                  : "bg-white text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50/50"
+              }`}
+            >
+              <Icon className={`w-4 h-4 ${isActive ? "text-orange-400" : ""}`} />
+              <span>{tab.label}</span>
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black border ${
+                isActive ? "bg-slate-800 text-slate-300 border-slate-700" : tab.color
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Drafts Section */}
       <div className="space-y-6">
         <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            Tugasan Baru 
-            <span className="bg-orange-50 border border-orange-100 text-orange-600 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase ml-2 animate-pulse">
-              Perlu Semakan
-            </span>
+            {activeTab === "Draf" && "Tugasan Baru"}
+            {activeTab === "Simpan" && "Cadangan Disimpan"}
+            {activeTab === "Lulus" && "Cadangan Diluluskan"}
+            {activeTab === "Tolak" && "Cadangan Ditolak"}
+            
+            {activeTab === "Draf" && (
+              <span className="bg-orange-50 border border-orange-100 text-orange-600 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase ml-2 animate-pulse">
+                Perlu Semakan
+              </span>
+            )}
+            {activeTab === "Simpan" && (
+              <span className="bg-blue-50 border border-blue-100 text-blue-600 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase ml-2">
+                Simpan
+              </span>
+            )}
+            {activeTab === "Lulus" && (
+              <span className="bg-emerald-50 border border-emerald-100 text-emerald-600 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase ml-2">
+                Aktif
+              </span>
+            )}
+            {activeTab === "Tolak" && (
+              <span className="bg-rose-50 border border-rose-100 text-rose-600 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase ml-2">
+                Ditolak
+              </span>
+            )}
           </h2>
         </div>
 
-        {drafts.length === 0 ? (
+        {filteredDrafts.length === 0 ? (
           <div className="glass-light rounded-3xl p-12 text-center border border-slate-200/50 shadow-xs">
             <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-slate-800">Tiada tugasan tertunggak</h3>
-            <p className="text-slate-500 text-sm mt-1">Semua cadangan AI telah disemak dengan jayanya.</p>
+            <h3 className="text-lg font-bold text-slate-800">
+              {activeTab === "Draf" && "Tiada tugasan tertunggak"}
+              {activeTab === "Simpan" && "Tiada cadangan disimpan"}
+              {activeTab === "Lulus" && "Tiada cadangan diluluskan"}
+              {activeTab === "Tolak" && "Tiada cadangan ditolak"}
+            </h3>
+            <p className="text-slate-500 text-sm mt-1">
+              {activeTab === "Draf" && "Semua cadangan AI telah disemak dengan jayanya."}
+              {activeTab === "Simpan" && "Klik butang 'Simpan' pada cadangan baru untuk menyimpannya di sini."}
+              {activeTab === "Lulus" && "Luluskan cadangan untuk menghantar arahan kerja kepada staf operasi."}
+              {activeTab === "Tolak" && "Senarai cadangan yang telah ditolak akan dipaparkan di sini."}
+            </p>
           </div>
         ) : (
           <div className="grid gap-6">
-            {drafts.map((draft) => {
+            {filteredDrafts.map((draft) => {
               const parts = draft.analisis_punca.split("|||");
               const isuPendek = parts.length > 1 ? parts[0] : "Isu Dikesan";
               const isuPanjang = parts.length > 1 ? parts[1] : draft.analisis_punca;

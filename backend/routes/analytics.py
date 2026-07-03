@@ -29,6 +29,9 @@ async def trigger_topic_analysis(premise_id: int, background_tasks: BackgroundTa
     Triggers a BERTopic analysis run for the given premise as a background task.
     This prevents the server from hanging during the heavy AI processing.
     """
+    # Delete old drafts immediately synchronously so the frontend polling works flawlessly
+    supabase.table("tbl_cadangan_ai").delete().eq("id_premis", premise_id).eq("status_kelulusan", "Draf").execute()
+
     def run_analysis_task():
         try:
             from services.topic_modeling import run_topic_analysis
