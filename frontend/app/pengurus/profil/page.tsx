@@ -427,7 +427,7 @@ export default function PengurusProfilPage() {
                   required
                   value={newManager.nama_penuh}
                   onChange={(e) => setNewManager({...newManager, nama_penuh: e.target.value})}
-                  className="w-full px-4 py-3 bg-white/50 border border-slate-200/50 rounded-xl text-xs font-bold outline-none focus:border-orange-500 transition-all shadow-inner"
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 text-sm font-semibold shadow-inner"
                 />
                 
                 <input
@@ -436,7 +436,7 @@ export default function PengurusProfilPage() {
                   required
                   value={newManager.emel}
                   onChange={(e) => setNewManager({...newManager, emel: e.target.value})}
-                  className="w-full px-4 py-3 bg-white/50 border border-slate-200/50 rounded-xl text-xs font-bold outline-none focus:border-orange-500 transition-all shadow-inner"
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 text-sm font-semibold shadow-inner"
                 />
 
                 <input
@@ -444,7 +444,7 @@ export default function PengurusProfilPage() {
                   placeholder="Nombor Telefon"
                   value={newManager.no_telefon}
                   onChange={(e) => setNewManager({...newManager, no_telefon: e.target.value})}
-                  className="w-full px-4 py-3 bg-white/50 border border-slate-200/50 rounded-xl text-xs font-bold outline-none focus:border-orange-500 transition-all shadow-inner"
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 text-sm font-semibold shadow-inner"
                 />
 
                 <input
@@ -453,7 +453,7 @@ export default function PengurusProfilPage() {
                   required
                   value={newManager.kata_laluan}
                   onChange={(e) => setNewManager({...newManager, kata_laluan: e.target.value})}
-                  className="w-full px-4 py-3 bg-white/50 border border-slate-200/50 rounded-xl text-xs font-bold outline-none focus:border-orange-500 transition-all shadow-inner"
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 text-sm font-semibold shadow-inner"
                 />
               </div>
 
