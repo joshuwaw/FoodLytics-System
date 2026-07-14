@@ -13,6 +13,7 @@ def get_drafts(premise_id: int):
             .select("*")\
             .eq("id_premis", premise_id)\
             .in_("status_kelulusan", ["Draf", "Simpan", "Lulus", "Tolak"])\
+            .order("id_cadangan", desc=True)\
             .execute()
         return res.data
     except Exception as e:

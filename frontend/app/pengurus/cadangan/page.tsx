@@ -106,6 +106,7 @@ const formatSaranan = (sarananStr: string) => {
         normalizedParsed[normKey] = parsed[key];
       });
 
+
       const tindakanStaf = normalizedParsed["tindakanstaf"] || normalizedParsed["tindakanpenyelesaian"] || normalizedParsed["tindakan"] || normalizedParsed["saranan"] || "";
       const tindakanPengurus = normalizedParsed["tindakanpengurus"] || "";
       const kpi = normalizedParsed["kpi"] || "";
@@ -156,6 +157,44 @@ export default function CadanganPage() {
   useEffect(() => {
     if (user?.id_premis) {
       fetchDrafts();
+
+      const checkRunningStatus = async () => {
+        try {
+          const res = await fetch(`${API_URL}/analytics/status/${user.id_premis}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === "running") {
+              setGenerating(true);
+              const interval = setInterval(async () => {
+                try {
+                  const statusRes = await fetch(`${API_URL}/analytics/status/${user.id_premis}`);
+                  if (statusRes.ok) {
+                    const statusData = await statusRes.json();
+                    if (statusData.status === "idle") {
+                      clearInterval(interval);
+                      
+                      // Fetch updated drafts
+                      const draftsRes = await fetch(`${API_URL}/prescriptive/${user.id_premis}/drafts`);
+                      if (draftsRes.ok) {
+                        const draftsData = await draftsRes.json();
+                        setDrafts(draftsData);
+                      }
+                      setGenerating(false);
+                    }
+                  }
+                } catch (e) {
+                  clearInterval(interval);
+                  setGenerating(false);
+                }
+              }, 2000);
+            }
+          }
+        } catch (e) {
+          console.error("Error checking initial drafts AI status:", e);
+        }
+      };
+
+      checkRunningStatus();
     }
   }, [user]);
 
@@ -177,38 +216,46 @@ export default function CadanganPage() {
     if (!user?.id_premis) return;
     setGenerating(true);
     try {
-      // Calls the topic generator which cascades into the prescriptive generator in the background
       const res = await fetch(`${API_URL}/analytics/topics/run/${user.id_premis}`, {
         method: "POST"
       });
       if (res.ok) {
-        // Capture the IDs of existing drafts before generation starts
-        const existingIds = new Set(drafts.map(d => d.id_cadangan));
-        
         let attempts = 0;
+        const maxAttempts = 30; // Max 60 seconds (30 * 2s)
         const interval = setInterval(async () => {
           attempts++;
           try {
-            const draftsRes = await fetch(`${API_URL}/prescriptive/${user.id_premis}/drafts`);
-            if (draftsRes.ok) {
-              const data = await draftsRes.json();
-              // Check if any new draft ID has appeared
-              const hasNewDrafts = data.some((d: any) => !existingIds.has(d.id_cadangan));
-              
-              if (hasNewDrafts || attempts >= 12) {
+            const statusRes = await fetch(`${API_URL}/analytics/status/${user.id_premis}`);
+            if (statusRes.ok) {
+              const statusData = await statusRes.json();
+              if (statusData.status === "idle") {
                 clearInterval(interval);
-                setDrafts(data);
+                
+                // Fetch the updated drafts
+                const draftsRes = await fetch(`${API_URL}/prescriptive/${user.id_premis}/drafts`);
+                if (draftsRes.ok) {
+                  const data = await draftsRes.json();
+                  setDrafts(data);
+                }
                 setGenerating(false);
+                return;
               }
             }
           } catch (e) {
-            console.error(e);
+            console.error("Polling drafts status error:", e);
           }
-          if (attempts >= 12) {
+
+          if (attempts >= maxAttempts) {
             clearInterval(interval);
+            // Fallback fetch
+            const draftsRes = await fetch(`${API_URL}/prescriptive/${user.id_premis}/drafts`);
+            if (draftsRes.ok) {
+              const data = await draftsRes.json();
+              setDrafts(data);
+            }
             setGenerating(false);
           }
-        }, 5000);
+        }, 2000);
       } else {
         setGenerating(false);
       }
@@ -277,6 +324,16 @@ export default function CadanganPage() {
           {generating ? "Menjana..." : "Jana Cadangan AI"}
         </button>
       </div>
+
+      {generating && (
+        <div className="glass-light rounded-3xl p-5 border border-orange-200/50 bg-gradient-to-r from-orange-50/40 to-orange-100/20 shadow-sm flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <Loader2 className="w-5 h-5 animate-spin text-orange-500 shrink-0" />
+          <div>
+            <h4 className="font-extrabold text-slate-800 text-sm">Penjanaan Cadangan AI...</h4>
+            <p className="text-xs text-slate-500 mt-0.5">Sila tunggu sebentar sementara AI merumuskan strategi baru.</p>
+          </div>
+        </div>
+      )}
 
       {/* Tab Filter Navigation */}
       <div className="flex flex-wrap gap-2.5 p-1.5 bg-slate-100/80 border border-slate-200/60 rounded-2xl max-w-2xl backdrop-blur-xs">
@@ -379,7 +436,7 @@ export default function CadanganPage() {
                         <AlertTriangle className="w-5 h-5 animate-pulse" style={{ animationDuration: '3s' }} />
                       </div>
                       <h3 className="text-lg font-bold text-slate-800 tracking-tight">
-                        Isu : <span className="text-rose-600 font-extrabold">{isuPendek}</span>
+                        Isu / Peluang: <span className="text-rose-600 font-extrabold">{isuPendek}</span>
                       </h3>
                     </div>
                     
@@ -397,7 +454,7 @@ export default function CadanganPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-slate-100/50 rounded-full blur-xl pointer-events-none -mt-4 -mr-4" />
                       <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                         <TrendingUp className="w-3.5 h-3.5 text-slate-400" />
-                        Kenapa Isu Ini Dikesan?
+                        Bukti & Pemerhatian (Evidence)
                       </h4>
                       {formatIsu(isuPanjang)}
                     </div>
@@ -407,7 +464,7 @@ export default function CadanganPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-100/30 rounded-full blur-xl pointer-events-none -mt-4 -mr-4" />
                       <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                         <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                        Tindakan Yang Dicadangkan:
+                        Cadangan Tindakan (Recommendations)
                       </h4>
                       {formatSaranan(draft.saranan_strategik)}
                     </div>

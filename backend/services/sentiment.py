@@ -6,7 +6,7 @@ import math
 
 # Initialize the client
 client = InferenceClient(api_key=HUGGINGFACE_API_KEY)
-MODEL_ID = "lxyuan/distilbert-base-multilingual-cased-sentiments-student"
+MODEL_ID = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
 
 # -----------------------------------------------------------------------------
 # MALAY LEXICON ENGINE (VADER-Style)

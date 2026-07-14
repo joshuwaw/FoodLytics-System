@@ -92,6 +92,40 @@ function TopicsAnalysisContent() {
 
   useEffect(() => {
     fetchTopics();
+
+    const checkRunningStatus = async () => {
+      if (!user?.id_premis) return;
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      try {
+        const res = await fetch(`${API_URL}/analytics/status/${user.id_premis}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === "running") {
+            setRunningAI(true);
+            const interval = setInterval(async () => {
+              try {
+                const statusRes = await fetch(`${API_URL}/analytics/status/${user.id_premis}`);
+                if (statusRes.ok) {
+                  const statusData = await statusRes.json();
+                  if (statusData.status === "idle") {
+                    clearInterval(interval);
+                    setRunningAI(false);
+                    fetchTopics();
+                  }
+                }
+              } catch (e) {
+                clearInterval(interval);
+                setRunningAI(false);
+              }
+            }, 2000);
+          }
+        }
+      } catch (e) {
+        console.error("Error checking initial AI status:", e);
+      }
+    };
+
+    checkRunningStatus();
   }, [user]);
 
   // Fetch Drilldown
@@ -121,20 +155,43 @@ function TopicsAnalysisContent() {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
     setRunningAI(true);
     try {
-      const res = await fetch(`${API_URL}/analytics/topics/run/${user.id_premis}`, {
+      await fetch(`${API_URL}/analytics/topics/run/${user.id_premis}`, {
         method: "POST",
       });
 
-      // Since it runs in background, we wait a few seconds before refreshing
-      // to give the AI time to process the first few records.
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Poll status endpoint until it's idle
+      await new Promise<void>((resolve) => {
+        let attempts = 0;
+        const maxAttempts = 30; // Max 60 seconds (30 * 2s)
+        const interval = setInterval(async () => {
+          attempts++;
+          try {
+            const statusRes = await fetch(`${API_URL}/analytics/status/${user.id_premis}`);
+            if (statusRes.ok) {
+              const statusData = await statusRes.json();
+              if (statusData.status === "idle") {
+                clearInterval(interval);
+                resolve();
+                return;
+              }
+            }
+          } catch (err) {
+            console.error("Polling status error:", err);
+          }
+
+          if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            resolve(); // Timeout fallback
+          }
+        }, 2000);
+      });
+
       await fetchTopics();
     } catch (e) {
       console.error("AI Analysis Error:", e);
     } finally {
       setRunningAI(false);
     }
-
   };
 
   const getTopicIcon = (label: string) => {
@@ -218,6 +275,16 @@ function TopicsAnalysisContent() {
           </button>
         </div>
       </div>
+
+      {runningAI && (
+        <div className="glass-light rounded-3xl p-5 border border-orange-200/50 bg-gradient-to-r from-orange-50/40 to-orange-100/20 shadow-sm flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <RefreshCw className="w-5 h-5 animate-spin text-orange-500 shrink-0" />
+          <div>
+            <h4 className="font-extrabold text-slate-800 text-sm">Analisis AI sedang dijalankan...</h4>
+            <p className="text-xs text-slate-500 mt-0.5">Sila tunggu sebentar sementara AI mengemas kini topik.</p>
+          </div>
+        </div>
+      )}
 
       {/* Horizontal Topic Cards */}
       {loading ? (

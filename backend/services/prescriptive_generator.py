@@ -129,29 +129,26 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
             texts_list = topic_examples_text[label][:5]
             texts_formatted = "\n- ".join(texts_list) if texts_list else "(Tiada teks spesifik dikesan)"
             
-            # Enterprise 5-Whys Prompt (Reinforced for Llama 3 / Malay)
-            prompt = f"""Sebagai Penganalisis Operasi Restoran Gred-Enterpris, jalankan analisis punca akar (Root Cause Analysis - 5 Whys) ke atas {count} aduan pelanggan mengenai '{clean_label}' dalam Bahasa Melayu.
+            # Enterprise Problem-Evidence-Recommendation Prompt
+            prompt = f"""Sebagai Penganalisis Operasi Restoran Gred-Enterpris, jalankan analisis ke atas aduan pelanggan mengenai '{clean_label}' dalam Bahasa Melayu.
 
 Ulasan Pelanggan:
 - {texts_formatted}
 
 Sila berikan jawapan anda dalam format JSON yang sah (valid JSON) dengan kunci berikut SAHAJA. JANGAN letak sebarang teks penjelasan di luar JSON. Tulis keseluruhan kandungan di dalam Bahasa Melayu.
-Mestilah mengikut format contoh berikut secara tepat (Nilai untuk 'isu_panjang' mestilah Teks Biasa berbaris baru, BUKAN list/array/dict):
 
-Contoh Format Jawapan:
+Format Jawapan:
 {{
-  "isu_pendek": "Pelayan Kurang Sopan",
-  "isu_panjang": "1. Mengapa pelanggan mengadu pelayan kasar? Kerana pelayan menjawab soalan dengan nada tinggi.\\n2. Mengapa pelayan bernada tinggi? Kerana pelayan terlalu letih menghadapi pelanggan yang ramai.\\n3. Mengapa pelayan terlalu letih? Kerana jadual kerja tidak teratur pada waktu puncak.\\n4. Mengapa jadual tidak teratur? Kerana pengurus tidak menjadualkan staf tambahan.\\n5. Mengapa pengurus tidak menjadualkan staf tambahan? Kerana tiada ramalan permintaan puncak dilakukan.",
-  "tindakan_staf": "Sentiasa menjaga adab perkhidmatan dan menggunakan nada suara yang sopan ketika melayan pelanggan.",
-  "tindakan_pengurus": "Menjadualkan pusingan kerja dan menambah staf sokongan ketika waktu puncak.",
-  "kpi": "Tiada aduan kasar daripada pelanggan dalam tempoh 30 hari.",
-  "pantauan": "Pengurus melakukan penilaian harian secara langsung di kaunter pesanan."
+  "problem": "Satu kalimat ringkas mengenalpasti isu utama atau peluang yang disokong oleh ulasan di atas tanpa sebarang spekulasi.",
+  "evidence": "Ringkasan bukti ulasan: sebutkan tema berulang, sentimen pelanggan, kekerapan (jika ada), dan pemerhatian penting secara ringkas (1 perenggan).",
+  "tindakan_staf": "Tindakan praktikal dan spesifik untuk staf operasi (1-2 kalimat).",
+  "tindakan_pengurus": "Tindakan praktikal dan spesifik untuk pengurus cawangan (1-2 kalimat)."
 }}
 
 Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
 
             payload = {
-                "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                "model": "Qwen/Qwen2.5-7B-Instruct",
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": 800,
                 "temperature": 0.3
@@ -177,27 +174,21 @@ Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
                             # Normalize keys of ai_out to support slight variations in case/format
                             normalized_ai_out = {k.lower().replace(" ", "_"): v for k, v in ai_out.items()}
                             
-                            if "isu_pendek" in normalized_ai_out and "isu_panjang" in normalized_ai_out:
-                                raw_punca = normalized_ai_out.get("isu_panjang", "")
-                                lines = [line.strip() for line in re.split(r'\r?\n|(?=\d\.\s)', raw_punca) if line.strip()]
-                                filtered_lines = []
-                                for idx in range(1, 6):
-                                    prefix = f"{idx}."
-                                    matching_line = next((l for l in lines if l.startswith(prefix)), None)
-                                    if matching_line:
-                                        filtered_lines.append(matching_line)
-                                if not filtered_lines:
-                                    filtered_lines = lines[:5]
-                                clean_punca = "\n".join(filtered_lines)
-                                punca = f"{normalized_ai_out['isu_pendek']} {dept}|||{clean_punca}"
+                            if "problem" in normalized_ai_out and "evidence" in normalized_ai_out:
+                                problem_val = normalized_ai_out.get("problem", "")
+                                evidence_val = normalized_ai_out.get("evidence", "")
+                                tindakan_staf_val = normalized_ai_out.get("tindakan_staf", "")
+                                tindakan_pengurus_val = normalized_ai_out.get("tindakan_pengurus", "")
                                 
-                                # Bundle actions into a JSON string for saranan_strategik
-                                saranan = json.dumps({
-                                    "tindakan_staf": normalized_ai_out.get("tindakan_staf", ""),
-                                    "tindakan_pengurus": normalized_ai_out.get("tindakan_pengurus", ""),
-                                    "kpi": normalized_ai_out.get("kpi", ""),
-                                    "pantauan": normalized_ai_out.get("pantauan", "")
-                                })
+                                # Format punca as Problem [Department]|||Evidence
+                                punca = f"{problem_val} [{dept}]|||{evidence_val}"
+                                
+                                # Store recommendations as JSON list
+                                status_fields = {
+                                    "tindakan_staf": tindakan_staf_val,
+                                    "tindakan_pengurus": tindakan_pengurus_val
+                                }
+                                saranan = json.dumps(status_fields)
                                 break
                     elif hf_res.status_code in [429, 503]:
                         print(f"[Prescriptive] HF API busy ({hf_res.status_code}). Retrying in 4 seconds...")
@@ -214,52 +205,40 @@ Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
                 # Smart Local Fallback based on topic
                 l = clean_label.lower()
                 if "layanan" in l or "pekerja" in l or "pelayan" in l:
-                    punca = f"Isu SOP Layanan {dept}|||Pekerja mungkin keletihan atau kurang latihan (SOP tidak jelas). Kegagalan mematuhi standard perkhidmatan pelanggan ketika waktu puncak."
+                    punca = f"Kualiti perkhidmatan pelanggan kurang memuaskan akibat staf tidak ramah. [{dept}]|||Buktinya termasuk keluhan berulang tentang staf barisan hadapan yang kurang senyum, tidak memberi salam, atau bersikap dingin semasa melayan pesanan pelanggan."
                     saranan = json.dumps({
-                        "tindakan_staf": "Adakan sesi latihan semula 'Hospitality 101' dan patuhi SOP perkhidmatan pelanggan.",
-                        "tindakan_pengurus": "Wujudkan sistem pusingan rehat yang lebih baik untuk pekerja barisan hadapan.",
-                        "kpi": "Pengurangan aduan layanan sebanyak 50% dalam tempoh 1 bulan.",
-                        "pantauan": "Pengurus membuat audit layanan secara rawak 2 kali seminggu."
+                        "tindakan_staf": "Mengamalkan budaya 3S (Senyum, Sapa, Salam) semasa berinteraksi dengan setiap pelanggan di kaunter.",
+                        "tindakan_pengurus": "Mengadakan taklimat ringkas perkhidmatan pelanggan (SOP Layanan) dan memantau prestasi staf di kaunter."
                     })
                 elif "makanan" in l or "rasa" in l or "kualiti" in l:
-                    punca = f"Kualiti Resepi Bervariasi {dept}|||Ketidakpatuhan kepada resipi standard di dapur. Kekurangan kawalan kualiti (QC) sebelum makanan dihidangkan."
+                    punca = f"Kualiti rasa makanan dan minuman kurang konsisten pada waktu puncak. [{dept}]|||Buktinya termasuk aduan pelanggan mengenai hidangan yang sejuk, rasa yang tawar, atau penyediaan makanan yang tidak segar."
                     saranan = json.dumps({
-                        "tindakan_staf": "Kuatkuasakan penggunaan kad resipi standard di dapur.",
-                        "tindakan_pengurus": "Wajibkan ketua cef merasa sampel (spot check) secara rawak setiap hari.",
-                        "kpi": "Kualiti rasa makanan konsisten 95% ke atas berdasarkan maklum balas.",
-                        "pantauan": "Pengurus menyemak rekod spot check dapur setiap hujung minggu."
+                        "tindakan_staf": "Mematuhi sukatan resipi standard dapur dengan tepat bagi setiap hidangan yang disediakan.",
+                        "tindakan_pengurus": "Melakukan pemeriksaan kualiti rawak (QC spot check) sebelum hidangan diserahkan kepada pelanggan."
                     })
                 elif "masa" in l or "lambat" in l or "menunggu" in l:
-                    punca = f"Kesesakan Stesen Dapur {dept}|||Aliran kerja dapur tidak dioptimumkan untuk pesanan yang tinggi. Proses penyediaan (prep-work) yang tidak mencukupi sebelum waktu puncak."
+                    punca = f"Masa menunggu hidangan terlalu lama semasa waktu puncak operasi. [{dept}]|||Buktinya termasuk aduan pelanggan yang terpaksa menunggu melebihi 25 minit untuk minuman atau hidangan ringkas disediakan."
                     saranan = json.dumps({
-                        "tindakan_staf": "Semak semula sistem aliran tiket (KDS) dan uruskan pesanan mengikut giliran pantas.",
-                        "tindakan_pengurus": "Tambahkan masa 'prep' wajib untuk bahan-bahan kritikal sejam sebelum waktu puncak bermula.",
-                        "kpi": "Masa hidangan di bawah 15 minit untuk 90% pesanan.",
-                        "pantauan": "Laporan prestasi harian KDS disemak oleh pengurus setiap malam."
+                        "tindakan_staf": "Menyediakan bahan-bahan masakan kritikal (prep-work) sejam sebelum waktu puncak bermula.",
+                        "tindakan_pengurus": "Mengatur pembahagian tugas staf dapur secara spesifik mengikut stesen untuk mempercepatkan penyediaan."
                     })
                 elif "harga" in l or "mahal" in l:
-                    punca = f"Ketidaksepadanan Nilai {dept}|||Pelanggan merasakan saiz hidangan tidak berbaloi dengan harga yang dibayar berikutan kos bahan mentah yang meningkat."
+                    punca = f"Pelanggan merasakan harga hidangan kurang berbaloi dengan saiz hidangan yang diterima. [{dept}]|||Buktinya termasuk sentimen negatif pelanggan mengenai harga menu premium yang dianggap terlalu tinggi berbanding kualiti rasa."
                     saranan = json.dumps({
-                        "tindakan_staf": "Cadangkan set kombo atau hidangan nilai tambah kepada pelanggan.",
-                        "tindakan_pengurus": "Nilai semula persembahan hidangan (plating) supaya kelihatan lebih premium atau tawarkan set kombo.",
-                        "kpi": "Skor kepuasan nilai harga meningkat kepada 4.0/5.0.",
-                        "pantauan": "Analisis kos jualan (COGS) disemak setiap bulan oleh pengurus."
+                        "tindakan_staf": "Memastikan persembahan hidangan (plating) dilakukan dengan kemas dan premium sebelum disajikan.",
+                        "tindakan_pengurus": "Menyemak semula kos bahan mentah (COGS) atau menawarkan set kombo bernilai untuk pelanggan."
                     })
                 elif "bersih" in l or "kotor" in l or "suasana" in l:
-                    punca = f"Pengabaian Rutin Sanitasi {dept}|||Jadual pembersihan berkala tidak ditandatangani atau diabaikan oleh pekerja semasa operasi sibuk."
+                    punca = f"Kebersihan ruang makan dan kemudahan restoran kurang memuaskan pelanggan. [{dept}]|||Buktinya termasuk maklum balas pelanggan mengenai permukaan meja yang melekit, sampah bertaburan, atau toilet yang tidak dibersihkan."
                     saranan = json.dumps({
-                        "tindakan_staf": "Laksanakan senarai semak pembersihan meja dan tandas sejam sekali.",
-                        "tindakan_pengurus": "Buat pemeriksaan sanitasi harian dan pastikan peralatan pembersihan lengkap.",
-                        "kpi": "Kebersihan premis mencapai 100% pematuhan senarai semak.",
-                        "pantauan": "Pemeriksaan mengejut oleh pengurus setiap pagi sebelum premis dibuka."
+                        "tindakan_staf": "Membersih dan mengelap meja pelanggan serta mengemas kawasan sekeliling setiap kali pelanggan beredar.",
+                        "tindakan_pengurus": "Menyediakan senarai semak pembersihan harian premis (meja & tandas) untuk diselia setiap shif kerja."
                     })
                 else:
-                    punca = f"Ketidakcekapan Operasi ({clean_label}) {dept}|||Proses semasa untuk menangani isu ini tiada pemantauan yang konsisten."
+                    punca = f"Isu operasi am memerlukan pemantauan konsisten daripada pengurusan. ({clean_label}) [{dept}]|||Buktinya termasuk ulasan am pelanggan mengenai kecekapan operasi harian di premis."
                     saranan = json.dumps({
-                        "tindakan_staf": "Siasat punca aduan dan lakukan tindakan pembetulan segera.",
-                        "tindakan_pengurus": "Lantik seorang penyelia khusus untuk memantau proses ini.",
-                        "kpi": "Isu diselesaikan dalam tempoh 48 jam.",
-                        "pantauan": "Pengurus membuat semakan status mingguan pada mesyuarat operasi."
+                        "tindakan_staf": "Melaporkan serta-merta sebarang masalah operasi harian kepada pengurus cawangan.",
+                        "tindakan_pengurus": "Meneliti punca aduan operasi ini secara langsung di kafe untuk tindakan pembetulan segera."
                     })
 
             # Impact scoring heuristic (Severity based on volume)

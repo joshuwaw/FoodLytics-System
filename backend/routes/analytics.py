@@ -18,6 +18,14 @@ import datetime
 
 router = APIRouter()
 
+# Global set to track running AI analyses by premise ID
+running_premis_jobs = set()
+
+@router.get("/status/{premise_id}")
+def get_analysis_status(premise_id: int):
+    is_running = premise_id in running_premis_jobs
+    return {"status": "running" if is_running else "idle"}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ENDPOINT 1: Trigger BERTopic analysis (fires as a background task)
@@ -29,8 +37,13 @@ async def trigger_topic_analysis(premise_id: int, background_tasks: BackgroundTa
     Triggers a BERTopic analysis run for the given premise as a background task.
     This prevents the server from hanging during the heavy AI processing.
     """
-    # Delete old drafts immediately synchronously so the frontend polling works flawlessly
-    supabase.table("tbl_cadangan_ai").delete().eq("id_premis", premise_id).eq("status_kelulusan", "Draf").execute()
+    if premise_id in running_premis_jobs:
+        return {
+            "message": "Analisis AI sedang dijalankan di latar belakang.",
+            "status": "processing"
+        }
+
+    running_premis_jobs.add(premise_id)
 
     def run_analysis_task():
         try:
@@ -45,6 +58,8 @@ async def trigger_topic_analysis(premise_id: int, background_tasks: BackgroundTa
             
         except Exception as e:
             print(f"[Analytics] Background Topic/Prescriptive pipeline failed: {e}")
+        finally:
+            running_premis_jobs.discard(premise_id)
 
     background_tasks.add_task(run_analysis_task)
     
