@@ -11,8 +11,9 @@ import {
   Tooltip as ReTooltip,
   ResponsiveContainer
 } from "recharts";
-import { TrendingUp, MessageSquare, Star, ArrowLeft, HeartPulse, Activity, Flame, Utensils } from "lucide-react";
+import { TrendingUp, MessageSquare, Star, ArrowLeft, HeartPulse, Activity, Flame, Utensils, Trash2, RefreshCw, Settings, Building2, Plus, X } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface TrendData {
   Minggu: string;
@@ -88,37 +89,117 @@ export default function TrendIndustriPage() {
   const [pertumbuhan, setPertumbuhan] = useState<number>(0);
   const [topics, setTopics] = useState<any[]>([]);
 
+  // Competitor States
+  const [competitorTrends, setCompetitorTrends] = useState<any[]>([]);
+  const [competitors, setCompetitors] = useState<any[]>([]);
+  const [scraping, setScraping] = useState(false);
+  const [showManageCompetitors, setShowManageCompetitors] = useState(false);
+  const [newCompetitor, setNewCompetitor] = useState({ nama_pesaing: "", pautan_gmaps: "" });
+  const [addingCompetitor, setAddingCompetitor] = useState(false);
+
   // Filter state
   const [visibleSources, setVisibleSources] = useState<string[]>([]);
 
-  useEffect(() => {
+  const fetchAllData = () => {
     if (!user?.id_premis) return;
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
 
     Promise.all([
       fetch(`${API_URL}/customer/trend-data/${user.id_premis}`).then(r => r.json()),
       fetch(`${API_URL}/customer/feedback-by-source/${user.id_premis}`).then(r => r.json()),
       fetch(`${API_URL}/customer/sentiment-stats/${user.id_premis}`).then(r => r.json()),
-      fetch(`${API_URL}/analytics/topics/${user.id_premis}`).then(r => r.json())
+      fetch(`${API_URL}/analytics/topics/${user.id_premis}`).then(r => r.json()),
+      fetch(`${API_URL}/analytics/competitors/${user.id_premis}`).then(r => r.json()),
+      fetch(`${API_URL}/analytics/pesaing/${user.id_premis}`).then(r => r.json())
     ])
-    .then(([trend, sources, stats, topicsData]) => {
+    .then(([trend, sources, stats, topicsData, compTrends, compList]) => {
       setTrendData(Array.isArray(trend) ? trend : []);
       setFeedbackBySource(Array.isArray(sources) ? sources : []);
       setTotalFeedback(stats.total || 0);
       setAvgRating(stats.purata_bintang || 0);
       setPertumbuhan(stats.pertumbuhan ?? 0);
       setTopics(topicsData.topics || []);
+      setCompetitorTrends(Array.isArray(compTrends) ? compTrends : []);
+      setCompetitors(Array.isArray(compList) ? compList : []);
       
-      // Init all available sources as visible
       if (Array.isArray(sources)) {
         setVisibleSources(sources.map(s => s.sumber));
       }
     })
     .catch(console.error)
     .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchAllData();
   }, [user]);
+
+  const handleAddCompetitor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id_premis) return;
+    setAddingCompetitor(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const res = await fetch(`${API_URL}/analytics/pesaing`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_premis: user.id_premis, ...newCompetitor })
+      });
+      if (res.ok) {
+        toast.success("Pesaing berjaya ditambah!");
+        setNewCompetitor({ nama_pesaing: "", pautan_gmaps: "" });
+        // Refresh
+        const compList = await fetch(`${API_URL}/analytics/pesaing/${user.id_premis}`).then(r => r.json());
+        setCompetitors(compList);
+      } else {
+        toast.error("Gagal menambah pesaing.");
+      }
+    } catch (err) {
+      toast.error("Ralat rangkaian.");
+    } finally {
+      setAddingCompetitor(false);
+    }
+  };
+
+  const handleDeleteCompetitor = async (id: number) => {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const res = await fetch(`${API_URL}/analytics/pesaing/${id}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        toast.success("Pesaing berjaya dipadam.");
+        setCompetitors(prev => prev.filter(c => c.id_pesaing !== id));
+      } else {
+        toast.error("Gagal memadam pesaing.");
+      }
+    } catch (err) {
+      toast.error("Ralat rangkaian.");
+    }
+  };
+
+  const handleTriggerScrape = async () => {
+    if (!user?.id_premis) return;
+    setScraping(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const res = await fetch(`${API_URL}/analytics/competitors/scrape/${user.id_premis}`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        toast.success("Analisis pesaing berjaya dikemas kini!");
+        const compTrends = await fetch(`${API_URL}/analytics/competitors/${user.id_premis}`).then(r => r.json());
+        setCompetitorTrends(compTrends);
+      } else {
+        toast.error("Gagal menganalisis pesaing.");
+      }
+    } catch (err) {
+      toast.error("Ralat rangkaian.");
+    } finally {
+      setScraping(false);
+    }
+  };
 
   const toggleSource = (src: string) => {
     setVisibleSources(prev => 
@@ -340,79 +421,237 @@ export default function TrendIndustriPage() {
       )}
 
       {/* TAB CONTENT: TREND PASARAN */}
-      {activeTab === "Umum" && (
-        <div className="space-y-6">
-          {/* Trending Hashtags */}
-          <div className="glass-light rounded-3xl p-6 border border-slate-100/60 shadow-sm">
-            <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-              <span className="text-blue-500">#</span> Hashtag Trending di Kawasan Anda
-            </h3>
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mt-1 mb-6">Trend media sosial dan interaksi dalam pasaran F&B tempatan (Data Mock)</p>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                { tag: "#FoodieBangi", count: "1,250", trend: "+15%" },
-                { tag: "#ViralMenu", count: "892", trend: "+28%" },
-                { tag: "#UKMFoodies", count: "745", trend: "+12%" },
-                { tag: "#MakananSedap", count: "623", trend: "+8%" },
-                { tag: "#MatchaLover", count: "456", trend: "+45%" },
-                { tag: "#CafeHopping", count: "389", trend: "+19%" },
-              ].map((item, idx) => (
-                <div key={idx} className="p-5 rounded-2xl bg-gradient-to-r from-indigo-50/20 to-white border border-indigo-100/40 spring-hover cursor-pointer flex justify-between items-start">
-                  <div>
-                    <h4 className="font-black text-indigo-700 text-base">{item.tag}</h4>
-                    <p className="text-xs text-slate-400 mt-1 font-semibold">{item.count} sebutan minggu ini</p>
-                  </div>
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-black tracking-wider bg-emerald-50 border-emerald-100 text-emerald-600">
-                    {item.trend}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {activeTab === "Umum" && (() => {
+        // Group competitorTrends by clean keyword name
+        const groupedTrendsMap: Record<string, {
+          kata_kunci: string;
+          bilangan_sebutan: number;
+          peratus_pertumbuhan: number;
+          tanda_pagar_popular: string[];
+        }> = {};
 
-          {/* Menu Opportunities */}
-          <div className="glass-light rounded-3xl p-6 border border-slate-100/60 shadow-sm">
-            <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-              <TrendingUp className="text-emerald-500 w-5 h-5" /> Temui Peluang Menu Baru
-            </h3>
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mt-1 mb-6">Berdasarkan perbualan sosial umum dan isyarat permintaan</p>
-            
-            <div className="space-y-4">
-              {[
-                { name: "Korean Fried Chicken", desc: "Meningkat pantas dalam kumpulan pelajar", mentions: 89, sentiment: "Sangat Positif", status: "Hot" },
-                { name: "Matcha Latte Ais", desc: "Permintaan tinggi pada waktu petang", mentions: 124, sentiment: "Positif", status: "Trending" },
-                { name: "Nasi Kandar Banjir", desc: "Tular di TikTok untuk makan malam", mentions: 210, sentiment: "Sangat Positif", status: "Viral" },
-              ].map((item, idx) => (
-                <div key={idx} className="p-5 rounded-2xl bg-white border border-slate-100/60 flex flex-col sm:flex-row gap-4 sm:items-center justify-between spring-hover">
-                  <div className="flex gap-4 items-center">
-                    <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100/50 text-orange-500 flex items-center justify-center shrink-0 shadow-sm">
-                      <Utensils className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-slate-800 text-base flex flex-wrap items-center gap-2">
-                        {item.name}
-                        <span className={`text-[9px] uppercase tracking-widest font-black px-2 py-0.5 rounded-md ${
-                          item.status === 'Viral' ? 'bg-rose-50 border border-rose-100 text-rose-600' :
-                          item.status === 'Hot' ? 'bg-orange-50 border border-orange-100 text-orange-600' :
-                          'bg-blue-50 border border-blue-100 text-blue-600'
-                        }`}>
-                          {item.status}
-                        </span>
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">{item.desc}</p>
-                    </div>
-                  </div>
-                  <div className="flex sm:flex-col gap-4 sm:gap-1 text-right sm:items-end shrink-0 mt-3 sm:mt-0 pt-3 sm:pt-0 border-t border-slate-100 sm:border-t-0">
-                    <p className="text-xs text-slate-400 font-bold mono-accent">{item.mentions} sebutan</p>
-                    <p className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-100/60 px-2 py-0.5 rounded-lg w-fit">{item.sentiment}</p>
-                  </div>
+        competitorTrends.forEach((item: any) => {
+          // Strip competitor suffix in parentheses, e.g., "Matcha Latte (maybematcha Bangi)" -> "Matcha Latte"
+          const cleanName = item.kata_kunci.replace(/\s*\(di\s+[^)]+\)/g, "").replace(/\s*\([^)]+\)/g, "").trim();
+          
+          if (!groupedTrendsMap[cleanName]) {
+            groupedTrendsMap[cleanName] = {
+              kata_kunci: cleanName,
+              bilangan_sebutan: 0,
+              peratus_pertumbuhan: 0,
+              tanda_pagar_popular: []
+            };
+          }
+          
+          groupedTrendsMap[cleanName].bilangan_sebutan += item.bilangan_sebutan || 0;
+          if (item.peratus_pertumbuhan > groupedTrendsMap[cleanName].peratus_pertumbuhan) {
+            groupedTrendsMap[cleanName].peratus_pertumbuhan = item.peratus_pertumbuhan;
+          }
+          
+          if (item.tanda_pagar_popular) {
+            const tags = item.tanda_pagar_popular.split(",").map((t: string) => t.trim());
+            groupedTrendsMap[cleanName].tanda_pagar_popular = [
+              ...groupedTrendsMap[cleanName].tanda_pagar_popular,
+              ...tags
+            ];
+          }
+        });
+
+        const aggregatedTrends = Object.values(groupedTrendsMap).map((item: any) => {
+          item.tanda_pagar_popular = item.tanda_pagar_popular.filter((v: any, i: any, a: any) => a.indexOf(v) === i);
+          return item;
+        });
+
+        return (
+          <div className="space-y-6">
+            {/* Header Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/40 border border-slate-200/50 p-6 rounded-3xl backdrop-blur-md shadow-sm">
+              <div>
+                <h3 className="text-lg font-black text-slate-800 tracking-tight">Inspirasi Menu Sekitar</h3>
+                <p className="text-xs text-slate-500 font-semibold mt-1">
+                  Melihat produk popular daripada {competitors.length} kafe rujukan pilihan anda.
+                </p>
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => setShowManageCompetitors(!showManageCompetitors)}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 active:scale-98 transition-all cursor-pointer"
+                >
+                  <Settings size={14} />
+                  <span>Pilih Kafe Rujukan</span>
+                </button>
+                <button
+                  onClick={handleTriggerScrape}
+                  disabled={scraping || competitors.length === 0}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 active:scale-98 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {scraping ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                  <span>{scraping ? "Menganalisis..." : "Jalankan Analisis"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Manage Competitors Panel */}
+            {showManageCompetitors && (
+              <div className="p-6 bg-black/5 border border-slate-200/40 rounded-3xl animate-in fade-in slide-in-from-top-4 duration-300 space-y-6">
+                <div className="flex justify-between items-center pb-4 border-b border-slate-200/40">
+                  <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">Senarai Kafe Rujukan</h4>
+                  <button onClick={() => setShowManageCompetitors(false)} className="text-slate-400 hover:text-slate-650 transition-colors">
+                    <X size={16} />
+                  </button>
                 </div>
-              ))}
+
+                <div className="grid md:grid-cols-2 gap-8">
+                  {/* List */}
+                  <div className="space-y-3">
+                    {competitors.length > 0 ? (
+                      <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
+                        {competitors.map((c) => (
+                          <div key={c.id_pesaing} className="p-4 bg-white border border-slate-200/40 rounded-2xl flex justify-between items-center shadow-inner">
+                            <div className="truncate flex-1 pr-4">
+                              <p className="font-extrabold text-slate-800 text-sm truncate">{c.nama_pesaing}</p>
+                              <a href={c.pautan_gmaps} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 font-bold hover:underline truncate block max-w-full">
+                                Pautan Google Maps
+                              </a>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteCompetitor(c.id_pesaing)}
+                              className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl transition-all border border-rose-100/50"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center bg-white/60 border border-slate-200/30 rounded-2xl">
+                        <p className="text-xs font-semibold text-slate-400">Tiada kafe rujukan didaftarkan. Sila tambah di sebelah kanan.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Form */}
+                  <form onSubmit={handleAddCompetitor} className="space-y-4 bg-white/40 p-5 rounded-2xl border border-slate-200/30">
+                    <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Tambah Kafe Rujukan</h5>
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Nama Kafe (e.g. Kopi & Seni)"
+                        required
+                        value={newCompetitor.nama_pesaing}
+                        onChange={(e) => setNewCompetitor({...newCompetitor, nama_pesaing: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-white/80 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-slate-400 shadow-inner"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Pautan Google Maps Cawangan"
+                        required
+                        value={newCompetitor.pautan_gmaps}
+                        onChange={(e) => setNewCompetitor({...newCompetitor, pautan_gmaps: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-white/80 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-slate-400 shadow-inner"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={addingCompetitor}
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-xl font-extrabold text-[10px] uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer shadow-md shadow-slate-900/5 flex items-center justify-center gap-1.5"
+                    >
+                      {addingCompetitor && <RefreshCw size={12} className="animate-spin" />}
+                      <span>Simpan Kafe</span>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Trending Hashtags */}
+            <div className="glass-light rounded-3xl p-6 border border-slate-100/60 shadow-sm">
+              <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                <span className="text-blue-500">#</span> Hashtag Trending di Kawasan Anda
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mt-1 mb-6">Trend media sosial dan interaksi dalam pasaran F&B tempatan (Data Dinamik)</p>
+              
+              {competitorTrends.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {competitorTrends.flatMap((item: any) => {
+                    if (!item.tanda_pagar_popular) return [];
+                    return item.tanda_pagar_popular.split(",").map((s: string) => s.trim());
+                  })
+                  .filter((v, i, a) => a.indexOf(v) === i) // Unique tags
+                  .slice(0, 6)
+                  .map((tag, idx) => {
+                    const related = competitorTrends.filter((item: any) => item.tanda_pagar_popular?.includes(tag));
+                    const totalCount = related.reduce((sum, item) => sum + (item.bilangan_sebutan || 0), 0);
+                    const rawGrowth = related[0]?.peratus_pertumbuhan;
+                    const growth = rawGrowth !== undefined ? `+${rawGrowth}%` : "+10%";
+                    return (
+                      <div key={idx} className="p-5 rounded-2xl bg-gradient-to-r from-indigo-50/20 to-white border border-indigo-100/40 spring-hover cursor-pointer flex justify-between items-start">
+                        <div>
+                          <h4 className="font-black text-indigo-700 text-base">{tag}</h4>
+                          <p className="text-xs text-slate-400 mt-1 font-semibold">{totalCount} sebutan minggu ini</p>
+                        </div>
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-black tracking-wider bg-emerald-50 border-emerald-100 text-emerald-600">
+                          {growth}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-8 text-center bg-white/30 rounded-2xl border border-slate-100">
+                  <p className="text-sm font-semibold text-slate-500">Tiada hashtag dikesan. Sila jalankan analisis pesaing di atas.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Menu Opportunities */}
+            <div className="glass-light rounded-3xl p-6 border border-slate-100/60 shadow-sm">
+              <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                <TrendingUp className="text-emerald-500 w-5 h-5" /> Temui Peluang Menu Baru
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mt-1 mb-6">Berdasarkan perbualan sosial umum dan isyarat permintaan</p>
+              
+              {aggregatedTrends.length > 0 ? (
+                <div className="space-y-4">
+                  {aggregatedTrends.map((item, idx) => {
+                    const growthNum = item.peratus_pertumbuhan;
+                    const status = growthNum > 30 ? "Permintaan Tinggi" : "Sedang Meningkat";
+                    const sentiment = growthNum > 20 ? "Sangat Positif" : "Positif";
+                    return (
+                      <div key={idx} className="p-5 rounded-2xl bg-white border border-slate-100/60 flex flex-col sm:flex-row gap-4 sm:items-center justify-between spring-hover">
+                        <div className="flex gap-4 items-center">
+                          <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100/50 text-orange-500 flex items-center justify-center shrink-0 shadow-sm">
+                            <Utensils className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-black text-slate-800 text-base flex flex-wrap items-center gap-2">
+                              {item.kata_kunci}
+                              <span className={`text-[9px] uppercase tracking-widest font-black px-2 py-0.5 rounded-md ${
+                                status === 'Permintaan Tinggi' ? 'bg-rose-50 border border-rose-100 text-rose-600' :
+                                'bg-blue-50 border border-blue-100 text-blue-600'
+                              }`}>
+                                {status}
+                              </span>
+                            </h4>
+                          </div>
+                        </div>
+                        <div className="flex sm:flex-col gap-4 sm:gap-1 text-right sm:items-end shrink-0 mt-3 sm:mt-0 pt-3 sm:pt-0 border-t border-slate-100 sm:border-t-0">
+                          <p className="text-xs text-slate-400 font-bold mono-accent">{item.bilangan_sebutan} sebutan keseluruhan</p>
+                          <p className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-100/60 px-2 py-0.5 rounded-lg w-fit">{sentiment}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-8 text-center bg-white/30 rounded-2xl border border-slate-100">
+                  <p className="text-sm font-semibold text-slate-500">Tiada peluang menu dikesan. Sila tambah pesaing di panel urus pesaing terlebih dahulu.</p>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

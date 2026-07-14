@@ -267,3 +267,75 @@ def get_topic_drilldown(premise_id: int, topic: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Drilldown failed: {e}")
+
+from pydantic import BaseModel
+from typing import Optional
+
+class PesaingCreate(BaseModel):
+    id_premis: int
+    nama_pesaing: str
+    pautan_gmaps: str
+
+@router.get("/pesaing/{premise_id}")
+def get_pesaing(premise_id: int):
+    try:
+        res = supabase.table("tbl_pesaing").select("*").eq("id_premis", premise_id).execute()
+        return res.data or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/pesaing")
+def add_pesaing(request: PesaingCreate):
+    try:
+        res = supabase.table("tbl_pesaing").insert({
+            "id_premis": request.id_premis,
+            "nama_pesaing": request.nama_pesaing,
+            "pautan_gmaps": request.pautan_gmaps
+        }).execute()
+        if not res.data:
+            raise HTTPException(status_code=500, detail="Failed to add competitor")
+        return res.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/pesaing/{id_pesaing}")
+def delete_pesaing(id_pesaing: int):
+    try:
+        res = supabase.table("tbl_pesaing").delete().eq("id_pesaing", id_pesaing).execute()
+        return {"status": "success", "message": "Competitor deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/competitors/{premise_id}")
+def get_competitor_trends(premise_id: int):
+    try:
+        premis_res = supabase.table("tbl_premis").select("id_pengurus").eq("id_premis", premise_id).execute()
+        id_pengurus = None
+        if premis_res.data:
+            id_pengurus = premis_res.data[0].get("id_pengurus")
+            
+        trends = []
+        if id_pengurus:
+            trends_res = supabase.table("tbl_trend_industri").select("*").eq("id_pengurus", id_pengurus).execute()
+            trends = trends_res.data or []
+            
+        if not trends:
+            pesaing_res = supabase.table("tbl_pesaing").select("id_pesaing").eq("id_premis", premise_id).execute()
+            if pesaing_res.data:
+                from services.competitor_scraper import scrape_and_analyze_competitors
+                scrape_and_analyze_competitors(premise_id)
+                trends_res = supabase.table("tbl_trend_industri").select("*").eq("id_pengurus", id_pengurus).execute()
+                trends = trends_res.data or []
+                
+        return trends
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/competitors/scrape/{premise_id}")
+def trigger_competitor_scrape(premise_id: int):
+    try:
+        from services.competitor_scraper import scrape_and_analyze_competitors
+        result = scrape_and_analyze_competitors(premise_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
