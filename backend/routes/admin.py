@@ -22,9 +22,9 @@ def login(request: LoginRequest):
         # Get id_premis from the role-specific table
         id_premis = None
         if peranan == "Pengurus":
-            premis_res = supabase.table("tbl_premis").select("id_premis").eq("id_pengurus", id_pengguna).execute()
-            if premis_res.data:
-                id_premis = premis_res.data[0]["id_premis"]
+            role_res = supabase.table("tbl_pengurus").select("id_premis").eq("id_pengguna", id_pengguna).execute()
+            if role_res.data:
+                id_premis = role_res.data[0].get("id_premis")
         elif peranan == "Staf Operasi":
             staf_res = supabase.table("tbl_staf_operasi").select("id_premis").eq("id_pengguna", id_pengguna).execute()
             if staf_res.data:
@@ -63,17 +63,17 @@ def register_premise(request: AccountRegisterRequest):
         id_premis = None
         new_kod_perniagaan = None
         
-        if request.peranan == "Staf Operasi":
-            if not request.kod_perniagaan:
-                raise HTTPException(status_code=400, detail="Kod Perniagaan diperlukan untuk Staf Operasi.")
-                
+        # Check if they are joining an existing premise (either Manager or Staff)
+        if request.kod_perniagaan:
             # Verify Kod Perniagaan exists
             premise_check = supabase.table("tbl_premis").select("id_premis").eq("kod_perniagaan", request.kod_perniagaan).execute()
             if not premise_check.data:
                 raise HTTPException(status_code=404, detail="Kod Perniagaan tidak sah atau tidak dijumpai.")
             id_premis = premise_check.data[0]["id_premis"]
+        elif request.peranan == "Staf Operasi":
+            raise HTTPException(status_code=400, detail="Kod Perniagaan diperlukan untuk Staf Operasi.")
         else:
-            # Generate a 6-character unique code for Pengurus
+            # Generate a 6-character unique code for Pengurus registering a new premise
             new_kod_perniagaan = str(uuid.uuid4()).split("-")[0].upper()
 
         # 1. Insert Base User Profile into tbl_pengguna
@@ -98,7 +98,8 @@ def register_premise(request: AccountRegisterRequest):
         if request.no_telefon:
             role_data["no_telefon"] = request.no_telefon
             
-        if request.peranan == "Staf Operasi":
+        # Set id_premis if it was found (i.e. joining existing premise)
+        if id_premis is not None:
             role_data["id_premis"] = id_premis
             
         user_response = supabase.table(user_table).insert(role_data).execute()
@@ -106,9 +107,9 @@ def register_premise(request: AccountRegisterRequest):
         if not user_response.data:
             raise HTTPException(status_code=400, detail=f"Failed to register user to {user_table}")
 
-        # 2. Insert Premise if Pengurus
+        # 3. Insert Premise if Pengurus and creating a new one
         premise_response_data = None
-        if request.peranan == "Pengurus":
+        if request.peranan == "Pengurus" and id_premis is None:
             medsos_json = json.dumps([m.model_dump() for m in request.pautan_medsos]) if request.pautan_medsos else None
             
             premise_data = {
@@ -125,11 +126,16 @@ def register_premise(request: AccountRegisterRequest):
             if not premise_response.data:
                 raise HTTPException(status_code=400, detail="Failed to register premise")
             premise_response_data = premise_response.data[0]
+            new_id_premis = premise_response_data["id_premis"]
+            
+            # Now link the manager to this new premise
+            supabase.table("tbl_pengurus").update({"id_premis": new_id_premis}).eq("id_pengguna", user_id).execute()
+            id_premis = new_id_premis
             
         return {
-            "user": user_response.data[0],
+            "user": {**user_response.data[0], "id_premis": id_premis},
             "premise": premise_response_data,
-            "kod_perniagaan": new_kod_perniagaan
+            "kod_perniagaan": new_kod_perniagaan or request.kod_perniagaan
         }
     except HTTPException as he:
         raise he
@@ -152,13 +158,15 @@ def get_user_profile(id_pengguna: int):
         premis = None
         
         if peranan == "Pengurus":
-            role_res = supabase.table("tbl_pengurus").select("no_telefon").eq("id_pengguna", id_pengguna).execute()
+            role_res = supabase.table("tbl_pengurus").select("no_telefon, id_premis").eq("id_pengguna", id_pengguna).execute()
             if role_res.data:
                 no_telefon = role_res.data[0].get("no_telefon") or ""
+                id_premis = role_res.data[0].get("id_premis")
                 
-            premis_res = supabase.table("tbl_premis").select("nama_premis, alamat_premis, id_premis, kod_perniagaan").eq("id_pengurus", id_pengguna).execute()
-            if premis_res.data:
-                premis = premis_res.data[0]
+                if id_premis:
+                    premis_res = supabase.table("tbl_premis").select("nama_premis, alamat_premis, id_premis, kod_perniagaan").eq("id_premis", id_premis).execute()
+                    if premis_res.data:
+                        premis = premis_res.data[0]
                 
         elif peranan == "Staf Operasi":
             role_res = supabase.table("tbl_staf_operasi").select("no_telefon, id_premis").eq("id_pengguna", id_pengguna).execute()
