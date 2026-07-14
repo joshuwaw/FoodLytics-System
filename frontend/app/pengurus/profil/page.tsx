@@ -29,9 +29,18 @@ export default function PengurusProfilPage() {
     alamat_premis: ""
   });
 
+  // Co-manager management states
+  const [newManager, setNewManager] = useState({
+    nama_penuh: "",
+    emel: "",
+    no_telefon: "",
+    kata_laluan: ""
+  });
+  const [addingManager, setAddingManager] = useState(false);
+
   // SWR Fetcher
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
-  
+
   const { data: profile, isLoading, mutate } = useSWR(
     user?.id_pengguna ? `${API_URL}/admin/profile/${user.id_pengguna}` : null,
     fetcher,
@@ -46,6 +55,11 @@ export default function PengurusProfilPage() {
         });
       }
     }
+  );
+
+  const { data: managers, mutate: mutateManagers } = useSWR(
+    profile?.premis?.id_premis ? `${API_URL}/admin/premises/${profile.premis.id_premis}/managers` : null,
+    fetcher
   );
 
   useEffect(() => {
@@ -93,6 +107,36 @@ export default function PengurusProfilPage() {
       toast.error("Ralat rangkaian.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAddManager = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile?.premis?.id_premis) return;
+    
+    setAddingManager(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/premises/add-manager`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_premis: profile.premis.id_premis,
+          ...newManager
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Rakan pengurus berjaya didaftarkan!");
+        setNewManager({ nama_penuh: "", emel: "", no_telefon: "", kata_laluan: "" });
+        mutateManagers(); // Refresh managers list
+      } else {
+        toast.error(data.detail || "Gagal menambah pengurus.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Ralat rangkaian.");
+    } finally {
+      setAddingManager(false);
     }
   };
 
@@ -333,7 +377,99 @@ export default function PengurusProfilPage() {
           </div>
         </div>
       </div>
-      </div>
+
+      {/* Team / Manager Management Section */}
+      {profile?.premis?.id_premis && (
+        <div className="glass-light rounded-[2.5rem] border border-white/50 p-8 shadow-xl shadow-slate-200/5 mt-8 animate-in fade-in duration-500 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-bl-[100px] -z-10" />
+          
+          <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100/50 flex items-center justify-center shadow-sm">
+              <UserCircle className="w-5 h-5 text-orange-500" />
+            </div>
+            Pengurusan Rakan Kongsi & Pengurus (Team Management)
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* List of active managers */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-4">Pengurus Aktif Cawangan</h3>
+              {managers && managers.length > 0 ? (
+                <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                  {managers.map((m: any) => (
+                    <div key={m.id_pengguna} className="p-5 bg-white/60 backdrop-blur-md border border-slate-200/30 rounded-2xl flex justify-between items-center transition-all hover:border-slate-300/50">
+                      <div>
+                        <p className="font-extrabold text-slate-800 text-sm">{m.nama}</p>
+                        <p className="text-xs text-slate-500 font-semibold">{m.emel}</p>
+                        {m.no_telefon && <p className="text-xs text-slate-400 mt-1 font-semibold">{m.no_telefon}</p>}
+                      </div>
+                      <div className="px-3 py-1 bg-orange-50 text-orange-500 border border-orange-100 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                        Pengurus
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center bg-white/30 rounded-2xl border border-slate-100">
+                  <p className="text-sm font-semibold text-slate-500">Tiada pengurus lain didaftarkan.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Form to add a new manager */}
+            <form onSubmit={handleAddManager} className="space-y-4 bg-white/30 p-6 rounded-3xl border border-slate-200/20 backdrop-blur-sm">
+              <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-2">Tambah Pengurus Baharu</h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Nama Penuh"
+                  required
+                  value={newManager.nama_penuh}
+                  onChange={(e) => setNewManager({...newManager, nama_penuh: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/50 border border-slate-200/50 rounded-xl text-xs font-bold outline-none focus:border-orange-500 transition-all shadow-inner"
+                />
+                
+                <input
+                  type="email"
+                  placeholder="E-mel Rasmi"
+                  required
+                  value={newManager.emel}
+                  onChange={(e) => setNewManager({...newManager, emel: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/50 border border-slate-200/50 rounded-xl text-xs font-bold outline-none focus:border-orange-500 transition-all shadow-inner"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Nombor Telefon"
+                  value={newManager.no_telefon}
+                  onChange={(e) => setNewManager({...newManager, no_telefon: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/50 border border-slate-200/50 rounded-xl text-xs font-bold outline-none focus:border-orange-500 transition-all shadow-inner"
+                />
+
+                <input
+                  type="password"
+                  placeholder="Kata Laluan"
+                  required
+                  value={newManager.kata_laluan}
+                  onChange={(e) => setNewManager({...newManager, kata_laluan: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/50 border border-slate-200/50 rounded-xl text-xs font-bold outline-none focus:border-orange-500 transition-all shadow-inner"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={addingManager}
+                className="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white py-3.5 rounded-xl font-extrabold transition-all shadow-md shadow-slate-900/10 active:scale-98 text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+              >
+                {addingManager && <Loader2 className="w-4 h-4 animate-spin" />}
+                Tambah Rakan Pengurus
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
 
       {/* Crop Modal */}
       {cropModalOpen && imageToCrop && (

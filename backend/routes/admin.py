@@ -229,3 +229,76 @@ def update_user_profile(id_pengguna: int, payload: ProfilUpdate):
         return {"message": "Profile updated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+class AddManagerRequest(BaseModel):
+    id_premis: int
+    nama_penuh: str
+    emel: str
+    kata_laluan: str
+    no_telefon: Optional[str] = None
+
+@router.get("/premises/{premise_id}/managers")
+def get_premise_managers(premise_id: int):
+    try:
+        # 1. Fetch all managers for this premise
+        managers_res = supabase.table("tbl_pengurus").select("id_pengguna, no_telefon, tarikh_daftar").eq("id_premis", premise_id).execute()
+        if not managers_res.data:
+            return []
+            
+        # 2. Get user details from tbl_pengguna
+        user_ids = [m["id_pengguna"] for m in managers_res.data]
+        users_res = supabase.table("tbl_pengguna").select("id_pengguna, nama, emel, peranan").in_("id_pengguna", user_ids).execute()
+        
+        user_map = {u["id_pengguna"]: u for u in users_res.data}
+        
+        result = []
+        for m in managers_res.data:
+            u_info = user_map.get(m["id_pengguna"], {})
+            result.append({
+                "id_pengguna": m["id_pengguna"],
+                "nama": u_info.get("nama", "Tiada Nama"),
+                "emel": u_info.get("emel", ""),
+                "no_telefon": m.get("no_telefon") or "",
+                "tarikh_daftar": m.get("tarikh_daftar")
+            })
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@router.post("/premises/add-manager")
+def add_premise_manager(request: AddManagerRequest):
+    try:
+        # 1. Check if email is already in use
+        email_check = supabase.table("tbl_pengguna").select("id_pengguna").eq("emel", request.emel).execute()
+        if email_check.data:
+            raise HTTPException(status_code=400, detail="E-mel sudah didaftarkan.")
+            
+        # 2. Insert into tbl_pengguna
+        pengguna_data = {
+            "nama": request.nama_penuh,
+            "emel": request.emel,
+            "kata_laluan": request.kata_laluan,
+            "peranan": "Pengurus"
+        }
+        pengguna_res = supabase.table("tbl_pengguna").insert(pengguna_data).execute()
+        if not pengguna_res.data:
+            raise HTTPException(status_code=500, detail="Failed to create user account.")
+            
+        new_user_id = pengguna_res.data[0]["id_pengguna"]
+        
+        # 3. Insert into tbl_pengurus
+        pengurus_data = {
+            "id_pengguna": new_user_id,
+            "id_premis": request.id_premis,
+            "no_telefon": request.no_telefon
+        }
+        pengurus_res = supabase.table("tbl_pengurus").insert(pengurus_data).execute()
+        if not pengurus_res.data:
+            supabase.table("tbl_pengguna").delete().eq("id_pengguna", new_user_id).execute()
+            raise HTTPException(status_code=500, detail="Failed to link manager to premise.")
+            
+        return {"message": "Pengurus berjaya ditambah!", "user_id": new_user_id}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

@@ -8,7 +8,6 @@ export default function RegisterPremise() {
   const router = useRouter();
   const [peranan, setPeranan] = useState("Pengurus");
   const [namaPenuh, setNamaPenuh] = useState("");
-  const [pengurusTipe, setPengurusTipe] = useState<"daftar" | "sertai">("daftar");
   const [emel, setEmel] = useState("");
   const [noTelefon, setNoTelefon] = useState("");
   const [namaPremis, setNamaPremis] = useState("");
@@ -54,11 +53,11 @@ export default function RegisterPremise() {
         emel,
         no_telefon: noTelefon,
         kata_laluan: kataLaluan,
-        nama_premis: (peranan === "Pengurus" && pengurusTipe === "daftar") ? namaPremis : undefined,
-        alamat_premis: (peranan === "Pengurus" && pengurusTipe === "daftar") ? alamatPremis : undefined,
-        pautan_gmaps: (peranan === "Pengurus" && pengurusTipe === "daftar") ? pautanGmaps : undefined,
-        pautan_medsos: (peranan === "Pengurus" && pengurusTipe === "daftar") ? medsos.filter(m => m.platform && m.url) : undefined,
-        kod_perniagaan: (peranan === "Staf Operasi" || (peranan === "Pengurus" && pengurusTipe === "sertai")) ? kodPerniagaan : undefined,
+        nama_premis: peranan === "Pengurus" ? namaPremis : undefined,
+        alamat_premis: peranan === "Pengurus" ? alamatPremis : undefined,
+        pautan_gmaps: peranan === "Pengurus" ? pautanGmaps : undefined,
+        pautan_medsos: peranan === "Pengurus" ? medsos.filter(m => m.platform && m.url) : undefined,
+        kod_perniagaan: peranan === "Staf Operasi" ? kodPerniagaan : undefined,
       };
 
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
@@ -262,135 +261,91 @@ export default function RegisterPremise() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6 animate-in fade-in duration-500">
-                  {/* Manager Option Toggle */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-300 ml-1 drop-shadow-sm">Aliran Premis Pengurus</label>
-                    <div className="grid grid-cols-2 gap-3 p-1.5 bg-black/40 border border-white/10 rounded-[1.25rem]">
-                      <button
-                        type="button"
-                        onClick={() => setPengurusTipe("daftar")}
-                        className={`py-2.5 rounded-lg transition-all duration-300 font-bold text-xs ${pengurusTipe === "daftar" ? "bg-orange-500/10 border border-orange-500/25 text-orange-400" : "text-slate-400 border border-transparent hover:text-white"}`}
-                      >
-                        Daftar Premis Baharu
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPengurusTipe("sertai")}
-                        className={`py-2.5 rounded-lg transition-all duration-300 font-bold text-xs ${pengurusTipe === "sertai" ? "bg-orange-500/10 border border-orange-500/25 text-orange-400" : "text-slate-400 border border-transparent hover:text-white"}`}
-                      >
-                        Sertai Premis Sedia Ada
-                      </button>
-                    </div>
-                  </div>
+                <div className="space-y-5 bg-black/20 p-6 rounded-[2rem] border border-white/10 animate-in fade-in duration-500">
+                  <h3 className="text-xs font-black text-orange-400 uppercase tracking-widest flex items-center gap-2 drop-shadow-sm">
+                    <ArrowRight className="w-4 h-4" /> Info Premis & Perniagaan
+                  </h3>
 
-                  {pengurusTipe === "sertai" ? (
-                    <div className="p-6 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-[0_0_30px_rgba(249,115,22,0.3)] animate-in fade-in zoom-in-95 duration-500 relative overflow-hidden">
-                      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
-                      <div className="flex items-center gap-5 relative z-10">
-                        <div className="p-4 bg-white/20 rounded-xl backdrop-blur-md">
-                          <Building2 className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <label className="block text-[11px] font-black uppercase tracking-wider opacity-90 mb-1.5 drop-shadow-md">Kod Akses Perniagaan</label>
-                          <input
-                            className="bg-transparent border-b-2 border-white/30 focus:border-white outline-none w-full py-2 font-black text-xl tracking-widest placeholder:text-white/50 transition-colors drop-shadow"
-                            placeholder="e.g. UKM-001"
-                            value={kodPerniagaan}
-                            onChange={(e) => setKodPerniagaan(e.target.value)}
-                            required={peranan === "Pengurus" && pengurusTipe === "sertai"}
-                          />
-                        </div>
+                  <div className="space-y-4">
+                    <div className="relative group">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                      <input
+                        type="text"
+                        placeholder="Nama Kafe / Restoran"
+                        value={namaPremis}
+                        onChange={(e) => setNamaPremis(e.target.value)}
+                        required={peranan === "Pengurus"}
+                        className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all text-sm font-semibold shadow-inner"
+                      />
+                    </div>
+
+                    <div className="relative group">
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                      <input
+                        type="text"
+                        placeholder="Alamat Lokasi Kafe"
+                        value={alamatPremis}
+                        onChange={(e) => setAlamatPremis(e.target.value)}
+                        required={peranan === "Pengurus"}
+                        className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all text-sm font-semibold shadow-inner"
+                      />
+                    </div>
+
+                    <div className="relative group">
+                      <Map className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                      <input
+                        type="text"
+                        placeholder="Pautan Google Maps"
+                        value={pautanGmaps}
+                        onChange={(e) => setPautanGmaps(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all text-sm font-semibold shadow-inner"
+                      />
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-xs font-black uppercase text-slate-300 tracking-widest drop-shadow-sm">Integrasi Media Sosial</span>
+                        <button
+                          type="button"
+                          onClick={handleAddMedsos}
+                          className="px-3 py-1.5 bg-white/5 border border-white/10 text-orange-400 rounded-xl hover:bg-white/10 hover:border-orange-500/50 transition-all font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Tambah Pautan
+                        </button>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-5 bg-black/20 p-6 rounded-[2rem] border border-white/10">
-                      <h3 className="text-xs font-black text-orange-400 uppercase tracking-widest flex items-center gap-2 drop-shadow-sm">
-                        <ArrowRight className="w-4 h-4" /> Info Premis & Perniagaan
-                      </h3>
 
-                      <div className="space-y-4">
-                        <div className="relative group">
-                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                      {medsos.map((item, i) => (
+                        <div key={i} className="flex gap-3 mb-3 animate-in fade-in slide-in-from-right-2">
                           <input
                             type="text"
-                            placeholder="Nama Kafe / Restoran"
-                            value={namaPremis}
-                            onChange={(e) => setNamaPremis(e.target.value)}
-                            required={peranan === "Pengurus" && pengurusTipe === "daftar"}
-                            className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all text-sm font-semibold shadow-inner"
+                            placeholder="IG / FB"
+                            value={item.platform}
+                            onChange={(e) => handleUpdateMedsos(i, 'platform', e.target.value)}
+                            className="w-24 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-sm font-bold shadow-inner text-center"
                           />
-                        </div>
-
-                        <div className="relative group">
-                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
-                          <input
-                            type="text"
-                            placeholder="Alamat Lokasi Kafe"
-                            value={alamatPremis}
-                            onChange={(e) => setAlamatPremis(e.target.value)}
-                            required={peranan === "Pengurus" && pengurusTipe === "daftar"}
-                            className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all text-sm font-semibold shadow-inner"
-                          />
-                        </div>
-
-                        <div className="relative group">
-                          <Map className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
-                          <input
-                            type="text"
-                            placeholder="Pautan Google Maps"
-                            value={pautanGmaps}
-                            onChange={(e) => setPautanGmaps(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all text-sm font-semibold shadow-inner"
-                          />
-                        </div>
-
-                        <div className="pt-4 border-t border-white/10">
-                          <div className="flex justify-between items-center mb-4">
-                            <span className="text-xs font-black uppercase text-slate-300 tracking-widest drop-shadow-sm">Integrasi Media Sosial</span>
+                          <div className="relative flex-1 group">
+                            <Share2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
+                            <input
+                              type="text"
+                              placeholder="Pautan URL Rasmi"
+                              value={item.url}
+                              onChange={(e) => handleUpdateMedsos(i, 'url', e.target.value)}
+                              className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-sm font-semibold shadow-inner"
+                            />
+                          </div>
+                          {medsos.length > 1 && (
                             <button
                               type="button"
-                              onClick={handleAddMedsos}
-                              className="px-3 py-1.5 bg-white/5 border border-white/10 text-orange-400 rounded-xl hover:bg-white/10 hover:border-orange-500/50 transition-all font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                              onClick={() => handleRemoveMedsos(i)}
+                              className="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 transition-all shrink-0 shadow-sm"
                             >
-                              <Plus className="w-3.5 h-3.5" /> Tambah Pautan
+                              <X className="w-5 h-5" />
                             </button>
-                          </div>
-
-                          {medsos.map((item, i) => (
-                            <div key={i} className="flex gap-3 mb-3 animate-in fade-in slide-in-from-right-2">
-                              <input
-                                type="text"
-                                placeholder="IG / FB"
-                                value={item.platform}
-                                onChange={(e) => handleUpdateMedsos(i, 'platform', e.target.value)}
-                                className="w-24 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-sm font-bold shadow-inner text-center"
-                              />
-                              <div className="relative flex-1 group">
-                                <Share2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
-                                <input
-                                  type="text"
-                                  placeholder="Pautan URL Rasmi"
-                                  value={item.url}
-                                  onChange={(e) => handleUpdateMedsos(i, 'url', e.target.value)}
-                                  className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-sm font-semibold shadow-inner"
-                                />
-                              </div>
-                              {medsos.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveMedsos(i)}
-                                  className="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 transition-all shrink-0 shadow-sm"
-                                >
-                                  <X className="w-5 h-5" />
-                                </button>
-                              )}
-                            </div>
-                          ))}
+                          )}
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
 
