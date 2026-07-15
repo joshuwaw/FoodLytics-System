@@ -60,9 +60,19 @@ const formatIsu = (text: string) => {
   const lines = text.split(/\r?\n|(?=\d\.\s*(?:Mengapa|Kenapa|Bagaimana|Siapa|Bila|Apa))/g);
   const filteredLines = lines.filter(line => line.trim()).slice(0, 5);
   return (
-    <div className="space-y-2 text-xs md:text-sm">
+    <div className="space-y-2.5 text-xs md:text-sm">
       {filteredLines.map((line, i) => {
         const trimmedLine = line.trim();
+        
+        if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•') || trimmedLine.startsWith('*') || trimmedLine.startsWith('')) {
+          const content = trimmedLine.replace(/^[-•*]\s*/, "");
+          return (
+            <div key={i} className="flex items-start gap-2 leading-relaxed">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0 animate-pulse" />
+              <span className="text-slate-600 font-semibold">{content}</span>
+            </div>
+          );
+        }
         
         const qMarkIndex = trimmedLine.indexOf('?');
         if (qMarkIndex !== -1) {
@@ -419,8 +429,12 @@ export default function CadanganPage() {
           <div className="grid gap-6">
             {filteredDrafts.map((draft) => {
               const parts = draft.analisis_punca.split("|||");
-              const isuPendek = parts.length > 1 ? parts[0] : "Isu Dikesan";
+              const rawIsuPendek = parts.length > 1 ? parts[0] : "Isu Dikesan";
               const isuPanjang = parts.length > 1 ? parts[1] : draft.analisis_punca;
+
+              const deptMatch = rawIsuPendek.match(/\[+([^\]]+)\]+/);
+              const department = deptMatch ? deptMatch[1].trim() : "";
+              const isuPendek = rawIsuPendek.replace(/\[+[^\]]+\]+/, "").trim();
 
               return (
               <div key={draft.id_cadangan} className="group relative bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-300 ease-out p-6 mb-4">
@@ -435,8 +449,13 @@ export default function CadanganPage() {
                       <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-500 shadow-inner group-hover:scale-105 transition-transform duration-300">
                         <AlertTriangle className="w-5 h-5 animate-pulse" style={{ animationDuration: '3s' }} />
                       </div>
-                      <h3 className="text-lg font-bold text-slate-800 tracking-tight">
-                        Isu / Peluang: <span className="text-rose-600 font-extrabold">{isuPendek}</span>
+                      <h3 className="text-lg font-bold text-slate-800 tracking-tight flex items-center flex-wrap gap-2">
+                        Isu: <span className="text-rose-600 font-extrabold">{isuPendek}</span>
+                        {department && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs">
+                            {department}
+                          </span>
+                        )}
                       </h3>
                     </div>
                     
@@ -454,7 +473,7 @@ export default function CadanganPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-slate-100/50 rounded-full blur-xl pointer-events-none -mt-4 -mr-4" />
                       <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                         <TrendingUp className="w-3.5 h-3.5 text-slate-400" />
-                        Bukti & Pemerhatian (Evidence)
+                        Bukti & Pemerhatian
                       </h4>
                       {formatIsu(isuPanjang)}
                     </div>
@@ -464,7 +483,7 @@ export default function CadanganPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-100/30 rounded-full blur-xl pointer-events-none -mt-4 -mr-4" />
                       <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                         <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                        Cadangan Tindakan (Recommendations)
+                        Cadangan Tindakan
                       </h4>
                       {formatSaranan(draft.saranan_strategik)}
                     </div>

@@ -130,19 +130,54 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
             texts_formatted = "\n- ".join(texts_list) if texts_list else "(Tiada teks spesifik dikesan)"
             
             # Enterprise Problem-Evidence-Recommendation Prompt
-            prompt = f"""Sebagai Penganalisis Operasi Restoran Gred-Enterpris, jalankan analisis ke atas aduan pelanggan mengenai '{clean_label}' dalam Bahasa Melayu.
+            prompt = f"""Sebagai Penganalisis Operasi Restoran Gred-Enterpris, jalankan analisis ke atas aduan pelanggan mengenai '{clean_label}' dalam Bahasa Melayu Malaysia (Standard Malay).
 
 Ulasan Pelanggan:
 - {texts_formatted}
 
-Sila berikan jawapan anda dalam format JSON yang sah (valid JSON) dengan kunci berikut SAHAJA. JANGAN letak sebarang teks penjelasan di luar JSON. Tulis keseluruhan kandungan di dalam Bahasa Melayu.
+Sila berikan jawapan anda dalam format JSON yang sah (valid JSON) dengan kunci berikut SAHAJA. JANGAN letak sebarang teks penjelasan di luar JSON. Tulis keseluruhan kandungan di dalam Bahasa Melayu Malaysia.
+
+SYARAT BAHASA & PRESTASI (PENTING):
+1. JANGAN salin tampal (copy-paste) bulat-bulat ulasan pelanggan dalam bahasa Inggeris/slang. Anda MESTILAH menterjemah dan menghuraikan semula (paraphrase) bukti tersebut ke dalam Bahasa Melayu Malaysia yang kemas dan profesional.
+2. Patuhi kamus terjemahan istilah berikut untuk mengelakkan perkataan Indonesia / salah guna bahasa:
+   - JANGAN guna 'antrian' / 'antrean' -> Guna 'barisan' atau 'sistem giliran'.
+   - JANGAN guna 'karyawan' -> Guna 'staf', 'pekerja' atau 'kru'.
+   - JANGAN guna 'pelayanan' -> Guna 'perkhidmatan' atau 'layanan'.
+   - JANGAN guna 'toilet' -> Guna 'tandas'.
+   - JANGAN guna 'air conditioner' / 'ac' -> Guna 'pendingin hawa'.
+   - JANGAN guna 'kebisingan' -> Guna 'keadaan bising' atau 'suasana bising'.
+   - JANGAN guna 'pemesanan' -> Guna 'pesanan'.
+   - JANGAN guna 'kasir' -> Guna 'juruwang'.
+   - JANGAN guna 'rekomendasi' -> Guna 'cadangan'.
+   - JANGAN guna 'umpan balik' / 'balas balik' -> Guna 'maklum balas'.
+   - JANGAN guna 'evaluasi' -> Guna 'penilaian' atau 'audit'.
+   - JANGAN guna 'pelatihan' -> Guna 'latihan' atau 'taklimat'.
+   - JANGAN guna 'performa' -> Guna 'prestasi' atau 'kualiti kerja'.
+   - JANGAN guna 'mengecek' -> Guna 'memeriksa', 'menyemak' atau 'memantau'.
+   - JANGAN guna 'himbau' / 'dihimbau' -> Guna 'disarankan', 'digalakkan' atau 'diminta'.
+   - JANGAN guna 'antre' -> Guna 'beratur'.
+   - JANGAN guna 'sore' -> Guna 'petang'.
+   - JANGAN guna 'akhir pekan' -> Guna 'hujung minggu'.
+   - JANGAN guna 'nyaman' (untuk tempat/tempat duduk) -> Guna 'selesa'.
+   - JANGAN guna 'parkir' -> Guna 'tempat letak kereta' atau 'kawasan parkir'.
+   - JANGAN guna 'kontinu' / 'terus menerus' -> Guna 'berterusan' atau 'secara berkala'.
+   - JANGAN guna 'manajer' -> Guna 'pengurus'.
+3. Tajuk isu ("problem") MESTILAH menggunakan tatabahasa Melayu yang betul dan bermakna logik.
+   - JANGAN terjemah 'Basic Facilities' / 'Kemudahan Asas' kepada istilah pelik seperti 'Kurang Berasas' atau 'Kurang Berkemudahan'.
+   - JANGAN terjemah secara literal 'No Taste' atau 'Bland' kepada 'Tidak Rasa' atau 'Rasa Rendah'. Gunakan istilah bahasa Melayu standard seperti **'Makanan Tawar / Hambar'** atau **'Makanan Kurang Sedap'**.
+   - JANGAN terjemah 'High Price, Low Value' secara literal kepada 'Harga Meningkat & Rasa Rendah'. Gunakan istilah standard seperti **'Harga Tidak Sepadan Kualiti'** atau **'Harga Menu Terlalu Mahal'**.
+   - Gunakan nama isu sebenar yang ringkas seperti 'Masalah Tandas & Parkir', 'Tandas Kotor', 'Tempat Letak Kereta Terhad', 'Kualiti Makanan Merosot', atau 'Layanan Staf Lambat'.
 
 Format Jawapan:
 {{
-  "problem": "Satu kalimat ringkas mengenalpasti isu utama atau peluang yang disokong oleh ulasan di atas tanpa sebarang spekulasi.",
-  "evidence": "Ringkasan bukti ulasan: sebutkan tema berulang, sentimen pelanggan, kekerapan (jika ada), dan pemerhatian penting secara ringkas (1 perenggan).",
-  "tindakan_staf": "Tindakan praktikal dan spesifik untuk staf operasi (1-2 kalimat).",
-  "tindakan_pengurus": "Tindakan praktikal dan spesifik untuk pengurus cawangan (1-2 kalimat)."
+  "problem": "Satu tajuk isu yang sangat pendek, logik, dan menggunakan BM standard (maksimum 4-5 perkataan, e.g., 'Tandas Kotor & Bau' atau 'Masa Menunggu Lama'). JANGAN letak kurungan [Department] atau [[Department]] di sini.",
+  "evidence": [
+    "Huraian bukti ringkas 1 diterjemah dalam BM standard (e.g., 'Pelanggan terpaksa beratur selama 45 minit pada hujung minggu.')",
+    "Huraian bukti ringkas 2 diterjemah dalam BM standard (e.g., 'Kawasan tempat letak kereta sangat terhad semasa waktu puncak.')",
+    "Huraian bukti ringkas 3 diterjemah dalam BM standard (jika ada, maksimum 12 perkataan)"
+  ],
+  "tindakan_staf": "Tindakan praktikal untuk staf operasi dalam BM standard (1 kalimat).",
+  "tindakan_pengurus": "Tindakan praktikal untuk pengurus cawangan dalam BM standard (1 kalimat)."
 }}
 
 Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
@@ -154,7 +189,7 @@ Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
                 "temperature": 0.3
             }
             
-            punca = f"{clean_label} {dept}|||Isu dikesan daripada {count} aduan. Menjalankan analisis manual..."
+            punca = f"{clean_label} [{dept}]|||• Isu dikesan daripada {count} aduan. Menjalankan analisis manual..."
             saranan = f"{dept} Siasat punca dan lakukan tindakan pembetulan."
             
             attempts = 3
@@ -175,10 +210,16 @@ Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
                             normalized_ai_out = {k.lower().replace(" ", "_"): v for k, v in ai_out.items()}
                             
                             if "problem" in normalized_ai_out and "evidence" in normalized_ai_out:
-                                problem_val = normalized_ai_out.get("problem", "")
-                                evidence_val = normalized_ai_out.get("evidence", "")
+                                problem_val = normalized_ai_out.get("problem", "").strip()
+                                evidence_data = normalized_ai_out.get("evidence", [])
                                 tindakan_staf_val = normalized_ai_out.get("tindakan_staf", "")
                                 tindakan_pengurus_val = normalized_ai_out.get("tindakan_pengurus", "")
+                                
+                                # Format evidence as bullet points separated by newlines
+                                if isinstance(evidence_data, list):
+                                    evidence_val = "\n".join([f"- {str(e).strip()}" for e in evidence_data if str(e).strip()])
+                                else:
+                                    evidence_val = f"- {str(evidence_data).strip()}"
                                 
                                 # Format punca as Problem [Department]|||Evidence
                                 punca = f"{problem_val} [{dept}]|||{evidence_val}"
@@ -205,37 +246,37 @@ Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
                 # Smart Local Fallback based on topic
                 l = clean_label.lower()
                 if "layanan" in l or "pekerja" in l or "pelayan" in l:
-                    punca = f"Kualiti perkhidmatan pelanggan kurang memuaskan akibat staf tidak ramah. [{dept}]|||Buktinya termasuk keluhan berulang tentang staf barisan hadapan yang kurang senyum, tidak memberi salam, atau bersikap dingin semasa melayan pesanan pelanggan."
+                    punca = f"Pelayanan Kurang Ramah [{dept}]|||- Aduan tentang staf barisan hadapan kurang senyum.\n- Pekerja mengabaikan permintaan pelanggan.\n- Nada percakapan kurang mesra di kaunter."
                     saranan = json.dumps({
                         "tindakan_staf": "Mengamalkan budaya 3S (Senyum, Sapa, Salam) semasa berinteraksi dengan setiap pelanggan di kaunter.",
                         "tindakan_pengurus": "Mengadakan taklimat ringkas perkhidmatan pelanggan (SOP Layanan) dan memantau prestasi staf di kaunter."
                     })
                 elif "makanan" in l or "rasa" in l or "kualiti" in l:
-                    punca = f"Kualiti rasa makanan dan minuman kurang konsisten pada waktu puncak. [{dept}]|||Buktinya termasuk aduan pelanggan mengenai hidangan yang sejuk, rasa yang tawar, atau penyediaan makanan yang tidak segar."
+                    punca = f"Kualiti Rasa Tidak Konsisten [{dept}]|||- Hidangan yang disajikan kadangkala sejuk.\n- Rasa makanan tawar semasa waktu puncak.\n- Bahan minuman kurang segar."
                     saranan = json.dumps({
                         "tindakan_staf": "Mematuhi sukatan resipi standard dapur dengan tepat bagi setiap hidangan yang disediakan.",
                         "tindakan_pengurus": "Melakukan pemeriksaan kualiti rawak (QC spot check) sebelum hidangan diserahkan kepada pelanggan."
                     })
                 elif "masa" in l or "lambat" in l or "menunggu" in l:
-                    punca = f"Masa menunggu hidangan terlalu lama semasa waktu puncak operasi. [{dept}]|||Buktinya termasuk aduan pelanggan yang terpaksa menunggu melebihi 25 minit untuk minuman atau hidangan ringkas disediakan."
+                    punca = f"Masa Menunggu Lama [{dept}]|||- Pelanggan terpaksa menunggu melebihi 25 minit.\n- Kelewatan hidangan utama berbanding minuman.\n- Stesen dapur mengalami kesesakan pesanan."
                     saranan = json.dumps({
                         "tindakan_staf": "Menyediakan bahan-bahan masakan kritikal (prep-work) sejam sebelum waktu puncak bermula.",
                         "tindakan_pengurus": "Mengatur pembahagian tugas staf dapur secara spesifik mengikut stesen untuk mempercepatkan penyediaan."
                     })
                 elif "harga" in l or "mahal" in l:
-                    punca = f"Pelanggan merasakan harga hidangan kurang berbaloi dengan saiz hidangan yang diterima. [{dept}]|||Buktinya termasuk sentimen negatif pelanggan mengenai harga menu premium yang dianggap terlalu tinggi berbanding kualiti rasa."
+                    punca = f"Harga Menu Kurang Berbaloi [{dept}]|||- Saiz hidangan kecil berbanding harga.\n- Kos menu premium dianggap terlalu tinggi.\n- Pelanggan mengharapkan kualiti lebih baik."
                     saranan = json.dumps({
                         "tindakan_staf": "Memastikan persembahan hidangan (plating) dilakukan dengan kemas dan premium sebelum disajikan.",
                         "tindakan_pengurus": "Menyemak semula kos bahan mentah (COGS) atau menawarkan set kombo bernilai untuk pelanggan."
                     })
                 elif "bersih" in l or "kotor" in l or "suasana" in l:
-                    punca = f"Kebersihan ruang makan dan kemudahan restoran kurang memuaskan pelanggan. [{dept}]|||Buktinya termasuk maklum balas pelanggan mengenai permukaan meja yang melekit, sampah bertaburan, atau toilet yang tidak dibersihkan."
+                    punca = f"Kebersihan Ruang Makan [{dept}]|||- Permukaan meja melekit dan lambat dibersihkan.\n- Sampah di tong sampah melimpah keluar.\n- Keadaan tandas kurang memuaskan."
                     saranan = json.dumps({
                         "tindakan_staf": "Membersih dan mengelap meja pelanggan serta mengemas kawasan sekeliling setiap kali pelanggan beredar.",
                         "tindakan_pengurus": "Menyediakan senarai semak pembersihan harian premis (meja & tandas) untuk diselia setiap shif kerja."
                     })
                 else:
-                    punca = f"Isu operasi am memerlukan pemantauan konsisten daripada pengurusan. ({clean_label}) [{dept}]|||Buktinya termasuk ulasan am pelanggan mengenai kecekapan operasi harian di premis."
+                    punca = f"Isu Operasi Am [{dept}]|||- Maklum balas umum mengenai aliran kerja kafe.\n- Keperluan pemantauan penyelia yang lebih kerap.\n- Aduan bertumpu kepada kualiti keseluruhan."
                     saranan = json.dumps({
                         "tindakan_staf": "Melaporkan serta-merta sebarang masalah operasi harian kepada pengurus cawangan.",
                         "tindakan_pengurus": "Meneliti punca aduan operasi ini secara langsung di kafe untuk tindakan pembetulan segera."
