@@ -15,15 +15,31 @@ Endpoints:
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from database import supabase
 import datetime
+import time
 
 router = APIRouter()
 
-# Global set to track running AI analyses by premise ID
-running_premis_jobs = set()
-
 @router.get("/status/{premise_id}")
 def get_analysis_status(premise_id: int):
-    is_running = premise_id in running_premis_jobs
+    # Fetch status from database instead of in-memory set
+    premis_res = supabase.table("tbl_premis").select("status_analisis").eq("id_premis", premise_id).execute()
+    status_val = "idle"
+    if premis_res.data:
+        status_val = premis_res.data[0].get("status_analisis") or "idle"
+        
+    is_running = status_val.startswith("running:")
+    
+    # Auto-expire locks older than 5 minutes (300 seconds)
+    if is_running:
+        try:
+            start_time = int(status_val.split(":")[1])
+            if int(time.time()) - start_time >= 300:
+                is_running = False
+                # Revert expired status in DB
+                supabase.table("tbl_premis").update({"status_analisis": "idle"}).eq("id_premis", premise_id).execute()
+        except Exception:
+            pass
+            
     return {"status": "running" if is_running else "idle"}
 
 
@@ -37,13 +53,30 @@ async def trigger_topic_analysis(premise_id: int, background_tasks: BackgroundTa
     Triggers a BERTopic analysis run for the given premise as a background task.
     This prevents the server from hanging during the heavy AI processing.
     """
-    if premise_id in running_premis_jobs:
-        return {
-            "message": "Analisis AI sedang dijalankan di latar belakang.",
-            "status": "processing"
-        }
+    # Fetch current status to check rate limit lock
+    premis_res = supabase.table("tbl_premis").select("status_analisis").eq("id_premis", premise_id).execute()
+    status_val = "idle"
+    if premis_res.data:
+        status_val = premis_res.data[0].get("status_analisis") or "idle"
+        
+    now = int(time.time())
+    
+    # Lock checks
+    if status_val.startswith("running:"):
+        try:
+            start_time = int(status_val.split(":")[1])
+            elapsed = now - start_time
+            if elapsed < 300: # 5 minutes lock
+                remaining = 300 - elapsed
+                return {
+                    "message": f"Analisis AI sedang berjalan. Sila tunggu {remaining} saat sebelum memulakan analisis baru.",
+                    "status": "processing"
+                }
+        except Exception:
+            pass
 
-    running_premis_jobs.add(premise_id)
+    # Acquire lock in DB
+    supabase.table("tbl_premis").update({"status_analisis": f"running:{now}"}).eq("id_premis", premise_id).execute()
 
     def run_analysis_task():
         try:
@@ -59,7 +92,8 @@ async def trigger_topic_analysis(premise_id: int, background_tasks: BackgroundTa
         except Exception as e:
             print(f"[Analytics] Background Topic/Prescriptive pipeline failed: {e}")
         finally:
-            running_premis_jobs.discard(premise_id)
+            # Revert to idle in DB upon completion or failure
+            supabase.table("tbl_premis").update({"status_analisis": "idle"}).eq("id_premis", premise_id).execute()
 
     background_tasks.add_task(run_analysis_task)
     
