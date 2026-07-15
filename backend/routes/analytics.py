@@ -19,10 +19,23 @@ import time
 
 router = APIRouter()
 
+def safe_execute(query_builder, retries=3, delay=0.5):
+    """
+    Executes a Supabase/PostgREST query with retries to handle transient HTTP/connection dropouts.
+    """
+    for i in range(retries):
+        try:
+            return query_builder.execute()
+        except Exception as e:
+            if i == retries - 1:
+                print(f"[DB Error] Executing query failed after {retries} attempts: {e}")
+                raise e
+            time.sleep(delay)
+
 @router.get("/status/{premise_id}")
 def get_analysis_status(premise_id: int):
     # Fetch status from database instead of in-memory set
-    premis_res = supabase.table("tbl_premis").select("status_analisis").eq("id_premis", premise_id).execute()
+    premis_res = safe_execute(supabase.table("tbl_premis").select("status_analisis").eq("id_premis", premise_id))
     status_val = "idle"
     if premis_res.data:
         status_val = premis_res.data[0].get("status_analisis") or "idle"
@@ -36,7 +49,7 @@ def get_analysis_status(premise_id: int):
             if int(time.time()) - start_time >= 300:
                 is_running = False
                 # Revert expired status in DB
-                supabase.table("tbl_premis").update({"status_analisis": "idle"}).eq("id_premis", premise_id).execute()
+                safe_execute(supabase.table("tbl_premis").update({"status_analisis": "idle"}).eq("id_premis", premise_id))
         except Exception:
             pass
             
@@ -54,7 +67,7 @@ async def trigger_topic_analysis(premise_id: int, background_tasks: BackgroundTa
     This prevents the server from hanging during the heavy AI processing.
     """
     # Fetch current status to check rate limit lock
-    premis_res = supabase.table("tbl_premis").select("status_analisis").eq("id_premis", premise_id).execute()
+    premis_res = safe_execute(supabase.table("tbl_premis").select("status_analisis").eq("id_premis", premise_id))
     status_val = "idle"
     if premis_res.data:
         status_val = premis_res.data[0].get("status_analisis") or "idle"
@@ -76,7 +89,7 @@ async def trigger_topic_analysis(premise_id: int, background_tasks: BackgroundTa
             pass
 
     # Acquire lock in DB
-    supabase.table("tbl_premis").update({"status_analisis": f"running:{now}"}).eq("id_premis", premise_id).execute()
+    safe_execute(supabase.table("tbl_premis").update({"status_analisis": f"running:{now}"}).eq("id_premis", premise_id))
 
     def run_analysis_task():
         try:
@@ -93,7 +106,7 @@ async def trigger_topic_analysis(premise_id: int, background_tasks: BackgroundTa
             print(f"[Analytics] Background Topic/Prescriptive pipeline failed: {e}")
         finally:
             # Revert to idle in DB upon completion or failure
-            supabase.table("tbl_premis").update({"status_analisis": "idle"}).eq("id_premis", premise_id).execute()
+            safe_execute(supabase.table("tbl_premis").update({"status_analisis": "idle"}).eq("id_premis", premise_id))
 
     background_tasks.add_task(run_analysis_task)
     
@@ -118,10 +131,11 @@ def get_topics(premise_id: int):
     """
     try:
         # Get all feedback IDs for this premise
-        feedback_res = supabase.table("tbl_maklumbalas") \
-            .select("id_maklum_balas, sumber_platform") \
-            .eq("id_premis", premise_id) \
-            .execute()
+        feedback_res = safe_execute(
+            supabase.table("tbl_maklumbalas")
+            .select("id_maklum_balas, sumber_platform")
+            .eq("id_premis", premise_id)
+        )
         feedbacks_map = {r["id_maklum_balas"]: (r.get("sumber_platform") or "Portal QR") for r in (feedback_res.data or [])}
         feedback_ids = list(feedbacks_map.keys())
 
@@ -129,10 +143,11 @@ def get_topics(premise_id: int):
             return {"premise_id": premise_id, "topics": []}
 
         # Get AI log IDs for these feedbacks
-        enjin_res = supabase.table("tbl_enjin_ai") \
-            .select("id_log_proses, id_maklum_balas") \
-            .in_("id_maklum_balas", feedback_ids) \
-            .execute()
+        enjin_res = safe_execute(
+            supabase.table("tbl_enjin_ai")
+            .select("id_log_proses, id_maklum_balas")
+            .in_("id_maklum_balas", feedback_ids)
+        )
 
         log_to_feedback = {r["id_log_proses"]: r["id_maklum_balas"] for r in (enjin_res.data or [])}
         log_ids = list(log_to_feedback.keys())
@@ -141,10 +156,11 @@ def get_topics(premise_id: int):
             return {"premise_id": premise_id, "topics": []}
 
         # Get all topic records
-        topik_res = supabase.table("tbl_topik") \
-            .select("id_log_proses, label_topik, skor_topik") \
-            .in_("id_log_proses", log_ids) \
-            .execute()
+        topik_res = safe_execute(
+            supabase.table("tbl_topik")
+            .select("id_log_proses, label_topik, skor_topik")
+            .in_("id_log_proses", log_ids)
+        )
         topik_records = topik_res.data or []
 
         if not topik_records:
@@ -156,10 +172,11 @@ def get_topics(premise_id: int):
 
         # Get sentiments for drill-down enrichment
         feedback_ids_with_logs = list(log_to_feedback.values())
-        sentimen_res = supabase.table("tbl_sentimen") \
-            .select("id_maklum_balas, label_sentimen") \
-            .in_("id_maklum_balas", feedback_ids_with_logs) \
-            .execute()
+        sentimen_res = safe_execute(
+            supabase.table("tbl_sentimen")
+            .select("id_maklum_balas, label_sentimen")
+            .in_("id_maklum_balas", feedback_ids_with_logs)
+        )
         sentimen_map = {s["id_maklum_balas"]: s["label_sentimen"] for s in (sentimen_res.data or [])}
 
         # Aggregate by label_topik (cleaning the sentiment suffix like "(Negatif)", "(Positif)", "(Neutral)")
