@@ -68,7 +68,7 @@ def _fetch_google_reviews_from_apify(gmaps_url: str, count: int) -> list[dict]:
     }
     
     try:
-        with httpx.Client(timeout=60.0) as client:
+        with httpx.Client(timeout=10.0) as client:
             response = client.post(url, json=payload)
             response.raise_for_status()
             data = response.json()
@@ -107,7 +107,7 @@ def _fetch_social_mentions_from_apify(medsos_urls: list, count: int) -> list[dic
     }
     
     try:
-        with httpx.Client(timeout=60.0) as client:
+        with httpx.Client(timeout=10.0) as client:
             response = client.post(url, json=payload)
             response.raise_for_status()
             data = response.json()

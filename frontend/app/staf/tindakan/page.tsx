@@ -40,6 +40,27 @@ const formatStaffSaranan = (sarananStr: string) => {
   return cleanStr;
 };
 
+const formatStaffIsu = (text: string) => {
+  const trimmed = text.trim();
+  const cleanText = trimmed.startsWith("- ") ? trimmed.substring(2) : trimmed;
+  const parts = cleanText.split(/\s+-\s+|\s*\n-\s*/g).map(p => p.trim()).filter(Boolean);
+  
+  if (parts.length > 1) {
+    return (
+      <div className="space-y-2 text-xs md:text-sm">
+        {parts.map((part, index) => (
+          <div key={index} className="flex items-start gap-2 leading-relaxed">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0 animate-pulse" />
+            <span className="text-slate-655 font-semibold text-slate-700">{part}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  
+  return <p className="text-sm text-slate-600 leading-relaxed font-semibold">{trimmed}</p>;
+};
+
 export default function ArahanKerjaPage() {
   const { user } = useAuth();
   const [workOrders, setWorkOrders] = useState<Cadangan[]>([]);
@@ -190,8 +211,12 @@ export default function ArahanKerjaPage() {
                       const isSelesai = wo.status_pelaksanaan === "Selesai";
                       
                       const parts = (wo.analisis_punca || "").split("|||");
-                      const isuPendek = parts.length > 1 ? parts[0] : "Isu Dikesan";
+                      const rawIsuPendek = parts.length > 1 ? parts[0] : "Isu Dikesan";
                       const isuPanjang = parts.length > 1 ? parts[1] : wo.analisis_punca;
+
+                      const deptMatch = rawIsuPendek.match(/\[+([^\]]+)\]+/);
+                      const department = deptMatch ? deptMatch[1].trim() : "";
+                      const isuPendek = rawIsuPendek.replace(/\[+[^\]]+\]+/, "").trim();
 
                       return (
                         <div
@@ -208,8 +233,13 @@ export default function ArahanKerjaPage() {
                           
                           {/* Compact Card Content */}
                           <div className="mb-3 flex justify-between items-start pl-2">
-                            <h3 className={`font-black text-base leading-snug ${isSelesai ? 'line-through text-slate-500 font-bold' : 'text-slate-900'}`}>
-                              {isuPendek}
+                            <h3 className={`font-black text-base leading-snug flex flex-wrap items-center gap-2 ${isSelesai ? 'line-through text-slate-500 font-bold' : 'text-slate-900'}`}>
+                              <span>{isuPendek}</span>
+                              {department && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs leading-none">
+                                  {department}
+                                </span>
+                              )}
                             </h3>
                             {wo.jenis_tindakan === "Isu" ? (
                               <AlertTriangle className={`w-5 h-5 shrink-0 ml-2 ${isBaru ? 'text-blue-500' : isProses ? 'text-amber-500' : 'text-slate-400'}`} />
@@ -219,7 +249,9 @@ export default function ArahanKerjaPage() {
                           </div>
                           
                           <div className="mb-4 pl-2 flex-1">
-                            <p className="text-sm text-slate-600 mb-4 leading-relaxed">{isuPanjang}</p>
+                            <div className="text-sm text-slate-600 mb-4 leading-relaxed">
+                              {formatStaffIsu(isuPanjang)}
+                            </div>
                             
                             <div className={`rounded-xl p-3.5 border transition-colors duration-300
                               ${isBaru ? 'bg-blue-50/60 border-blue-100/50 text-blue-950' : ''}

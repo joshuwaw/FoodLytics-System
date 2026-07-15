@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { AlertTriangle, TrendingUp, CheckCircle, XCircle, Send, Loader2, Sparkles, Star, BrainCircuit, Clock } from "lucide-react";
+import { AlertTriangle, TrendingUp, CheckCircle, XCircle, Send, Loader2, Sparkles, Star, BrainCircuit, Clock, RefreshCw } from "lucide-react";
+
+// formatIsu and other helpers remain unchanged ...
 
 interface Cadangan {
   id_cadangan: number;
@@ -14,6 +16,7 @@ interface Cadangan {
   skor_keyakinan: number;
   status_kelulusan: string;
   tarikh_jana: string;
+  status_pelaksanaan?: string;
 }
 
 const formatIsu = (text: string) => {
@@ -345,36 +348,46 @@ export default function CadanganPage() {
         </div>
       )}
 
-      {/* Tab Filter Navigation */}
-      <div className="flex flex-wrap gap-2.5 p-1.5 bg-slate-100/80 border border-slate-200/60 rounded-2xl max-w-2xl backdrop-blur-xs">
-        {[
-          { id: "Draf", label: "Semakan Baru", count: drafts.filter(d => d.status_kelulusan === "Draf").length, color: "text-amber-600 bg-amber-50/80 border-amber-200/50", icon: Clock },
-          { id: "Simpan", label: "Disimpan", count: drafts.filter(d => d.status_kelulusan === "Simpan").length, color: "text-blue-600 bg-blue-50/80 border-blue-200/50", icon: Star },
-          { id: "Lulus", label: "Diluluskan", count: drafts.filter(d => d.status_kelulusan === "Lulus").length, color: "text-emerald-600 bg-emerald-50/80 border-emerald-200/50", icon: Send },
-          { id: "Tolak", label: "Ditolak", count: drafts.filter(d => d.status_kelulusan === "Tolak").length, color: "text-rose-600 bg-rose-50/80 border-rose-200/50", icon: XCircle },
-        ].map(tab => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all duration-300 cursor-pointer border ${
-                isActive 
-                  ? "bg-slate-900 text-white border-slate-900 shadow-md shadow-slate-900/10 scale-[1.02]" 
-                  : "bg-white text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50/50"
-              }`}
-            >
-              <Icon className={`w-4 h-4 ${isActive ? "text-orange-400" : ""}`} />
-              <span>{tab.label}</span>
-              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black border ${
-                isActive ? "bg-slate-800 text-slate-300 border-slate-700" : tab.color
-              }`}>
-                {tab.count}
-              </span>
-            </button>
-          );
-        })}
+      {/* Tab Filter Navigation and Refresh Status Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-2.5 p-1.5 bg-slate-100/80 border border-slate-200/60 rounded-2xl max-w-2xl backdrop-blur-xs flex-1">
+          {[
+            { id: "Draf", label: "Semakan Baru", count: drafts.filter(d => d.status_kelulusan === "Draf").length, color: "text-amber-600 bg-amber-50/80 border-amber-200/50", icon: Clock },
+            { id: "Simpan", label: "Disimpan", count: drafts.filter(d => d.status_kelulusan === "Simpan").length, color: "text-blue-600 bg-blue-50/80 border-blue-200/50", icon: Star },
+            { id: "Lulus", label: "Diluluskan", count: drafts.filter(d => d.status_kelulusan === "Lulus").length, color: "text-emerald-600 bg-emerald-50/80 border-emerald-200/50", icon: Send },
+            { id: "Tolak", label: "Ditolak", count: drafts.filter(d => d.status_kelulusan === "Tolak").length, color: "text-rose-600 bg-rose-50/80 border-rose-200/50", icon: XCircle },
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all duration-300 cursor-pointer border ${
+                  isActive 
+                    ? "bg-slate-900 text-white border-slate-900 shadow-md shadow-slate-900/10 scale-[1.02]" 
+                    : "bg-white text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50/50"
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? "text-orange-400" : ""}`} />
+                <span>{tab.label}</span>
+                <span className={`px-2 py-0.5 rounded-md text-[10px] font-black border ${
+                  isActive ? "bg-slate-800 text-slate-300 border-slate-700" : tab.color
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={fetchDrafts}
+          className="flex items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs md:text-sm transition-all duration-200 shadow-xs cursor-pointer active:scale-95 shrink-0 self-start sm:self-auto"
+        >
+          <RefreshCw className="w-4 h-4 text-slate-500" />
+          <span>Kemaskini Status</span>
+        </button>
       </div>
 
       {/* Drafts Section */}
@@ -499,34 +512,56 @@ export default function CadanganPage() {
                       <span>⚡ Log ID: LOG_{draft.id_log_proses}</span>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-end gap-3">
-                      <button
-                        onClick={() => handleAction(draft.id_cadangan, "reject")}
-                        disabled={actionLoading === draft.id_cadangan}
-                        className="px-4 py-2.5 rounded-xl font-bold text-xs text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 hover:border-red-200 flex items-center gap-2 shadow-xs transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
-                      >
-                        {actionLoading === draft.id_cadangan ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
-                        Tolak
-                      </button>
+                    {/* Actions and Status Badges */}
+                    <div className="flex items-center justify-end gap-3 flex-wrap">
+                      {draft.status_pelaksanaan === "Selesai" ? (
+                        <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm shadow-emerald-500/5 animate-in fade-in duration-300">
+                          <CheckCircle className="w-4 h-4 text-emerald-500 animate-bounce" />
+                          Tindakan Selesai oleh Staf
+                        </span>
+                      ) : (
+                        <>
+                          {draft.status_kelulusan === "Lulus" && (
+                            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 mr-2">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
+                              Dalam Pelaksanaan Staf
+                            </span>
+                          )}
 
-                      <button
-                        onClick={() => handleAction(draft.id_cadangan, "save")}
-                        disabled={actionLoading === draft.id_cadangan}
-                        className="px-4 py-2.5 rounded-xl font-bold text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 hover:border-blue-200 flex items-center gap-2 shadow-xs transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
-                      >
-                        {actionLoading === draft.id_cadangan ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Star className="w-3.5 h-3.5" />}
-                        Simpan
-                      </button>
+                          {draft.status_kelulusan !== "Tolak" && (
+                            <button
+                              onClick={() => handleAction(draft.id_cadangan, "reject")}
+                              disabled={actionLoading === draft.id_cadangan}
+                              className="px-4 py-2.5 rounded-xl font-bold text-xs text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 hover:border-red-200 flex items-center gap-2 shadow-xs transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
+                            >
+                              {actionLoading === draft.id_cadangan ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                              Tolak
+                            </button>
+                          )}
 
-                      <button
-                        onClick={() => handleAction(draft.id_cadangan, "approve")}
-                        disabled={actionLoading === draft.id_cadangan}
-                        className="px-5 py-2.5 rounded-xl font-bold text-xs bg-rose-900 text-white hover:bg-rose-950 border border-rose-950 shadow-md shadow-rose-900/10 hover:shadow-lg hover:shadow-rose-900/20 flex items-center gap-2 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
-                      >
-                        {actionLoading === draft.id_cadangan ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                        Luluskan & Hantar ke Staf
-                      </button>
+                          {draft.status_kelulusan !== "Simpan" && (
+                            <button
+                              onClick={() => handleAction(draft.id_cadangan, "save")}
+                              disabled={actionLoading === draft.id_cadangan}
+                              className="px-4 py-2.5 rounded-xl font-bold text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 hover:border-blue-200 flex items-center gap-2 shadow-xs transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
+                            >
+                              {actionLoading === draft.id_cadangan ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Star className="w-3.5 h-3.5" />}
+                              Simpan
+                            </button>
+                          )}
+
+                          {draft.status_kelulusan !== "Lulus" && (
+                            <button
+                              onClick={() => handleAction(draft.id_cadangan, "approve")}
+                              disabled={actionLoading === draft.id_cadangan}
+                              className="px-5 py-2.5 rounded-xl font-bold text-xs bg-rose-900 text-white hover:bg-rose-950 border border-rose-950 shadow-md shadow-rose-900/10 hover:shadow-lg hover:shadow-rose-900/20 flex items-center gap-2 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
+                            >
+                              {actionLoading === draft.id_cadangan ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                              Luluskan & Hantar ke Staf
+                            </button>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
