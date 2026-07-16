@@ -41,6 +41,7 @@ graph TD
     DB <-->|Sync State & Fetch Metrics| Frontend[Next.js Dashboards]
     
     subgraph Frontend [Next.js Role-Based Interfaces]
+        AdminDash[Admin: Premise Registration & QR Code Gen]
         ManagerDash[Manager: Dashboard, Analytics, Report Gen & AI Approvals]
         StaffDash[Staff: Work Order Execution & Progress Tracker]
     end
@@ -100,13 +101,19 @@ To ensure absolute stability and performance in scalable container environments:
 
 ## 👥 Role-Based Workflows
 
-### 📱 1. Customer (Portal QR)
+### ⚡ 1. Administrator (Admin)
+The administrative control hub for the system.
+* **Premise Registration**: Enrolls new restaurants, outlets, or branches into the system with metadata.
+* **QR Code Generation**: Generates and prints unique table-specific or outlet-wide QR codes for customers to access the feedback portal.
+* **System Health Monitor**: Monitors API integration status, database connection, and active QR scans.
+
+### 📱 2. Customer (Portal QR)
 Customers scan a table/receipt QR code, launching a lightweight mobile-responsive feedback portal.
 * Submits ratings for overall stars, food quality, staff service, and shop ambience.
 * Inputs raw review text.
 * On submission, the backend asynchronously triggers the NLP pipeline in a FastAPI Background Task, ensuring sub-second response times for the customer.
 
-### 📊 2. Manager (Pengurus)
+### 📊 3. Manager (Pengurus)
 Managers handle data sync, strategic analysis, report exports, and operational decisions.
 * **Aggregated Dashboard**: Tracks performance trends, platform breakdown (QR vs. Google vs. Social Media), and sentiment velocity.
 * **Drill-down Analytics**: Clicks on a specific topic cluster (e.g., *"Masa Menunggu"*) to inspect the raw reviews, stars, and sentiment scores.
@@ -114,7 +121,7 @@ Managers handle data sync, strategic analysis, report exports, and operational d
 * **Prescriptive AI Review**: Evaluates AI-drafted recommendations. Can approve (*"Lulus"*), reject (*"Tolak"*), or save as draft (*"Simpan"*).
 * **PDF Export**: Generates and prints comprehensive business reports directly from the dashboard.
 
-### 🔧 3. Staff (Staf Operasi)
+### 🔧 4. Staff (Staf Operasi)
 Frontline staff act as the hands of the operations loop.
 * **Work Order Queue**: Receives recommendations approved by the Manager as structured tasks.
 * **Execution Tracking**: Updates status of work orders through their lifecycle: `Baru` (New) ➡️ `Dalam Proses` (In Progress) ➡️ `Selesai` (Completed).
@@ -127,7 +134,7 @@ Frontline staff act as the hands of the operations loop.
 ```
 FoodLytics-System/
 ├── backend/                  # FastAPI Backend Service
-│   ├── routes/               # API Router Handlers (Admin, Analytics, Ingestion, Prescriptive, etc.)
+│   ├── routes/               # API Router Handlers (Admin, Analytics, Ingestion, Prescriptive, Laporan, etc.)
 │   ├── services/             # Core AI & Scraper Integrations (Topic modeling, Sentiment, Slang, Apify)
 │   ├── models.py             # Pydantic Schemas for validation
 │   ├── database.py           # Supabase DB Connection Manager

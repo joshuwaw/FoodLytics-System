@@ -2,6 +2,8 @@ import random
 import httpx
 import json
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor
 from config import HUGGINGFACE_API_KEY
 
 def _get_department_routing(topic_label: str) -> str:
