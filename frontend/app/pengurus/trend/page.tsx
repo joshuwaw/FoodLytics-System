@@ -11,7 +11,7 @@ import {
   Tooltip as ReTooltip,
   ResponsiveContainer
 } from "recharts";
-import { TrendingUp, MessageSquare, Star, ArrowLeft, HeartPulse, Activity, Flame, Utensils, Trash2, RefreshCw, Settings, Building2, Plus, X } from "lucide-react";
+import { TrendingUp, MessageSquare, Star, ArrowLeft, HeartPulse, Activity, Flame, Utensils, Trash2, RefreshCw, Settings, Building2, Plus, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -81,6 +81,10 @@ export default function TrendIndustriPage() {
   const [activeTab, setActiveTab] = useState<"Khusus" | "Umum">("Khusus");
   
   // Data State
+  const startYear = 2025;
+  const currentYear = new Date().getFullYear();
+  const yearsList = Array.from({ length: currentYear - startYear + 1 }, (_, i) => startYear + i);
+
   const [loading, setLoading] = useState(true);
   const [trendData, setTrendData] = useState<TrendData[]>([]);
   const [feedbackBySource, setFeedbackBySource] = useState<FeedbackBySource[]>([]);
@@ -99,6 +103,10 @@ export default function TrendIndustriPage() {
 
   // Filter state
   const [visibleSources, setVisibleSources] = useState<string[]>([]);
+  const [trendGroupBy, setTrendGroupBy] = useState<"weeks" | "months">("weeks");
+  const [trendLoading, setTrendLoading] = useState(false);
+  const [trendYear, setTrendYear] = useState<number>(new Date().getFullYear());
+  const [trendMonth, setTrendMonth] = useState<number>(new Date().getMonth() + 1);
 
   const fetchAllData = () => {
     if (!user?.id_premis) return;
@@ -106,15 +114,13 @@ export default function TrendIndustriPage() {
     setLoading(true);
 
     Promise.all([
-      fetch(`${API_URL}/customer/trend-data/${user.id_premis}`).then(r => r.json()),
       fetch(`${API_URL}/customer/feedback-by-source/${user.id_premis}`).then(r => r.json()),
       fetch(`${API_URL}/customer/sentiment-stats/${user.id_premis}`).then(r => r.json()),
       fetch(`${API_URL}/analytics/topics/${user.id_premis}`).then(r => r.json()),
       fetch(`${API_URL}/analytics/competitors/${user.id_premis}`).then(r => r.json()),
       fetch(`${API_URL}/analytics/pesaing/${user.id_premis}`).then(r => r.json())
     ])
-    .then(([trend, sources, stats, topicsData, compTrends, compList]) => {
-      setTrendData(Array.isArray(trend) ? trend : []);
+    .then(([sources, stats, topicsData, compTrends, compList]) => {
       setFeedbackBySource(Array.isArray(sources) ? sources : []);
       setTotalFeedback(stats.total || 0);
       setAvgRating(stats.purata_bintang || 0);
@@ -134,6 +140,20 @@ export default function TrendIndustriPage() {
   useEffect(() => {
     fetchAllData();
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.id_premis) return;
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+    
+    setTrendLoading(true);
+    fetch(`${API_URL}/customer/trend-data/${user.id_premis}?group_by=${trendGroupBy}&year=${trendYear}&month=${trendMonth}`)
+      .then(r => r.json())
+      .then(trend => {
+        setTrendData(Array.isArray(trend) ? trend : []);
+      })
+      .catch(console.error)
+      .finally(() => setTrendLoading(false));
+  }, [user, trendGroupBy, trendYear, trendMonth]);
 
   const handleAddCompetitor = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -357,13 +377,99 @@ export default function TrendIndustriPage() {
           </div>
 
           {/* Cross Platform Chart */}
-          <div className="glass-light rounded-3xl p-6 border border-slate-100/60 shadow-sm">
-            <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-black text-slate-800 tracking-tight">Interaksi Merentasi Platform</h3>
-                <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mt-1">Volume maklum balas mengikut sumber sepanjang masa</p>
+          <div className="glass-light rounded-3xl p-6 border border-slate-100/60 shadow-sm relative overflow-hidden">
+            {trendLoading && (
+              <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-10 flex items-center justify-center animate-in fade-in duration-200">
+                <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
               </div>
-              <div className="flex flex-wrap gap-2 bg-slate-100/50 p-1.5 rounded-2xl w-fit">
+            )}
+            <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div>
+                  <h3 className="text-xl font-black text-slate-800 tracking-tight">Interaksi Merentasi Platform</h3>
+                  <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mt-1">Volume maklum balas mengikut platform</p>
+                </div>
+                
+                {/* Timeframe selector: weeks / months */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-slate-100/85 p-1 rounded-xl border border-slate-200/50">
+                    <button
+                      type="button"
+                      onClick={() => setTrendGroupBy("weeks")}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                        trendGroupBy === "weeks"
+                          ? "bg-white text-slate-800 shadow-sm border border-slate-200/30 scale-[1.02]"
+                          : "text-slate-500 hover:text-slate-800 hover:bg-white/30"
+                      }`}
+                    >
+                      Mingguan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTrendGroupBy("months")}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                        trendGroupBy === "months"
+                          ? "bg-white text-slate-800 shadow-sm border border-slate-200/30 scale-[1.02]"
+                          : "text-slate-500 hover:text-slate-800 hover:bg-white/30"
+                      }`}
+                    >
+                      Bulanan
+                    </button>
+                  </div>
+
+                  {/* Year selector (only visible when Bulanan is active) */}
+                  {trendGroupBy === "months" && (
+                    <select
+                      value={trendYear}
+                      onChange={(e) => setTrendYear(Number(e.target.value))}
+                      className="px-3 py-1.5 bg-white border border-slate-250/60 rounded-xl text-[10px] font-black text-slate-700 outline-none focus:ring-2 focus:ring-orange-500/20 shadow-sm cursor-pointer"
+                    >
+                      {yearsList.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  )}
+
+                  {/* Month & Year selectors (visible when Mingguan is active) */}
+                  {trendGroupBy === "weeks" && (
+                    <div className="flex items-center gap-1.5 animate-in fade-in duration-200">
+                      <select
+                        value={trendMonth}
+                        onChange={(e) => setTrendMonth(Number(e.target.value))}
+                        className="px-3 py-1.5 bg-white border border-slate-250/60 rounded-xl text-[10px] font-black text-slate-700 outline-none focus:ring-2 focus:ring-orange-500/20 shadow-sm cursor-pointer"
+                      >
+                        {[
+                          { val: 1, label: "Januari" },
+                          { val: 2, label: "Februari" },
+                          { val: 3, label: "Mac" },
+                          { val: 4, label: "April" },
+                          { val: 5, label: "Mei" },
+                          { val: 6, label: "Jun" },
+                          { val: 7, label: "Julai" },
+                          { val: 8, label: "Ogos" },
+                          { val: 9, label: "September" },
+                          { val: 10, label: "Oktober" },
+                          { val: 11, label: "November" },
+                          { val: 12, label: "Disember" }
+                        ].map((m) => (
+                          <option key={m.val} value={m.val}>{m.label}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={trendYear}
+                        onChange={(e) => setTrendYear(Number(e.target.value))}
+                        className="px-3 py-1.5 bg-white border border-slate-250/60 rounded-xl text-[10px] font-black text-slate-700 outline-none focus:ring-2 focus:ring-orange-500/20 shadow-sm cursor-pointer"
+                      >
+                        {yearsList.map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 bg-slate-100/50 p-1.5 rounded-2xl w-fit md:ml-auto justify-end">
                 {feedbackBySource.map(src => (
                   <button
                     key={src.sumber}

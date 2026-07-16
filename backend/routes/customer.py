@@ -253,43 +253,69 @@ def get_recent_feedback(premise_id: int, limit: int = 5, sumber: str = None):
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 @router.get("/weekly-stats/{premise_id}")
-def get_weekly_stats(premise_id: int):
+def get_weekly_stats(premise_id: int, range_type: str = "7d"):
     """
-    Returns weekly aggregated volume and sentiment scores.
+    Returns aggregated volume and sentiment scores over different ranges:
+    - 7d (7 days, daily)
+    - 30d (30 days, daily)
+    - 90d (90 days, weekly)
     """
     try:
-        # Get date 7 days ago
-        seven_days_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).isoformat()
+        # Determine number of days based on range_type
+        days_limit = 7
+        if range_type == "30d":
+            days_limit = 30
+        elif range_type == "90d":
+            days_limit = 90
+            
+        start_date = (datetime.datetime.now() - datetime.timedelta(days=days_limit)).isoformat()
         
-        # Get feedback from last 7 days
+        # Get feedback from range
         feedback_res = supabase.table("tbl_maklumbalas") \
             .select("id_maklum_balas, tarikh_terima") \
             .eq("id_premis", premise_id) \
-            .gte("tarikh_terima", seven_days_ago) \
+            .gte("tarikh_terima", start_date) \
             .execute()
             
         records = feedback_res.data or []
         
-        # Initialize days
-        days_map = {0: "Isnin", 1: "Selasa", 2: "Rabu", 3: "Khamis", 4: "Jumaat", 5: "Sabtu", 6: "Ahad"}
-        
-        # Build base dictionary for last 7 days to ensure ordered and complete days
+        # Initialize buckets
         today = datetime.datetime.now()
-        weekly_data = []
-        for i in range(6, -1, -1):
-            d = today - datetime.timedelta(days=i)
-            day_name = days_map[d.weekday()]
-            weekly_data.append({
-                "hari": day_name,
-                "date_str": d.strftime("%Y-%m-%d"),
-                "volume": 0,
-                "sentiment_scores": []
-            })
-            
+        buckets = []
+        
+        if range_type in ["7d", "30d"]:
+            days_map = {0: "Isnin", 1: "Selasa", 2: "Rabu", 3: "Khamis", 4: "Jumaat", 5: "Sabtu", 6: "Ahad"}
+            for i in range(days_limit - 1, -1, -1):
+                d = today - datetime.timedelta(days=i)
+                if range_type == "7d":
+                    label = days_map[d.weekday()]
+                else:
+                    # e.g., "12 Jul"
+                    label = d.strftime("%d %b")
+                    
+                buckets.append({
+                    "label": label,
+                    "date_str": d.strftime("%Y-%m-%d"),
+                    "volume": 0,
+                    "sentiment_scores": []
+                })
+        else: # 90d (group into 13 weeks)
+            # We construct 13 weekly buckets ending today
+            for w in range(12, -1, -1):
+                w_end = today - datetime.timedelta(weeks=w)
+                w_start = w_end - datetime.timedelta(days=6)
+                label = f"{w_start.strftime('%d %b')} - {w_end.strftime('%d %b')}"
+                buckets.append({
+                    "label": label,
+                    "start_date": w_start.date(),
+                    "end_date": w_end.date(),
+                    "volume": 0,
+                    "sentiment_scores": []
+                })
+                
         if not records:
-            # Return empty structure
-            return [{"hari": d["hari"], "volume": 0, "sentimen": 50} for d in weekly_data]
-
+            return [{"hari": b["label"], "volume": 0, "sentimen": 50} for b in buckets]
+            
         # Get sentiments
         feedback_ids = [r["id_maklum_balas"] for r in records]
         sentimen_res = supabase.table("tbl_sentimen") \
@@ -298,43 +324,46 @@ def get_weekly_stats(premise_id: int):
             .execute()
             
         sentimen_map = {s["id_maklum_balas"]: s["label_sentimen"] for s in (sentimen_res.data or [])}
-        
-        # Score mapping: Positif=100, Neutral=50, Negatif=0
         score_val = {"Positif": 100, "Neutral": 50, "Negatif": 0}
         
-        # Aggregate
+        # Aggregate records into buckets
         for r in records:
             try:
                 date_obj = datetime.datetime.fromisoformat(r["tarikh_terima"])
                 date_str = date_obj.strftime("%Y-%m-%d")
+                date_only = date_obj.date()
                 
                 label = sentimen_map.get(r["id_maklum_balas"], "Neutral")
                 score = score_val.get(label, 50)
                 
-                # Find the bucket
-                for bucket in weekly_data:
-                    if bucket["date_str"] == date_str:
-                        bucket["volume"] += 1
-                        bucket["sentiment_scores"].append(score)
-                        break
+                for b in buckets:
+                    if range_type in ["7d", "30d"]:
+                        if b["date_str"] == date_str:
+                            b["volume"] += 1
+                            b["sentiment_scores"].append(score)
+                            break
+                    else: # 90d
+                        if b["start_date"] <= date_only <= b["end_date"]:
+                            b["volume"] += 1
+                            b["sentiment_scores"].append(score)
+                            break
             except:
                 pass
                 
-        # Final formatting
+        # Format output
         result = []
-        for bucket in weekly_data:
+        for b in buckets:
             avg_sent = 50
-            if bucket["sentiment_scores"]:
-                avg_sent = sum(bucket["sentiment_scores"]) / len(bucket["sentiment_scores"])
+            if b["sentiment_scores"]:
+                avg_sent = sum(b["sentiment_scores"]) / len(b["sentiment_scores"])
             
             result.append({
-                "hari": bucket["hari"],
-                "volume": bucket["volume"],
+                "hari": b["label"],
+                "volume": b["volume"],
                 "sentimen": round(avg_sent)
             })
             
         return result
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
@@ -374,60 +403,96 @@ def get_feedback_by_source(premise_id: int):
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 @router.get("/trend-data/{premise_id}")
-def get_trend_data(premise_id: int):
+def get_trend_data(premise_id: int, group_by: str = "weeks", year: int = None, month: int = None):
     """
-    Returns sentiment trend data spanning the last 30 days, grouped into weeks.
-    Used for a multi-series AreaChart comparing sources over time.
+    Returns platform-specific feedback trends aggregated by weeks or months.
     """
     try:
-        thirty_days_ago = (datetime.datetime.now() - datetime.timedelta(days=30)).isoformat()
+        now = datetime.datetime.now()
+        target_year = year if year else now.year
+        target_month = month if month else now.month
         
-        # Get feedback from last 30 days
+        if group_by == "months":
+            # Fetch for the entire target year
+            start_date = f"{target_year}-01-01T00:00:00"
+            end_date = f"{target_year}-12-31T23:59:59"
+        else: # weeks of a specific month
+            import calendar
+            last_day = calendar.monthrange(target_year, target_month)[1]
+            start_date = f"{target_year}-{target_month:02d}-01T00:00:00"
+            end_date = f"{target_year}-{target_month:02d}-{last_day:02d}T23:59:59"
+            
         feedback_res = supabase.table("tbl_maklumbalas") \
             .select("id_maklum_balas, tarikh_terima, sumber_platform") \
             .eq("id_premis", premise_id) \
-            .gte("tarikh_terima", thirty_days_ago) \
+            .gte("tarikh_terima", start_date) \
+            .lte("tarikh_terima", end_date) \
             .execute()
-            
+                
         records = feedback_res.data or []
         
-        if not records:
-            return []
+        if group_by == "months":
+            # Construct 12 monthly buckets for target year
+            month_names = {
+                1: "Jan", 2: "Feb", 3: "Mac", 4: "Apr", 5: "Mei", 6: "Jun",
+                7: "Jul", 8: "Ogos", 9: "Sep", 10: "Okt", 11: "Nov", 12: "Dis"
+            }
             
-        # Define 4 weekly buckets
-        now = datetime.datetime.now()
-        buckets = [
-            {"label": "Minggu 1", "start": now - datetime.timedelta(days=28), "end": now - datetime.timedelta(days=21)},
-            {"label": "Minggu 2", "start": now - datetime.timedelta(days=21), "end": now - datetime.timedelta(days=14)},
-            {"label": "Minggu 3", "start": now - datetime.timedelta(days=14), "end": now - datetime.timedelta(days=7)},
-            {"label": "Minggu 4", "start": now - datetime.timedelta(days=7), "end": now}
-        ]
-        
-        # Initialize data structure: { week_label: { source: volume } }
-        chart_data = {b["label"]: {"Minggu": b["label"]} for b in buckets}
-        
-        # Categorize records
-        for r in records:
-            try:
-                date_obj = datetime.datetime.fromisoformat(r["tarikh_terima"])
-                src = r.get("sumber_platform") or "Portal QR"
+            buckets = []
+            for m in range(1, 13):
+                buckets.append({
+                    "label": f"{month_names[m]} {target_year}",
+                    "month": m,
+                    "year": target_year
+                })
                 
-                # Find bucket
-                for b in buckets:
-                    # Very simple grouping
-                    if b["start"].replace(tzinfo=None) <= date_obj.replace(tzinfo=None) <= b["end"].replace(tzinfo=None):
-                        week_label = b["label"]
-                        # Init source if not exists
-                        if src not in chart_data[week_label]:
-                            chart_data[week_label][src] = 0
-                        chart_data[week_label][src] += 1
-                        break
-            except Exception:
-                pass
+            chart_data = {b["label"]: {"Minggu": b["label"]} for b in buckets}
+            
+            for r in records:
+                try:
+                    date_obj = datetime.datetime.fromisoformat(r["tarikh_terima"])
+                    src = r.get("sumber_platform") or "Portal QR"
+                    
+                    for b in buckets:
+                        if date_obj.month == b["month"] and date_obj.year == b["year"]:
+                            m_label = b["label"]
+                            if src not in chart_data[m_label]:
+                                chart_data[m_label][src] = 0
+                            chart_data[m_label][src] += 1
+                            break
+                except:
+                    pass
+            return list(chart_data.values())
+            
+        else: # weeks of a specific month
+            import calendar
+            last_day = calendar.monthrange(target_year, target_month)[1]
+            buckets = [
+                {"label": "Minggu 1", "start": 1, "end": 7},
+                {"label": "Minggu 2", "start": 8, "end": 14},
+                {"label": "Minggu 3", "start": 15, "end": 21},
+                {"label": "Minggu 4", "start": 22, "end": 28}
+            ]
+            if last_day > 28:
+                buckets.append({"label": "Minggu 5", "start": 29, "end": last_day})
                 
-        # Format into array for Tremor
-        return list(chart_data.values())
-        
+            chart_data = {b["label"]: {"Minggu": b["label"]} for b in buckets}
+            for r in records:
+                try:
+                    date_obj = datetime.datetime.fromisoformat(r["tarikh_terima"])
+                    src = r.get("sumber_platform") or "Portal QR"
+                    day_val = date_obj.day
+                    for b in buckets:
+                        if b["start"] <= day_val <= b["end"]:
+                            week_label = b["label"]
+                            if src not in chart_data[week_label]:
+                                chart_data[week_label][src] = 0
+                            chart_data[week_label][src] += 1
+                            break
+                except Exception:
+                    pass
+            return list(chart_data.values())
+            
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 

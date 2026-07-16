@@ -21,7 +21,7 @@ interface PremisDetail {
   kod_perniagaan: string;
 }
 
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 
 interface DataSrc {
   platform: string;
@@ -88,6 +88,8 @@ export default function PengurusDashboard() {
   const [dataSources, setDataSources] = useState<DataSrc[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [pertumbuhan, setPertumbuhan] = useState<number>(0);
+  const [rangeType, setRangeType] = useState<"7d" | "30d" | "90d">("7d");
+  const [chartLoading, setChartLoading] = useState(false);
 
   useEffect(() => {
     if (!user?.id_premis) { setLoading(false); return; }
@@ -120,12 +122,6 @@ export default function PengurusDashboard() {
       .then((d) => setRecentFeedback(Array.isArray(d) ? d : []))
       .catch(() => {});
 
-    // Fetch weekly stats
-    fetch(`${API_URL}/customer/weekly-stats/${user.id_premis}`)
-      .then((r) => r.json())
-      .then((d) => setWeeklyData(Array.isArray(d) ? d : []))
-      .catch(() => {});
-
     // Fetch top topics
     fetch(`${API_URL}/analytics/topics/${user.id_premis}`)
       .then((r) => r.json())
@@ -144,6 +140,18 @@ export default function PengurusDashboard() {
       .finally(() => setLoading(false));
   }, [user]);
 
+  useEffect(() => {
+    if (!user?.id_premis) return;
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+    
+    setChartLoading(true);
+    fetch(`${API_URL}/customer/weekly-stats/${user.id_premis}?range_type=${rangeType}`)
+      .then((r) => r.json())
+      .then((d) => setWeeklyData(Array.isArray(d) ? d : []))
+      .catch(() => {})
+      .finally(() => setChartLoading(false));
+  }, [user, rangeType]);
+
   const handleSync = async () => {
     if (!user?.id_premis) return;
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
@@ -158,7 +166,7 @@ export default function PengurusDashboard() {
         fetch(`${API_URL}/customer/recent-feedback/${user.id_premis}?limit=5`)
           .then((r) => r.json())
           .then((d) => setRecentFeedback(Array.isArray(d) ? d : []));
-        fetch(`${API_URL}/customer/weekly-stats/${user.id_premis}`)
+        fetch(`${API_URL}/customer/weekly-stats/${user.id_premis}?range_type=${rangeType}`)
           .then((r) => r.json())
           .then((d) => setWeeklyData(Array.isArray(d) ? d : []));
         fetch(`${API_URL}/customer/sentiment-stats/${user.id_premis}`)
@@ -437,14 +445,40 @@ export default function PengurusDashboard() {
       </div>
 
       {/* ── Row 3: Area Chart ── */}
-      <div className="glass-light rounded-3xl p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-blue-500" />
-            <h3 className="font-black text-slate-800 text-sm tracking-tight">
-              Kadar Pertumbuhan &amp; Volume Ulasan Mingguan
-            </h3>
+      <div className="glass-light rounded-3xl p-6 relative overflow-hidden">
+        {chartLoading && (
+          <div className="absolute inset-0 bg-white/40 backdrop-blur-[1.5px] z-10 flex items-center justify-center animate-in fade-in duration-200">
+            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
           </div>
+        )}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-blue-500" />
+              <h3 className="font-black text-slate-800 text-sm tracking-tight">
+                Trend Pertumbuhan &amp; Volume Ulasan
+              </h3>
+            </div>
+            
+            {/* Timeframe Filter Control */}
+            <div className="flex items-center gap-1 bg-slate-100/80 backdrop-blur-md p-1 rounded-xl border border-slate-200/50 self-start">
+              {(["7d", "30d", "90d"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setRangeType(t)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                    rangeType === t
+                      ? "bg-white text-slate-800 shadow-sm border border-slate-200/30 scale-[1.02]"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-white/30"
+                  }`}
+                >
+                  {t === "7d" ? "7 Hari" : t === "30d" ? "30 Hari" : "90 Hari"}
+                </button>
+              ))}
+            </div>
+          </div>
+          
           <div className="flex items-center gap-5">
             {[{ color: "#3b82f6", label: "Volume Ulasan" }, { color: "#10b981", label: "Skor Sentimen" }].map(({ color, label }) => (
               <div key={label} className="flex items-center gap-1.5">
