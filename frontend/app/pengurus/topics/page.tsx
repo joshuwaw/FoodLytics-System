@@ -274,7 +274,7 @@ function TopicsAnalysisContent() {
             ) : (
               <Sparkles className="w-4 h-4" />
             )}
-            {runningAI ? "Menganalisis..." : "Jalankan Analisis AI"}
+            {runningAI ? "Menganalisis..." : "Jalankan Analisis"}
           </button>
         </div>
       </div>
