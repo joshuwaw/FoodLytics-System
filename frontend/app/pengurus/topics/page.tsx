@@ -51,6 +51,7 @@ function TopicsAnalysisContent() {
   const [activeFilter, setActiveFilter] = useState<"Semua" | "Negatif" | "Positif">("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(5);
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "highest" | "lowest">("newest");
 
   // Fetch Topics
   const fetchTopics = async () => {
@@ -457,6 +458,18 @@ function TopicsAnalysisContent() {
                 className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white/80 focus:outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 w-48 font-medium text-slate-700 placeholder:text-slate-400"
               />
             </div>
+
+            {/* Sort Selection */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 font-bold text-slate-700 cursor-pointer"
+            >
+              <option value="newest">Masa: Terbaru</option>
+              <option value="oldest">Masa: Terlama</option>
+              <option value="highest">Rating: Tertinggi</option>
+              <option value="lowest">Rating: Terendah</option>
+            </select>
           </div>
         </div>
 
@@ -471,6 +484,16 @@ function TopicsAnalysisContent() {
               (!selectedPlatform || d.sumber_platform === selectedPlatform) &&
               (!searchQuery || d.ulasan_teks.toLowerCase().includes(searchQuery.toLowerCase()))
             );
+
+            // Sort logic
+            filteredDrilldown.sort((a, b) => {
+              if (sortBy === "newest") return new Date(b.tarikh_terima).getTime() - new Date(a.tarikh_terima).getTime();
+              if (sortBy === "oldest") return new Date(a.tarikh_terima).getTime() - new Date(b.tarikh_terima).getTime();
+              if (sortBy === "highest") return b.bilangan_bintang - a.bilangan_bintang;
+              if (sortBy === "lowest") return a.bilangan_bintang - b.bilangan_bintang;
+              return 0;
+            });
+
             const totalFiltered = filteredDrilldown.length;
             const displayDrilldown = filteredDrilldown.slice(0, visibleCount);
             
