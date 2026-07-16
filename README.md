@@ -89,7 +89,13 @@ For negative feedback clusters, the system automatically triggers a prescriptive
 * **Root Cause (5 Whys)**: Recursively asks *"Why"* to trace the symptom (e.g., pelayan kasar) back to the systemic operational bottleneck (e.g., no peak-demand forecasting).
 * **Department Routing**: Routes tasks to Front-of-House, Kitchen (Dapur), Maintenance (Penyelenggaraan), or Management (Pengurusan).
 * **KPIs & Monitoring**: Establishes target metrics and monitoring guidelines.
-* **Actionable Work Orders**: Generates explicit instructions split between Staff and Managers.
+* **Actionable Work Orders:** Generates explicit instructions split between Staff and Managers.
+
+### 5. Operational Resilience & DB-Backed Locks
+To ensure absolute stability and performance in scalable container environments:
+* **DB-Backed State Machine:** Replaces volatile in-memory set tracking with a Supabase-backed `status_analisis` column in `tbl_premis` so that container restarts never leave users confused with an idle dashboard while background tasks execute.
+* **Rate-Limit Locks:** Protects the ingestion routes with a 5-minute concurrent run lock to prevent double-click button spams and rate-limiting from Hugging Face APIs.
+* **Scraper Timeouts:** Implements a strict `10.0`s client timeout on all competitor scraper network requests to prevent slow or blocked third-party servers from hanging backend worker threads.
 
 ---
 
