@@ -85,7 +85,7 @@ export default function LoginPage() {
               Tingkatkan <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300">Prestasi</span><br/> Operasi Anda.
             </h2>
             <p className="text-slate-300 leading-relaxed text-lg font-medium max-w-lg drop-shadow">
-              Platform kecerdasan buatan komprehensif untuk memantau sentimen pelanggan dan menjana arahan kerja automatik dalam masa nyata.
+              Platform kecerdasan buatan komprehensif untuk memantau sentimen pelanggan dan menjana senarai tugasan staf secara automatik.
             </p>
           </div>
 

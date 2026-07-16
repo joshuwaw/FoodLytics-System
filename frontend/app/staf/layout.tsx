@@ -34,7 +34,7 @@ export default function StafLayout({ children }: { children: React.ReactNode }) 
 
   const navItems = [
     { href: "/staf", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/staf/tindakan", label: "Arahan Kerja", icon: ClipboardList },
+    { href: "/staf/tindakan", label: "Tugasan Staf", icon: ClipboardList },
     { href: "/staf/trend", label: "Prestasi & Trend", icon: TrendingUp },
     { href: "/staf/topics", label: "Analisis Topik", icon: BrainCircuit },
     { href: "/staf/profil", label: "Profil Saya", icon: UserCircle },

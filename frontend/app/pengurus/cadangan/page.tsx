@@ -318,13 +318,13 @@ export default function CadanganPage() {
         <div className="relative">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/25 text-orange-300 border border-orange-500/30 mb-3 backdrop-blur-xs">
             <Sparkles className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
-            Sistem Preskriptif AI
+            Cadangan Maklum Balas AI
           </span>
           <h1 className="text-3xl md:text-4xl font-black tracking-tight">
-            Cadangan Strategik <span className="text-slate-400 font-medium text-lg md:text-xl block md:inline md:ml-2">(Berasaskan AI)</span>
+            Idea &amp; Cadangan AI
           </h1>
           <p className="text-slate-300 mt-2 text-sm max-w-2xl leading-relaxed">
-            Platform pintar yang menukarkan corak maklum balas kepada tindakan pelaksanaan demi peningkatan kualiti perkhidmatan.
+            Idea penyelesaian pantas untuk membantu staff anda menyelesaikan masalah harian pelanggan.
           </p>
         </div>
         
@@ -434,7 +434,7 @@ export default function CadanganPage() {
             <p className="text-slate-500 text-sm mt-1">
               {activeTab === "Draf" && "Semua cadangan AI telah disemak dengan jayanya."}
               {activeTab === "Simpan" && "Klik butang 'Simpan' pada cadangan baru untuk menyimpannya di sini."}
-              {activeTab === "Lulus" && "Luluskan cadangan untuk menghantar arahan kerja kepada staf operasi."}
+              {activeTab === "Lulus" && "Hantar cadangan untuk menugaskannya kepada staf operasi kafe."}
               {activeTab === "Tolak" && "Senarai cadangan yang telah ditolak akan dipaparkan di sini."}
             </p>
           </div>
@@ -557,7 +557,7 @@ export default function CadanganPage() {
                               className="px-5 py-2.5 rounded-xl font-bold text-xs bg-rose-900 text-white hover:bg-rose-950 border border-rose-950 shadow-md shadow-rose-900/10 hover:shadow-lg hover:shadow-rose-900/20 flex items-center gap-2 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
                             >
                               {actionLoading === draft.id_cadangan ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                              Luluskan & Hantar ke Staf
+                              Hantar ke Staf
                             </button>
                           )}
                         </>

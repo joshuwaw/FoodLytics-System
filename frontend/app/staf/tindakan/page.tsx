@@ -131,13 +131,13 @@ export default function ArahanKerjaPage() {
         <div className="relative">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/25 text-blue-300 border border-blue-500/30 mb-3 backdrop-blur-xs">
             <ClipboardList className="w-3.5 h-3.5 text-blue-400" />
-            SOP & Tindakan Staf
+            Tugasan Kafe &amp; Kedai
           </span>
           <h1 className="text-3xl md:text-4xl font-black tracking-tight">
-            Arahan Kerja <span className="text-slate-400 font-medium text-lg md:text-xl block md:inline md:ml-2">(SOP Pelaksanaan)</span>
+            Tugasan Staf Operasi
           </h1>
           <p className="text-slate-300 mt-2 text-sm max-w-2xl leading-relaxed">
-            Senarai tugas rasmi dan arahan pembaikan yang diluluskan oleh Pengurus untuk tindakan pembetulan segera.
+            Senarai tugasan pembaikan yang dihantar oleh Pengurus untuk tindakan pembetulan segera.
           </p>
         </div>
       </div>
@@ -175,8 +175,8 @@ export default function ArahanKerjaPage() {
         {workOrders.length === 0 ? (
           <div className="glass-light rounded-3xl p-12 text-center border border-slate-200/50 shadow-xs">
             <CheckCircle2 className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-slate-800">Tiada arahan kerja buat masa ini</h3>
-            <p className="text-slate-500 text-sm mt-1">Sistem anda berada dalam keadaan optimum. Teruskan kecemerlangan!</p>
+            <h3 className="text-lg font-bold text-slate-800">Tiada tugasan aktif buat masa ini</h3>
+            <p className="text-slate-500 text-sm mt-1">Sistem anda berada dalam keadaan optimum. Terima kasih atas usaha anda!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

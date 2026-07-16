@@ -164,7 +164,7 @@ export default function StafDashboard() {
               <ShieldCheck className="w-5.5 h-5.5 text-white" />
             </div>
             <h3 className="text-lg font-black tracking-tight mb-1">Staf Operasi</h3>
-            <p className="text-blue-100 text-xs leading-relaxed">Akses pantas bagi arahan kerja, prestasi harian dan feedback pelanggan.</p>
+            <p className="text-blue-100 text-xs leading-relaxed">Akses pantas bagi tugasan staf, prestasi harian dan feedback pelanggan.</p>
           </div>
         </div>
       </div>
