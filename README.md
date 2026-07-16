@@ -25,7 +25,7 @@ graph TD
             Lexicon[Malay Lexicon Heuristics]
             DistilBERT[DistilBERT Multilingual Transformer]
             TopicClustering[Guided BERTopic Topic Modeling]
-            LLMEngine[Qwen-2.5 5-Whys Prescriptive AI]
+            LLMEngine[Qwen-2.5 Prescriptive AI]
             
             Slang --> Lexicon
             Slang --> DistilBERT
@@ -59,7 +59,7 @@ graph TD
 | **Ingestion** | **Apify API Scrapers** | Automated scraping of Google Maps reviews, X/Twitter, and Instagram |
 | **NLP Modeling** | **Guided BERTopic** | Topic clustering using `sentence-transformers`, `UMAP`, `HDBSCAN`, and `scikit-learn` |
 | **Sentiment** | **Hybrid Transformer + Lexicon** | `distilbert-base-multilingual-cased` + custom Malay Lexicon rules |
-| **Prescriptive AI** | **Qwen2.5-7B-Instruct** | Hosted via Hugging Face Inference API for Root Cause Analysis (5 Whys) |
+| **Prescriptive AI** | **Qwen2.5-7B-Instruct** | Hosted via Hugging Face Inference API for operational recommendations |
 | **IaC & DevOps** | **Terraform & GitHub Actions** | Docker container builds, Azure Container Apps, Log Analytics, Web Apps |
 
 ---
@@ -86,7 +86,6 @@ FoodLytics solves the common issue of BERTopic clustering failing on very short 
 
 ### 4. Prescriptive Strategic AI (Root Cause Analysis)
 For negative feedback clusters, the system automatically triggers a prescriptive analysis using Qwen-2.5:
-* **Root Cause (5 Whys)**: Recursively asks *"Why"* to trace the symptom (e.g., pelayan kasar) back to the systemic operational bottleneck (e.g., no peak-demand forecasting).
 * **Department Routing**: Routes tasks to Front-of-House, Kitchen (Dapur), Maintenance (Penyelenggaraan), or Management (Pengurusan).
 * **KPIs & Monitoring**: Establishes target metrics and monitoring guidelines.
 * **Actionable Work Orders:** Generates explicit instructions split between Staff and Managers.
