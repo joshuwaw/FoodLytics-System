@@ -25,7 +25,7 @@ graph TD
             Lexicon[Malay Lexicon Heuristics]
             DistilBERT[DistilBERT Multilingual Transformer]
             TopicClustering[Guided BERTopic Topic Modeling]
-            LLMEngine[Llama-3 5-Whys Prescriptive AI]
+            LLMEngine[Qwen-2.5 5-Whys Prescriptive AI]
             
             Slang --> Lexicon
             Slang --> DistilBERT
@@ -41,7 +41,6 @@ graph TD
     DB <-->|Sync State & Fetch Metrics| Frontend[Next.js Dashboards]
     
     subgraph Frontend [Next.js Role-Based Interfaces]
-        AdminDash[Admin: Premise & Code Management]
         ManagerDash[Manager: Dashboard, Analytics, Report Gen & AI Approvals]
         StaffDash[Staff: Work Order Execution & Progress Tracker]
     end
@@ -60,7 +59,7 @@ graph TD
 | **Ingestion** | **Apify API Scrapers** | Automated scraping of Google Maps reviews, X/Twitter, and Instagram |
 | **NLP Modeling** | **Guided BERTopic** | Topic clustering using `sentence-transformers`, `UMAP`, `HDBSCAN`, and `scikit-learn` |
 | **Sentiment** | **Hybrid Transformer + Lexicon** | `distilbert-base-multilingual-cased` + custom Malay Lexicon rules |
-| **Prescriptive AI** | **Meta-Llama-3-8B-Instruct** | Hosted via Hugging Face Inference API for Root Cause Analysis (5 Whys) |
+| **Prescriptive AI** | **Qwen2.5-7B-Instruct** | Hosted via Hugging Face Inference API for Root Cause Analysis (5 Whys) |
 | **IaC & DevOps** | **Terraform & GitHub Actions** | Docker container builds, Azure Container Apps, Log Analytics, Web Apps |
 
 ---
@@ -86,7 +85,7 @@ FoodLytics solves the common issue of BERTopic clustering failing on very short 
 3. **Layer 3: Guided BERTopic**: Any reviews not captured by Layer 1 are embedded using `sentence-transformers` and clustered using Guided BERTopic with seed topics and KeyBERT representations.
 
 ### 4. Prescriptive Strategic AI (Root Cause Analysis)
-For negative feedback clusters, the system automatically triggers a prescriptive analysis using Llama-3:
+For negative feedback clusters, the system automatically triggers a prescriptive analysis using Qwen-2.5:
 * **Root Cause (5 Whys)**: Recursively asks *"Why"* to trace the symptom (e.g., pelayan kasar) back to the systemic operational bottleneck (e.g., no peak-demand forecasting).
 * **Department Routing**: Routes tasks to Front-of-House, Kitchen (Dapur), Maintenance (Penyelenggaraan), or Management (Pengurusan).
 * **KPIs & Monitoring**: Establishes target metrics and monitoring guidelines.
@@ -115,11 +114,6 @@ Frontline staff act as the hands of the operations loop.
 * **Work Order Queue**: Receives recommendations approved by the Manager as structured tasks.
 * **Execution Tracking**: Updates status of work orders through their lifecycle: `Baru` (New) ➡️ `Dalam Proses` (In Progress) ➡️ `Selesai` (Completed).
 
-### ⚙️ 4. Admin
-System administrators maintain the database and coordinate onboarding.
-* Registers new premises (restaurants).
-* Registers Manager accounts and links them to premises.
-* Generates unique *Business Codes* (Kod Perniagaan) allowing staff members to sign up and automatically align with the correct restaurant premise.
 
 ---
 
