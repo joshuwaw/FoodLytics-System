@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
-import { RefreshCw, MessageSquareQuote, ArrowLeft, Star, Clock, Utensils, DollarSign, Sparkles, AlertCircle, XCircle, Search } from "lucide-react";
+import { RefreshCw, MessageSquareQuote, ArrowLeft, Star, Clock, Utensils, DollarSign, Sparkles, AlertCircle, XCircle, Search, ArrowUpDown, ChevronDown } from "lucide-react";
 import Link from "next/link";
 
 interface TopicInfo {
@@ -459,17 +459,21 @@ function TopicsAnalysisContent() {
               />
             </div>
 
-            {/* Sort Selection */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 font-bold text-slate-700 cursor-pointer"
-            >
-              <option value="newest">Masa: Terbaru</option>
-              <option value="oldest">Masa: Terlama</option>
-              <option value="highest">Rating: Tertinggi</option>
-              <option value="lowest">Rating: Terendah</option>
-            </select>
+            {/* Beautiful Custom Sort Selector */}
+            <div className="relative flex items-center">
+              <ArrowUpDown className="w-3.5 h-3.5 absolute left-3 text-slate-400 pointer-events-none" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="pl-8.5 pr-8 py-1.5 text-xs rounded-xl border border-slate-200 bg-white/90 hover:bg-slate-50 focus:outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 font-bold text-slate-700 cursor-pointer appearance-none shadow-xs transition-all duration-200"
+              >
+                <option value="newest">Susun: Terbaru</option>
+                <option value="oldest">Susun: Terlama</option>
+                <option value="highest">Penilaian: Tertinggi</option>
+                <option value="lowest">Penilaian: Terendah</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 text-slate-400 pointer-events-none" />
+            </div>
           </div>
         </div>
 
