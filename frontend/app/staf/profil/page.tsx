@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
 import { UserCircle, Store, Save, Loader2, Building, Phone, Mail, User, Camera, ShieldCheck, KeyRound } from "lucide-react";
@@ -114,7 +113,7 @@ export default function StafProfilPage() {
       return;
     }
     if (passwords.kata_laluan_baru !== passwords.sahkan_kata_laluan) {
-      toast.error("Sahan kata laluan baharu tidak sepadan.");
+      toast.error("Sahkan kata laluan baharu tidak sepadan.");
       return;
     }
     
@@ -220,223 +219,227 @@ export default function StafProfilPage() {
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-5xl mx-auto pb-12">
         
         {/* Enterprise Header (Banner & Avatar) */}
-      <div className="glass-light rounded-[2.5rem] border border-white/50 overflow-hidden mb-8 relative shadow-xl shadow-slate-200/5">
-        <div className="h-32 md:h-36 bg-gradient-to-r from-slate-950/80 via-slate-900/80 to-slate-950/80 w-full relative overflow-hidden border-b border-white/10 backdrop-blur-md">
-          {/* Subtle Abstract Pattern/Gradient */}
-          <div className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent"></div>
-        </div>
-        
-        <div className="px-8 pb-8 pt-0 md:px-10 md:pb-10 relative flex flex-col md:flex-row justify-between items-center md:items-end gap-6">
-          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 text-center md:text-left">
-            <div className="relative group cursor-pointer -mt-16 md:-mt-20">
-              <label htmlFor="avatar-upload" className="block cursor-pointer">
-                <div className="w-32 h-32 md:w-40 md:h-40 bg-white/60 backdrop-blur-md border border-white rounded-[2.2rem] p-2 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-300">
-                  <div className="w-full h-full bg-slate-100/50 backdrop-blur-sm border border-white/20 rounded-[1.8rem] flex items-center justify-center overflow-hidden relative">
-                    {profilePic ? (
-                      <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-                    ) : formData.nama ? (
-                      <span className="text-5xl md:text-6xl font-black text-slate-400 uppercase">
-                        {formData.nama.charAt(0)}
-                      </span>
-                    ) : (
-                      <UserCircle className="w-16 h-16 text-slate-350" />
-                    )}
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm">
-                      <Camera className="w-8 h-8 text-white mb-1" />
-                      <span className="text-[10px] text-white font-bold uppercase tracking-widest">Tukar Gambar</span>
-                    </div>
-                  </div>
-                </div>
-              </label>
-              <input 
-                id="avatar-upload" 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                onChange={handleImageUpload}
-              />
-            </div>
-            
-            <div className="pb-2 md:pb-6">
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">{formData.nama || "Profil Saya"}</h1>
-              <p className="text-slate-500 font-bold flex items-center gap-2 justify-center md:justify-start mt-1.5 text-sm">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                {(user?.peranan === 'Staf Operasi' || user?.peranan === 'Staf') ? 'Staf Operasi' : 'Pengurus'} &bull; {formData.nama_premis || "Tiada Cawangan"}
-              </p>
-            </div>
+        <div className="glass-light rounded-[2.5rem] border border-white/50 overflow-hidden mb-8 relative shadow-xl shadow-slate-200/5">
+          <div className="h-32 md:h-36 bg-gradient-to-r from-slate-950/80 via-slate-900/80 to-slate-950/80 w-full relative overflow-hidden border-b border-white/10 backdrop-blur-md">
+            {/* Subtle Abstract Pattern/Gradient */}
+            <div className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent"></div>
           </div>
           
-          <div className="pb-2 md:pb-6 w-full md:w-auto">
-            <button 
-              onClick={handleSave}
-              disabled={saving}
-              className="w-full md:w-auto bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-750 text-white px-8 py-3.5 rounded-2xl font-black flex items-center justify-center gap-2 transition-all disabled:opacity-70 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-98 cursor-pointer"
-            >
-              {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-              {saving ? "Menyimpan..." : "Simpan Perubahan"}
-            </button>
+          <div className="px-8 pb-8 pt-0 md:px-10 md:pb-10 relative flex flex-col md:flex-row justify-between items-center md:items-end gap-6">
+            <div className="flex flex-col md:flex-row items-center md:items-end gap-6 text-center md:text-left">
+              <div className="relative group cursor-pointer -mt-16 md:-mt-20">
+                <label htmlFor="avatar-upload" className="block cursor-pointer">
+                  <div className="w-32 h-32 md:w-40 md:h-40 bg-white/60 backdrop-blur-md border border-white rounded-[2.2rem] p-2 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-300">
+                    <div className="w-full h-full bg-slate-100/50 backdrop-blur-sm border border-white/20 rounded-[1.8rem] flex items-center justify-center overflow-hidden relative">
+                      {profilePic ? (
+                        <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                      ) : formData.nama ? (
+                        <span className="text-5xl md:text-6xl font-black text-slate-400 uppercase">
+                          {formData.nama.charAt(0)}
+                        </span>
+                      ) : (
+                        <UserCircle className="w-16 h-16 text-slate-350" />
+                      )}
+                      {/* Hover Overlay */}
+                      <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm">
+                        <Camera className="w-8 h-8 text-white mb-1" />
+                        <span className="text-[10px] text-white font-bold uppercase tracking-widest">Tukar Gambar</span>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+                <input 
+                  id="avatar-upload" 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleImageUpload}
+                />
+              </div>
+              
+              <div className="pb-2 md:pb-6">
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight">{formData.nama || "Profil Saya"}</h1>
+                <p className="text-slate-500 font-bold flex items-center gap-2 justify-center md:justify-start mt-1.5 text-sm">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  {(user?.peranan === 'Staf Operasi' || user?.peranan === 'Staf') ? 'Staf Operasi' : 'Pengurus'} &bull; {formData.nama_premis || "Tiada Cawangan"}
+                </p>
+              </div>
+            </div>
+            
+            <div className="pb-2 md:pb-6 w-full md:w-auto">
+              <button 
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full md:w-auto bg-gradient-to-r from-blue-500 to-indigo-650 hover:from-blue-600 hover:to-indigo-750 text-white px-8 py-3.5 rounded-2xl font-black flex items-center justify-center gap-2 transition-all disabled:opacity-70 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-98 cursor-pointer"
+              >
+                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                {saving ? "Menyimpan..." : "Simpan Perubahan"}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* Personal Details */}
-        <div className="glass-light rounded-[2.5rem] border border-white/50 p-8 shadow-xl shadow-slate-200/5 relative overflow-hidden">
+        {/* Display Maklumat Peribadi and Maklumat Cawangan SIDE-BY-SIDE */}
+        <div className="grid md:grid-cols-2 gap-8 mb-8">
+          {/* Card 1: Personal Details */}
+          <div id="peribadi" className="glass-light rounded-[2.5rem] border border-white/50 p-8 shadow-xl shadow-slate-200/5 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-[100px] -z-10" />
+            
+            <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100/50 flex items-center justify-center shadow-sm">
+                <UserCircle className="w-5 h-5 text-blue-500" />
+              </div>
+              Maklumat Peribadi
+            </h2>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><User className="w-4 h-4" /> Nama Penuh</label>
+                <input 
+                  type="text" 
+                  value={formData.nama}
+                  onChange={(e) => setFormData({...formData, nama: e.target.value})}
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-800 font-semibold shadow-inner"
+                  placeholder="Masukkan nama penuh"
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Mail className="w-4 h-4" /> E-mel</label>
+                <input 
+                  type="email" 
+                  value={formData.emel}
+                  onChange={(e) => setFormData({...formData, emel: e.target.value})}
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner"
+                  placeholder="e.g. john@example.com"
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Phone className="w-4 h-4" /> No. Telefon</label>
+                <input 
+                  type="text" 
+                  value={formData.no_telefon}
+                  onChange={(e) => setFormData({...formData, no_telefon: e.target.value})}
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner"
+                  placeholder="01X-XXXXXXX"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Premise Details */}
+          <div id="cawangan" className="glass-light rounded-[2.5rem] border border-white/50 p-8 shadow-xl shadow-slate-200/5 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-slate-900/5 rounded-bl-[100px] -z-10" />
+
+            <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/50 flex items-center justify-center shadow-sm">
+                <Store className="w-5 h-5 text-slate-600" />
+              </div>
+              Maklumat Cawangan
+            </h2>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Building className="w-4 h-4" /> Nama Cawangan</label>
+                <input 
+                  type="text" 
+                  value={formData.nama_premis}
+                  onChange={(e) => setFormData({...formData, nama_premis: e.target.value})}
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner"
+                  placeholder="Nama Restoran/Kafe"
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Alamat Penuh</label>
+                <textarea 
+                  rows={3}
+                  value={formData.alamat_premis}
+                  onChange={(e) => setFormData({...formData, alamat_premis: e.target.value})}
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold resize-none shadow-inner"
+                  placeholder="Alamat lengkap..."
+                />
+              </div>
+              
+              {profile?.premis?.kod_perniagaan && (
+                <div className="mt-4 bg-gradient-to-r from-slate-950/90 to-slate-900/90 rounded-2xl p-6 relative overflow-hidden group border border-white/5 shadow-lg shadow-slate-950/20">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full opacity-10 group-hover:scale-110 transition-transform duration-500"></div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Kod Perniagaan</p>
+                  <div className="flex items-center justify-between relative z-10">
+                    <p className="text-2xl font-mono font-black text-white tracking-widest">{profile.premis.kod_perniagaan}</p>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-3 font-medium relative z-10 leading-relaxed max-w-[85%]">
+                    Berikan kod eksklusif ini kepada staf anda untuk dipautkan ke sistem cawangan.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Change Password Section (Rendered directly as a clean full-width card below) */}
+        <div id="katalaluan" className="glass-light rounded-[2.5rem] border border-white/50 p-8 shadow-xl shadow-slate-200/5 relative overflow-hidden animate-in fade-in duration-500">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-[100px] -z-10" />
           
           <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100/50 flex items-center justify-center shadow-sm">
-              <UserCircle className="w-5 h-5 text-blue-500" />
+              <KeyRound className="w-5 h-5 text-blue-500" />
             </div>
-            Maklumat Peribadi
+            Kemas Kini Kata Laluan
           </h2>
           
-          <div className="space-y-6">
-            <div>
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><User className="w-4 h-4" /> Nama Penuh</label>
-              <input 
-                type="text" 
-                value={formData.nama}
-                onChange={(e) => setFormData({...formData, nama: e.target.value})}
-                className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-800 font-semibold shadow-inner"
-                placeholder="Masukkan nama penuh"
-              />
-            </div>
-            
-            <div>
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Mail className="w-4 h-4" /> E-mel</label>
-              <input 
-                type="email" 
-                value={formData.emel}
-                onChange={(e) => setFormData({...formData, emel: e.target.value})}
-                className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner"
-                placeholder="e.g. john@example.com"
-              />
-            </div>
-            
-            <div>
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Phone className="w-4 h-4" /> No. Telefon</label>
-              <input 
-                type="text" 
-                value={formData.no_telefon}
-                onChange={(e) => setFormData({...formData, no_telefon: e.target.value})}
-                className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner"
-                placeholder="01X-XXXXXXX"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Premise Details */}
-        <div className="glass-light rounded-[2.5rem] border border-white/50 p-8 shadow-xl shadow-slate-200/5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-slate-900/5 rounded-bl-[100px] -z-10" />
-
-          <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/50 flex items-center justify-center shadow-sm">
-              <Store className="w-5 h-5 text-slate-600" />
-            </div>
-            Maklumat Cawangan
-          </h2>
-          
-          <div className="space-y-6">
-            <div>
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Building className="w-4 h-4" /> Nama Cawangan</label>
-              <input 
-                type="text" 
-                value={formData.nama_premis}
-                onChange={(e) => setFormData({...formData, nama_premis: e.target.value})}
-                className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner"
-                placeholder="Nama Restoran/Kafe"
-              />
-            </div>
-            
-            <div>
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Alamat Penuh</label>
-              <textarea 
-                rows={3}
-                value={formData.alamat_premis}
-                onChange={(e) => setFormData({...formData, alamat_premis: e.target.value})}
-                className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold resize-none shadow-inner"
-                placeholder="Alamat lengkap..."
-              />
-            </div>
-            
-            {profile?.premis?.kod_perniagaan && (
-              <div className="mt-4 bg-gradient-to-r from-slate-950/90 to-slate-900/90 rounded-2xl p-6 relative overflow-hidden group border border-white/5 shadow-lg shadow-slate-950/20">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full opacity-10 group-hover:scale-110 transition-transform duration-500"></div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Kod Perniagaan</p>
-                <div className="flex items-center justify-between relative z-10">
-                  <p className="text-2xl font-mono font-black text-white tracking-widest">{profile.premis.kod_perniagaan}</p>
-                </div>
-                <p className="text-xs text-slate-400 mt-3 font-medium relative z-10 leading-relaxed max-w-[85%]">
-                  Berikan kod eksklusif ini kepada staf anda untuk dipautkan ke sistem cawangan.
-                </p>
+          <form onSubmit={handleUpdatePassword} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Kata Laluan Semasa</label>
+                <input 
+                  type="password" 
+                  required
+                  value={passwords.kata_laluan_lama}
+                  onChange={(e) => setPasswords({...passwords, kata_laluan_lama: e.target.value})}
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
+                  placeholder="••••••••"
+                />
               </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Change Password Section */}
-      <div className="glass-light rounded-[2.5rem] border border-white/50 p-8 shadow-xl shadow-slate-200/5 mt-8 relative overflow-hidden animate-in fade-in duration-500">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-[100px] -z-10" />
-        
-        <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100/50 flex items-center justify-center shadow-sm">
-            <KeyRound className="w-5 h-5 text-blue-500" />
-          </div>
-          Kemas Kini Kata Laluan
-        </h2>
-        
-        <form onSubmit={handleUpdatePassword} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-          <div>
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Kata Laluan Semasa</label>
-            <input 
-              type="password" 
-              required
-              value={passwords.kata_laluan_lama}
-              onChange={(e) => setPasswords({...passwords, kata_laluan_lama: e.target.value})}
-              className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
-              placeholder="••••••••"
-            />
-          </div>
-          
-          <div>
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Kata Laluan Baharu</label>
-            <input 
-              type="password" 
-              required
-              value={passwords.kata_laluan_baru}
-              onChange={(e) => setPasswords({...passwords, kata_laluan_baru: e.target.value})}
-              className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
-              placeholder="Min. 6 aksara"
-            />
-          </div>
-          
-          <div>
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Sahkan Kata Laluan Baharu</label>
-            <div className="flex gap-4">
-              <input 
-                type="password" 
-                required
-                value={passwords.sahkan_kata_laluan}
-                onChange={(e) => setPasswords({...passwords, sahkan_kata_laluan: e.target.value})}
-                className="flex-1 px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
-                placeholder="Sahkan kata laluan"
-              />
+              
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Kata Laluan Baharu</label>
+                <input 
+                  type="password" 
+                  required
+                  value={passwords.kata_laluan_baru}
+                  onChange={(e) => setPasswords({...passwords, kata_laluan_baru: e.target.value})}
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
+                  placeholder="Min. 6 aksara"
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Sahkan Kata Laluan Baharu</label>
+                <input 
+                  type="password" 
+                  required
+                  value={passwords.sahkan_kata_laluan}
+                  onChange={(e) => setPasswords({...passwords, sahkan_kata_laluan: e.target.value})}
+                  className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
+                  placeholder="Sahkan kata laluan"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
               <button 
                 type="submit"
                 disabled={updatingPassword}
-                className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-4 rounded-2xl font-black text-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-slate-900/10 shrink-0"
+                className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3.5 rounded-2xl font-black text-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-slate-900/10"
               >
                 {updatingPassword && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Kemas Kini
+                Kemas Kini Kata Laluan
               </button>
             </div>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
       </div>
 
       {/* Crop Modal */}

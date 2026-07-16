@@ -27,9 +27,14 @@ def login(request: LoginRequest):
             if role_res.data:
                 id_premis = role_res.data[0].get("id_premis")
         elif peranan == "Staf Operasi":
-            staf_res = supabase.table("tbl_staf_operasi").select("id_premis").eq("id_pengguna", id_pengguna).execute()
+            staf_res = supabase.table("tbl_staf_operasi").select("id_premis, status_bekerja").eq("id_pengguna", id_pengguna).execute()
             if staf_res.data:
                 id_premis = staf_res.data[0].get("id_premis")
+                status = staf_res.data[0].get("status_bekerja") or "Aktif"
+                if status == "Menunggu Kelulusan":
+                    raise HTTPException(status_code=403, detail="Akaun anda masih menunggu kelulusan daripada Pengurus Cawangan.")
+                elif status == "Tamat Perkhidmatan":
+                    raise HTTPException(status_code=403, detail="Akaun anda telah dinyahaktifkan (Tamat Perkhidmatan).")
         
         return LoginResponse(
             id_pengguna=id_pengguna,
@@ -102,6 +107,8 @@ def register_premise(request: AccountRegisterRequest):
         # Set id_premis if it was found (i.e. joining existing premise)
         if id_premis is not None:
             role_data["id_premis"] = id_premis
+            if user_table == "tbl_staf_operasi":
+                role_data["status_bekerja"] = "Menunggu Kelulusan"
             
         user_response = supabase.table(user_table).insert(role_data).execute()
         
@@ -329,6 +336,61 @@ def change_password(request: ChangePasswordRequest):
             .execute()
             
         return {"message": "Kata laluan berjaya dikemaskini!"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+# ----------------------------------------------------
+# Staff Management under Premise
+# ----------------------------------------------------
+@router.get("/premises/{premise_id}/staff")
+def get_premise_staff(premise_id: int):
+    try:
+        # Fetch all staff for this premise
+        staff_res = supabase.table("tbl_staf_operasi").select("id_pengguna, no_telefon, status_bekerja").eq("id_premis", premise_id).execute()
+        if not staff_res.data:
+            return []
+            
+        # Get user details from tbl_pengguna
+        user_ids = [s["id_pengguna"] for s in staff_res.data]
+        users_res = supabase.table("tbl_pengguna").select("id_pengguna, nama, emel, peranan").in_("id_pengguna", user_ids).execute()
+        
+        user_map = {u["id_pengguna"]: u for u in users_res.data}
+        
+        result = []
+        for s in staff_res.data:
+            u_info = user_map.get(s["id_pengguna"], {})
+            result.append({
+                "id_pengguna": s["id_pengguna"],
+                "nama": u_info.get("nama", "Tiada Nama"),
+                "emel": u_info.get("emel", ""),
+                "no_telefon": s.get("no_telefon") or "",
+                "status_bekerja": s.get("status_bekerja") or "Aktif",
+                "peranan": "Staf Operasi"
+            })
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+class UpdateStaffStatusRequest(BaseModel):
+    status_bekerja: str
+
+@router.put("/staff/{staff_id}/status")
+def update_staff_status(staff_id: int, request: UpdateStaffStatusRequest):
+    try:
+        # Check if staff exists
+        check_res = supabase.table("tbl_staf_operasi").select("id_pengguna").eq("id_pengguna", staff_id).execute()
+        if not check_res.data:
+            raise HTTPException(status_code=404, detail="Staf tidak dijumpai.")
+            
+        # Update status
+        supabase.table("tbl_staf_operasi")\
+            .update({"status_bekerja": request.status_bekerja})\
+            .eq("id_pengguna", staff_id)\
+            .execute()
+            
+        return {"message": "Status staf berjaya dikemaskini!"}
     except HTTPException as he:
         raise he
     except Exception as e:

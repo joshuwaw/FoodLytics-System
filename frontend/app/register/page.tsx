@@ -70,8 +70,16 @@ export default function RegisterPremise() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Gagal mendaftar. Sila cuba lagi.");
 
-      setMessage({ type: "success", text: "Pendaftaran berjaya! Mengalihkan ke log masuk..." });
-      setTimeout(() => router.push("/login"), 1500);
+      if (peranan === "Staf Operasi") {
+        setMessage({ 
+          type: "success", 
+          text: "Pendaftaran berjaya! Akaun anda telah didaftarkan dalam status 'Menunggu Kelulusan'. Sila hubungi pengurus cawangan anda untuk mengaktifkan akaun sebelum log masuk." 
+        });
+        setTimeout(() => router.push("/login"), 5000);
+      } else {
+        setMessage({ type: "success", text: "Pendaftaran berjaya! Mengalihkan ke log masuk..." });
+        setTimeout(() => router.push("/login"), 1500);
+      }
     } catch (err: any) {
       setMessage({ type: "error", text: err.message });
     } finally {
