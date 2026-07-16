@@ -33,7 +33,7 @@ export default function PengurusLayout({ children }: { children: React.ReactNode
   };
 
   const navItems = [
-    { href: "/pengurus", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/pengurus", label: "Papan Pemuka", icon: LayoutDashboard },
     { href: "/pengurus/trend", label: "Prestasi & Trend", icon: TrendingUp },
     { href: "/pengurus/topics", label: "Analisis Topik", icon: BrainCircuit },
     { href: "/pengurus/cadangan", label: "Cadangan & Tindakan", icon: Lightbulb },

@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [user, isLoading, router]);
 
   const navItems = [
-    { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin", label: "Papan Pemuka", icon: LayoutDashboard },
     { href: "/admin/register", label: "Daftar Premis", icon: Store },
     { href: "/admin/qr", label: "Penjana QR", icon: QrCode },
   ];
