@@ -89,7 +89,20 @@ export const LaporanPDFTemplate = forwardRef<HTMLDivElement, { data: PDFData | n
                 </div>
                 <div className="pl-8">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Pertumbuhan 30 Hari</p>
-                  <p className="text-6xl font-black text-green-600 tracking-tighter">+{stats?.pertumbuhan || 0}%</p>
+                  {(() => {
+                    // Extract numerical value, handles if already formatted as string
+                    const rawPert = stats?.pertumbuhan;
+                    const pert = typeof rawPert === "string" ? parseFloat(rawPert) : (rawPert || 0);
+                    const isPositive = pert > 0;
+                    const isNegative = pert < 0;
+                    const colorClass = isPositive ? "text-emerald-600" : isNegative ? "text-rose-600" : "text-slate-500";
+                    const sign = isPositive ? "+" : "";
+                    return (
+                      <p className={`text-6xl font-black ${colorClass} tracking-tighter`}>
+                        {sign}{pert}%
+                      </p>
+                    );
+                  })()}
                 </div>
               </div>
 
