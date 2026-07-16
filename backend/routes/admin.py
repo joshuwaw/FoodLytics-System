@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Any, Optional
+from pydantic import BaseModel
 from database import supabase
 from models import AccountRegisterRequest, PremiseResponse, LoginRequest, LoginResponse
 
@@ -302,3 +303,34 @@ def add_premise_manager(request: AddManagerRequest):
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+class ChangePasswordRequest(BaseModel):
+    id_pengguna: int
+    kata_laluan_lama: str
+    kata_laluan_baru: str
+
+@router.put("/change-password")
+def change_password(request: ChangePasswordRequest):
+    try:
+        # Verify old password
+        res = supabase.table("tbl_pengguna")\
+            .select("id_pengguna")\
+            .eq("id_pengguna", request.id_pengguna)\
+            .eq("kata_laluan", request.kata_laluan_lama)\
+            .execute()
+        if not res.data:
+            raise HTTPException(status_code=400, detail="Kata laluan asal tidak tepat.")
+            
+        # Update to new password
+        supabase.table("tbl_pengguna")\
+            .update({"kata_laluan": request.kata_laluan_baru})\
+            .eq("id_pengguna", request.id_pengguna)\
+            .execute()
+            
+        return {"message": "Kata laluan berjaya dikemaskini!"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+

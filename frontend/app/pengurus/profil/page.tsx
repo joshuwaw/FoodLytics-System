@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
-import { UserCircle, Store, Save, Loader2, Building, Phone, Mail, User, Camera, ShieldCheck } from "lucide-react";
+import { UserCircle, Store, Save, Loader2, Building, Phone, Mail, User, Camera, ShieldCheck, KeyRound } from "lucide-react";
 import Cropper from "react-easy-crop";
 import useSWR from "swr";
 import { toast } from "sonner";
@@ -28,6 +28,14 @@ export default function PengurusProfilPage() {
     nama_premis: "",
     alamat_premis: ""
   });
+
+  // Password change states
+  const [passwords, setPasswords] = useState({
+    kata_laluan_lama: "",
+    kata_laluan_baru: "",
+    sahkan_kata_laluan: ""
+  });
+  const [updatingPassword, setUpdatingPassword] = useState(false);
 
   // Co-manager management states
   const [newManager, setNewManager] = useState({
@@ -137,6 +145,43 @@ export default function PengurusProfilPage() {
       toast.error("Ralat rangkaian.");
     } finally {
       setAddingManager(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwords.kata_laluan_lama || !passwords.kata_laluan_baru || !passwords.sahkan_kata_laluan) {
+      toast.error("Sila isi semua ruangan kata laluan.");
+      return;
+    }
+    if (passwords.kata_laluan_baru !== passwords.sahkan_kata_laluan) {
+      toast.error("Sahan kata laluan baharu tidak sepadan.");
+      return;
+    }
+    
+    setUpdatingPassword(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/change-password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_pengguna: user?.id_pengguna,
+          kata_laluan_lama: passwords.kata_laluan_lama,
+          kata_laluan_baru: passwords.kata_laluan_baru
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Kata laluan berjaya dikemaskini!");
+        setPasswords({ kata_laluan_lama: "", kata_laluan_baru: "", sahkan_kata_laluan: "" });
+      } else {
+        toast.error(data.detail || "Gagal mengemas kini kata laluan.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Ralat rangkaian.");
+    } finally {
+      setUpdatingPassword(false);
     }
   };
 
@@ -376,6 +421,66 @@ export default function PengurusProfilPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Change Password Section */}
+      <div className="glass-light rounded-[2.5rem] border border-white/50 p-8 shadow-xl shadow-slate-200/5 mt-8 relative overflow-hidden animate-in fade-in duration-500">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-bl-[100px] -z-10" />
+        
+        <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100/50 flex items-center justify-center shadow-sm">
+            <KeyRound className="w-5 h-5 text-orange-500" />
+          </div>
+          Kemas Kini Kata Laluan
+        </h2>
+        
+        <form onSubmit={handleUpdatePassword} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          <div>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Kata Laluan Semasa</label>
+            <input 
+              type="password" 
+              required
+              value={passwords.kata_laluan_lama}
+              onChange={(e) => setPasswords({...passwords, kata_laluan_lama: e.target.value})}
+              className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
+              placeholder="••••••••"
+            />
+          </div>
+          
+          <div>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Kata Laluan Baharu</label>
+            <input 
+              type="password" 
+              required
+              value={passwords.kata_laluan_baru}
+              onChange={(e) => setPasswords({...passwords, kata_laluan_baru: e.target.value})}
+              className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
+              placeholder="Min. 6 aksara"
+            />
+          </div>
+          
+          <div>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Sahkan Kata Laluan Baharu</label>
+            <div className="flex gap-4">
+              <input 
+                type="password" 
+                required
+                value={passwords.sahkan_kata_laluan}
+                onChange={(e) => setPasswords({...passwords, sahkan_kata_laluan: e.target.value})}
+                className="flex-1 px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
+                placeholder="Sahkan kata laluan"
+              />
+              <button 
+                type="submit"
+                disabled={updatingPassword}
+                className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-4 rounded-2xl font-black text-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-slate-900/10 shrink-0"
+              >
+                {updatingPassword && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Kemas Kini
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
 
       {/* Team / Manager Management Section */}
