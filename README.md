@@ -84,11 +84,11 @@ FoodLytics solves the common issue of BERTopic clustering failing on very short 
 2. **Layer 2: Text Normalization**: Runs Malay chatspeak/slang normalization.
 3. **Layer 3: Guided BERTopic**: Any reviews not captured by Layer 1 are embedded using `sentence-transformers` and clustered using Guided BERTopic with seed topics and KeyBERT representations.
 
-### 4. Prescriptive Strategic AI (Root Cause Analysis)
+### 4. Prescriptive Strategic AI (Evidence-Based Action Routing)
 For negative feedback clusters, the system automatically triggers a prescriptive analysis using Qwen-2.5:
-* **Department Routing**: Routes tasks to Front-of-House, Kitchen (Dapur), Maintenance (Penyelenggaraan), or Management (Pengurusan).
-* **KPIs & Monitoring**: Establishes target metrics and monitoring guidelines.
-* **Actionable Work Orders:** Generates explicit instructions split between Staff and Managers.
+* **Evidence Extraction:** Extracts and summarizes raw customer complaints into structured, professional bullet points to justify the detected issue.
+* **Department Routing:** Routes tasks to Front-of-House, Kitchen (Dapur), Maintenance (Penyelenggaraan), or Management (Pengurusan).
+* **Actionable Work Orders:** Generates explicit execution steps split between Staff and Managers.
 
 ### 5. Operational Resilience & DB-Backed Locks
 To ensure absolute stability and performance in scalable container environments:
