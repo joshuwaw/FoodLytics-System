@@ -52,6 +52,7 @@ function TopicsAnalysisContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(5);
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "highest" | "lowest">("newest");
+  const [selectedMonth, setSelectedMonth] = useState<string>("Semua");
 
   // Fetch Topics
   const fetchTopics = async () => {
@@ -134,6 +135,7 @@ function TopicsAnalysisContent() {
     if (!user?.id_premis) return;
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
     setSelectedTopic(topicLabel);
+    setSelectedMonth("Semua");
     setLoadingDrilldown(true);
     setSearchQuery("");
     setVisibleCount(5);
@@ -459,6 +461,31 @@ function TopicsAnalysisContent() {
               />
             </div>
 
+            {/* Month Timeline Selection */}
+            {(() => {
+              const uniqueMonths = Array.from(new Set(drilldown.map(d => {
+                const date = new Date(d.tarikh_terima);
+                return date.toLocaleDateString("ms-MY", { month: "long", year: "numeric" });
+              })));
+
+              return (
+                <div className="relative flex items-center">
+                  <Clock className="w-3.5 h-3.5 absolute left-3 text-slate-400 pointer-events-none" />
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="pl-8.5 pr-8 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 font-bold text-slate-700 cursor-pointer appearance-none shadow-xs transition-all duration-200"
+                  >
+                    <option value="Semua">Semua Garis Masa</option>
+                    {uniqueMonths.map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 text-slate-400 pointer-events-none" />
+                </div>
+              );
+            })()}
+
             {/* Beautiful Custom Sort Selector */}
             <div className="relative flex items-center">
               <ArrowUpDown className="w-3.5 h-3.5 absolute left-3 text-slate-400 pointer-events-none" />
@@ -483,11 +510,14 @@ function TopicsAnalysisContent() {
           </div>
         ) : drilldown.length > 0 ? (
           (() => {
-            const filteredDrilldown = drilldown.filter(d => 
-              (activeFilter === "Semua" || d.label_sentimen === activeFilter) &&
-              (!selectedPlatform || d.sumber_platform === selectedPlatform) &&
-              (!searchQuery || d.ulasan_teks.toLowerCase().includes(searchQuery.toLowerCase()))
-            );
+            const filteredDrilldown = drilldown.filter(d => {
+              const dateObj = new Date(d.tarikh_terima);
+              const mStr = dateObj.toLocaleDateString("ms-MY", { month: "long", year: "numeric" });
+              return (activeFilter === "Semua" || d.label_sentimen === activeFilter) &&
+                (!selectedPlatform || d.sumber_platform === selectedPlatform) &&
+                (!searchQuery || d.ulasan_teks.toLowerCase().includes(searchQuery.toLowerCase())) &&
+                (selectedMonth === "Semua" || mStr === selectedMonth);
+            });
 
             // Sort logic
             filteredDrilldown.sort((a, b) => {
