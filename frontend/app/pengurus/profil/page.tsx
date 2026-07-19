@@ -853,6 +853,7 @@ export default function PengurusProfilPage() {
             </div>
           </div>
         </div>
+      )}
       {/* Manager Reset Staff Password Modal */}
       {showResetModal && resettingStaff && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
