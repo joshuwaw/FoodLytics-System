@@ -51,6 +51,7 @@ export default function PengurusProfilPage() {
     kata_laluan: ""
   });
   const [addingManager, setAddingManager] = useState(false);
+  const [showAddManager, setShowAddManager] = useState(false);
 
   // Staff status toggle state
   const [updatingStaffId, setUpdatingStaffId] = useState<number | null>(null);
@@ -188,6 +189,7 @@ export default function PengurusProfilPage() {
       if (res.ok) {
         toast.success("Rakan pengurus berjaya didaftarkan!");
         setNewManager({ nama_penuh: "", emel: "", no_telefon: "", kata_laluan: "" });
+        setShowAddManager(false);
         mutateManagers(); // Refresh managers list
       } else {
         toast.error(data.detail || "Gagal menambah pengurus.");
@@ -513,16 +515,6 @@ export default function PengurusProfilPage() {
             Senarai Kakitangan
           </button>
           <button
-            onClick={() => setActiveSubTab("pasukan")}
-            className={`pb-3 text-xs font-black uppercase tracking-wider transition-all relative cursor-pointer ${
-              activeSubTab === "pasukan"
-                ? "text-orange-500 border-b-2 border-orange-500"
-                : "text-slate-450 hover:text-slate-700"
-            }`}
-          >
-            Pengurusan Pengurus
-          </button>
-          <button
             onClick={() => setActiveSubTab("katalaluan")}
             className={`pb-3 text-xs font-black uppercase tracking-wider transition-all relative cursor-pointer ${
               activeSubTab === "katalaluan"
@@ -552,7 +544,66 @@ export default function PengurusProfilPage() {
               <div className="space-y-6">
                 {/* Managers Section */}
                 <div>
-                  <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-3">Pengurus</h3>
+                  <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider">Pengurus</h3>
+                    <button
+                      onClick={() => setShowAddManager(!showAddManager)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm active:scale-95"
+                    >
+                      {showAddManager ? "Tutup Borang" : "Tambah Pengurus +"}
+                    </button>
+                  </div>
+
+                  {showAddManager && (
+                    <form onSubmit={handleAddManager} className="mb-6 p-6 bg-slate-50/80 border border-slate-200/50 rounded-2xl space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-black uppercase text-slate-500">Tambah Rakan Pengurus Baharu</h4>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input
+                          type="text"
+                          placeholder="Nama Penuh"
+                          required
+                          value={newManager.nama_penuh}
+                          onChange={(e) => setNewManager({...newManager, nama_penuh: e.target.value})}
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500/20"
+                        />
+                        <input
+                          type="email"
+                          placeholder="E-mel Rasmi"
+                          required
+                          value={newManager.emel}
+                          onChange={(e) => setNewManager({...newManager, emel: e.target.value})}
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500/20"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Nombor Telefon"
+                          value={newManager.no_telefon}
+                          onChange={(e) => setNewManager({...newManager, no_telefon: e.target.value})}
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500/20"
+                        />
+                        <input
+                          type="password"
+                          placeholder="Kata Laluan"
+                          required
+                          value={newManager.kata_laluan}
+                          onChange={(e) => setNewManager({...newManager, kata_laluan: e.target.value})}
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500/20"
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          type="submit"
+                          disabled={addingManager}
+                          className="flex items-center gap-1.5 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-75"
+                        >
+                          {addingManager && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                          Daftar Rakan Pengurus
+                        </button>
+                      </div>
+                    </form>
+                  )}
                   {managers && managers.length > 0 ? (
                     <div className="grid gap-3 sm:grid-cols-2">
                       {managers.map((m: any) => (
@@ -658,97 +709,7 @@ export default function PengurusProfilPage() {
             </div>
           )}
 
-          {/* Tab 2: Co-manager registration form */}
-          {activeSubTab === "pasukan" && profile?.premis?.id_premis && (
-            <div className="glass-light rounded-[2.5rem] border border-white/50 p-8 shadow-xl shadow-slate-200/5 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-bl-[100px] -z-10" />
-              
-              <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100/50 flex items-center justify-center shadow-sm">
-                  <UserCircle className="w-5 h-5 text-orange-500" />
-                </div>
-                Pengurusan Pengurus
-              </h2>
 
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* List of active managers */}
-                <div className="space-y-4">
-                  <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-4">Pengurus Cawangan</h3>
-                  {managers && managers.length > 0 ? (
-                    <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-                      {managers.map((m: any) => (
-                        <div key={m.id_pengguna} className="p-5 bg-white/60 backdrop-blur-md border border-slate-200/30 rounded-2xl flex justify-between items-center transition-all hover:border-slate-300/50">
-                          <div>
-                            <p className="font-extrabold text-slate-800 text-sm">{m.nama}</p>
-                            <p className="text-xs text-slate-500 font-semibold">{m.emel}</p>
-                            {m.no_telefon && <p className="text-xs text-slate-400 mt-1 font-semibold">{m.no_telefon}</p>}
-                          </div>
-                          <div className="px-3 py-1 bg-orange-50 text-orange-500 border border-orange-100 rounded-lg text-[9px] font-black uppercase tracking-wider">
-                            Pengurus
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-8 text-center bg-white/30 rounded-2xl border border-slate-100">
-                      <p className="text-sm font-semibold text-slate-500">Tiada pengurus lain didaftarkan.</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Form to add a new manager */}
-                <form onSubmit={handleAddManager} className="space-y-4 bg-white/30 p-6 rounded-3xl border border-slate-200/20 backdrop-blur-sm">
-                  <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-2">Tambah Pengurus Baharu</h3>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      placeholder="Nama Penuh"
-                      required
-                      value={newManager.nama_penuh}
-                      onChange={(e) => setNewManager({...newManager, nama_penuh: e.target.value})}
-                      className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 text-sm font-semibold shadow-inner"
-                    />
-                    
-                    <input
-                      type="email"
-                      placeholder="E-mel Rasmi"
-                      required
-                      value={newManager.emel}
-                      onChange={(e) => setNewManager({...newManager, emel: e.target.value})}
-                      className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 text-sm font-semibold shadow-inner"
-                    />
-
-                    <input
-                      type="text"
-                      placeholder="Nombor Telefon"
-                      value={newManager.no_telefon}
-                      onChange={(e) => setNewManager({...newManager, no_telefon: e.target.value})}
-                      className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 text-sm font-semibold shadow-inner"
-                    />
-
-                    <input
-                      type="password"
-                      placeholder="Kata Laluan"
-                      required
-                      value={newManager.kata_laluan}
-                      onChange={(e) => setNewManager({...newManager, kata_laluan: e.target.value})}
-                      className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 text-sm font-semibold shadow-inner"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={addingManager}
-                    className="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white py-3.5 rounded-xl font-extrabold transition-all shadow-md shadow-slate-900/10 active:scale-98 text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
-                  >
-                    {addingManager && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Tambah Rakan Pengurus
-                  </button>
-                </form>
-              </div>
-            </div>
-          )}
 
           {/* Tab 3: Change Password Section */}
           {activeSubTab === "katalaluan" && (
