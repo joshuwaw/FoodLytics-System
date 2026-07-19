@@ -132,7 +132,7 @@ export default function PengurusProfilPage() {
   const [managerStatuses, setManagerStatuses] = useState<Record<number, string>>({});
   
   useEffect(() => {
-    if (managers) {
+    if (managers && Array.isArray(managers)) {
       const statuses: Record<number, string> = {};
       managers.forEach((m: any) => {
         const saved = localStorage.getItem(`manager_status_${m.id_pengguna}`) || "Aktif";
