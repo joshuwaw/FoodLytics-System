@@ -550,7 +550,7 @@ export default function PengurusProfilPage() {
                       onClick={() => setShowAddManager(!showAddManager)}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm active:scale-95"
                     >
-                      {showAddManager ? "Tutup Borang" : "Tambah Pengurus +"}
+                      {showAddManager ? "Tutup" : "Tambah Pengurus +"}
                     </button>
                   </div>
 
