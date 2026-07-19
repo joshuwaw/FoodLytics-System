@@ -54,27 +54,6 @@ export default function PengurusProfilPage() {
   const [showAddManager, setShowAddManager] = useState(false);
   const [showNewManagerPassword, setShowNewManagerPassword] = useState(false);
 
-  // Manager statuses state
-  const [managerStatuses, setManagerStatuses] = useState<Record<number, string>>({});
-  
-  useEffect(() => {
-    if (managers) {
-      const statuses: Record<number, string> = {};
-      managers.forEach((m: any) => {
-        const saved = localStorage.getItem(`manager_status_${m.id_pengguna}`) || "Aktif";
-        statuses[m.id_pengguna] = saved;
-      });
-      setManagerStatuses(statuses);
-    }
-  }, [managers]);
-
-  const handleToggleManagerStatus = (managerId: number) => {
-    const current = managerStatuses[managerId] || "Aktif";
-    const next = current === "Aktif" ? "Tidak Aktif" : "Aktif";
-    localStorage.setItem(`manager_status_${managerId}`, next);
-    setManagerStatuses(prev => ({ ...prev, [managerId]: next }));
-    toast.success("Status pengurus cawangan berjaya dikemas kini!");
-  };
 
   // Staff status toggle state
   const [updatingStaffId, setUpdatingStaffId] = useState<number | null>(null);
@@ -145,6 +124,28 @@ export default function PengurusProfilPage() {
     profile?.premis?.id_premis ? `${API_URL}/admin/premises/${profile.premis.id_premis}/staff` : null,
     fetcher
   );
+
+  // Manager statuses state
+  const [managerStatuses, setManagerStatuses] = useState<Record<number, string>>({});
+  
+  useEffect(() => {
+    if (managers) {
+      const statuses: Record<number, string> = {};
+      managers.forEach((m: any) => {
+        const saved = localStorage.getItem(`manager_status_${m.id_pengguna}`) || "Aktif";
+        statuses[m.id_pengguna] = saved;
+      });
+      setManagerStatuses(statuses);
+    }
+  }, [managers]);
+
+  const handleToggleManagerStatus = (managerId: number) => {
+    const current = managerStatuses[managerId] || "Aktif";
+    const next = current === "Aktif" ? "Tidak Aktif" : "Aktif";
+    localStorage.setItem(`manager_status_${managerId}`, next);
+    setManagerStatuses(prev => ({ ...prev, [managerId]: next }));
+    toast.success("Status pengurus cawangan berjaya dikemas kini!");
+  };
 
   useEffect(() => {
     if (user?.id_pengguna) {
