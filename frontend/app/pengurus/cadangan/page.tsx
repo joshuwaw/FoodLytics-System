@@ -318,13 +318,13 @@ export default function CadanganPage() {
         <div className="relative">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/25 text-orange-300 border border-orange-500/30 mb-3 backdrop-blur-xs">
             <Sparkles className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
-            Cadangan Maklum Balas AI
+            Analisis AI
           </span>
           <h1 className="text-3xl md:text-4xl font-black tracking-tight">
-            Idea &amp; Cadangan AI
+            Cadangan Penambahbaikan
           </h1>
           <p className="text-slate-300 mt-2 text-sm max-w-2xl leading-relaxed">
-            Idea penyelesaian pantas untuk membantu staff anda menyelesaikan masalah harian pelanggan.
+            Tindakan penambahbaikan operasi cawangan berdasarkan analisis maklum balas pelanggan.
           </p>
         </div>
         
@@ -334,7 +334,7 @@ export default function CadanganPage() {
           className="relative shrink-0 flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white px-5 py-3 rounded-2xl font-bold shadow-lg shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:hover:scale-100"
         >
           {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <BrainCircuit className="w-5 h-5" />}
-          {generating ? "Menjana..." : "Jana Cadangan AI"}
+          {generating ? "Menjana..." : "Jana Cadangan"}
         </button>
       </div>
 
@@ -557,7 +557,7 @@ export default function CadanganPage() {
                               className="px-5 py-2.5 rounded-xl font-bold text-xs bg-rose-900 text-white hover:bg-rose-950 border border-rose-950 shadow-md shadow-rose-900/10 hover:shadow-lg hover:shadow-rose-900/20 flex items-center gap-2 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
                             >
                               {actionLoading === draft.id_cadangan ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                              Hantar ke Staf
+                              Lulus
                             </button>
                           )}
                         </>
