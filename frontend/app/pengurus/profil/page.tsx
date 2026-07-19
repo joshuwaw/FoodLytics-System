@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
-import { UserCircle, Store, Save, Loader2, Building, Phone, Mail, User, Camera, ShieldCheck, KeyRound, Users, Briefcase, ToggleLeft, ToggleRight } from "lucide-react";
+import { UserCircle, Store, Save, Loader2, Building, Phone, Mail, User, Camera, ShieldCheck, KeyRound, Users, Briefcase, ToggleLeft, ToggleRight, Lock } from "lucide-react";
 import Cropper from "react-easy-crop";
 import useSWR from "swr";
 import { toast } from "sonner";
@@ -47,6 +47,39 @@ export default function PengurusProfilPage() {
 
   // Staff status toggle state
   const [updatingStaffId, setUpdatingStaffId] = useState<number | null>(null);
+
+  // Staff Password Reset State
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resettingStaff, setResettingStaff] = useState<any>(null);
+  const [staffNewPassword, setStaffNewPassword] = useState("");
+  const [resettingLoading, setResettingLoading] = useState(false);
+
+  const handleResetStaffPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resettingStaff) return;
+    setResettingLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/staff/${resettingStaff.id_pengguna}/reset-password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ new_password: staffNewPassword }),
+      });
+      if (res.ok) {
+        toast.success(`Kata laluan untuk ${resettingStaff.nama} berjaya diset semula!`);
+        setShowResetModal(false);
+        setStaffNewPassword("");
+        setResettingStaff(null);
+      } else {
+        const errData = await res.json();
+        toast.error(errData.detail || "Gagal menetapkan semula kata laluan.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Ralat rangkaian.");
+    } finally {
+      setResettingLoading(false);
+    }
+  };
 
   // Active Sub Tab State: "kakitangan" (Staff & manager status), "pasukan" (Add co-manager), "katalaluan" (Change password)
   const [activeSubTab, setActiveSubTab] = useState<"kakitangan" | "pasukan" | "katalaluan">("kakitangan");
@@ -561,34 +594,51 @@ export default function PengurusProfilPage() {
                               Staf
                             </span>
                             
-                            {/* Staff Work Status Toggle Button */}
-                            <button
-                              onClick={() => handleToggleStaffStatus(s.id_pengguna, s.status_bekerja)}
-                              disabled={updatingStaffId === s.id_pengguna}
-                              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[10px] font-black transition-all border cursor-pointer active:scale-95 ${
-                                s.status_bekerja === "Aktif"
-                                  ? "bg-emerald-50 text-emerald-600 border-emerald-200/60 hover:bg-emerald-100/50"
-                                  : s.status_bekerja === "Menunggu Kelulusan"
-                                  ? "bg-amber-50 text-amber-600 border-amber-200/60 hover:bg-amber-100/50 animate-pulse"
-                                  : "bg-rose-50 text-rose-600 border-rose-200/60 hover:bg-rose-100/50"
-                              }`}
-                            >
-                              {updatingStaffId === s.id_pengguna ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : s.status_bekerja === "Aktif" ? (
-                                <ToggleRight className="w-4 h-4" />
-                              ) : s.status_bekerja === "Menunggu Kelulusan" ? (
-                                <ShieldCheck className="w-4 h-4 text-amber-500" />
-                              ) : (
-                                <ToggleLeft className="w-4 h-4" />
+                            {/* Actions Container */}
+                            <div className="flex items-center gap-2">
+                              {/* Staff Work Status Toggle Button */}
+                              <button
+                                onClick={() => handleToggleStaffStatus(s.id_pengguna, s.status_bekerja)}
+                                disabled={updatingStaffId === s.id_pengguna}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all border cursor-pointer active:scale-95 ${
+                                  s.status_bekerja === "Aktif"
+                                    ? "bg-emerald-50 text-emerald-600 border-emerald-200/60 hover:bg-emerald-100/50"
+                                    : s.status_bekerja === "Menunggu Kelulusan"
+                                    ? "bg-amber-50 text-amber-600 border-amber-200/60 hover:bg-amber-100/50 animate-pulse"
+                                    : "bg-rose-50 text-rose-600 border-rose-200/60 hover:bg-rose-100/50"
+                                }`}
+                              >
+                                {updatingStaffId === s.id_pengguna ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : s.status_bekerja === "Aktif" ? (
+                                  <ToggleRight className="w-4 h-4" />
+                                ) : s.status_bekerja === "Menunggu Kelulusan" ? (
+                                  <ShieldCheck className="w-4 h-4 text-amber-500" />
+                                ) : (
+                                  <ToggleLeft className="w-4 h-4" />
+                                )}
+                                {s.status_bekerja === "Aktif" 
+                                  ? "Aktif" 
+                                  : s.status_bekerja === "Menunggu Kelulusan" 
+                                  ? "Sahkan Kelulusan" 
+                                  : "Telah Berhenti"
+                                }
+                              </button>
+
+                              {/* Reset Password Button */}
+                              {s.status_bekerja !== "Menunggu Kelulusan" && (
+                                <button
+                                  onClick={() => {
+                                    setResettingStaff(s);
+                                    setShowResetModal(true);
+                                  }}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-700 rounded-xl text-[10px] font-black transition-all cursor-pointer active:scale-95"
+                                >
+                                  <Lock className="w-3 h-3 text-slate-500" />
+                                  Kata Laluan
+                                </button>
                               )}
-                              {s.status_bekerja === "Aktif" 
-                                ? "Aktif" 
-                                : s.status_bekerja === "Menunggu Kelulusan" 
-                                ? "Sahkan Kelulusan" 
-                                : "Telah Berhenti"
-                              }
-                            </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -800,6 +850,58 @@ export default function PengurusProfilPage() {
               >
                 Gunakan Gambar
               </button>
+            </div>
+          </div>
+        </div>
+      {/* Manager Reset Staff Password Modal */}
+      {showResetModal && resettingStaff && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white/95 backdrop-blur-2xl border border-slate-200 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl w-full max-w-[460px] relative overflow-hidden text-slate-800 animate-in zoom-in-95 duration-200">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-bl-[100px] -z-10" />
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2.5">
+                  <Lock className="w-5 h-5 text-orange-500" />
+                  Set Semula Kata Laluan
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setStaffNewPassword("");
+                    setResettingStaff(null);
+                  }}
+                  className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
+
+              <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl text-xs text-orange-800 leading-relaxed">
+                Anda sedang menukar kata laluan untuk staf: <strong>{resettingStaff.nama}</strong> ({resettingStaff.emel}).
+              </div>
+
+              <form onSubmit={handleResetStaffPassword} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Kata Laluan Baru Staf</label>
+                  <input
+                    type="password"
+                    placeholder="Masukkan kata laluan baru"
+                    value={staffNewPassword}
+                    onChange={(e) => setStaffNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/40 text-sm font-semibold"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={resettingLoading}
+                  className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-xl text-sm font-black shadow-lg cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {resettingLoading ? "Mengemaskini..." : "Simpan Kata Laluan Baru"}
+                </button>
+              </form>
             </div>
           </div>
         </div>

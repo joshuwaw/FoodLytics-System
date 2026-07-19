@@ -396,3 +396,65 @@ def update_staff_status(staff_id: int, request: UpdateStaffStatusRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
+class CheckEmailRequest(BaseModel):
+    emel: str
+
+class ResetPasswordDemoRequest(BaseModel):
+    id_pengguna: int
+    new_password: str
+
+class StaffResetPasswordRequest(BaseModel):
+    new_password: str
+
+@router.post("/check-email")
+def check_email_exists(request: CheckEmailRequest):
+    try:
+        user_res = supabase.table("tbl_pengguna").select("id_pengguna, nama, emel, peranan").eq("emel", request.emel).execute()
+        if not user_res.data:
+            raise HTTPException(status_code=404, detail="E-mel tidak dijumpai dalam pangkalan data.")
+        
+        user = user_res.data[0]
+        peranan = user.get("peranan")
+        if peranan == "Staf":
+            peranan = "Staf Operasi"
+            
+        return {
+            "id_pengguna": user["id_pengguna"],
+            "nama": user["nama"],
+            "emel": user["emel"],
+            "peranan": peranan
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@router.put("/reset-password-demo")
+def reset_password_demo(request: ResetPasswordDemoRequest):
+    try:
+        check_res = supabase.table("tbl_pengguna").select("id_pengguna").eq("id_pengguna", request.id_pengguna).execute()
+        if not check_res.data:
+            raise HTTPException(status_code=404, detail="Pengguna tidak dijumpai.")
+            
+        supabase.table("tbl_pengguna").update({"kata_laluan": request.new_password}).eq("id_pengguna", request.id_pengguna).execute()
+        return {"message": "Kata laluan berjaya dikemaskini!"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@router.put("/staff/{staff_id}/reset-password")
+def reset_staff_password_by_manager(staff_id: int, request: StaffResetPasswordRequest):
+    try:
+        check_res = supabase.table("tbl_staf_operasi").select("id_pengguna").eq("id_pengguna", staff_id).execute()
+        if not check_res.data:
+            raise HTTPException(status_code=404, detail="Staf tidak dijumpai.")
+            
+        supabase.table("tbl_pengguna").update({"kata_laluan": request.new_password}).eq("id_pengguna", staff_id).execute()
+        return {"message": "Kata laluan staf berjaya dikemaskini!"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+

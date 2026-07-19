@@ -14,6 +14,68 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Forgot Password modal state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [foundUser, setFoundUser] = useState<{ id_pengguna: number; nama: string; emel: string; peranan: string } | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetSuccess, setResetSuccess] = useState(false);
+
+  const handleCheckEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError(null);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const res = await fetch(`${API_URL}/admin/check-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emel: forgotEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "E-mel tidak dijumpai.");
+      setFoundUser(data);
+    } catch (err: any) {
+      setForgotError(err.message);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError(null);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const res = await fetch(`${API_URL}/admin/reset-password-demo`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_pengguna: foundUser?.id_pengguna, new_password: newPassword }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || "Gagal mengemaskini kata laluan.");
+      }
+      setResetSuccess(true);
+    } catch (err: any) {
+      setForgotError(err.message);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const closeForgotModal = () => {
+    setShowForgotModal(false);
+    setForgotEmail("");
+    setForgotError(null);
+    setFoundUser(null);
+    setNewPassword("");
+    setResetSuccess(false);
+  };
+
   // Redirect if already logged in
   useEffect(() => {
     if (!isLoading && user) {
@@ -164,9 +226,13 @@ export default function LoginPage() {
                   <label className="text-xs font-black uppercase tracking-widest text-slate-300 drop-shadow-sm">
                     Kata Laluan
                   </label>
-                  <a href="#" className="text-xs font-bold text-orange-400 hover:text-orange-300 transition-colors">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); setShowForgotModal(true); }}
+                    className="text-xs font-bold text-orange-400 hover:text-orange-300 transition-colors focus:outline-none cursor-pointer"
+                  >
                     Lupa?
-                  </a>
+                  </button>
                 </div>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
@@ -218,6 +284,121 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {/* Forgot Password Modal Overlay */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-[#111827]/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-full max-w-[460px] relative overflow-hidden text-slate-100">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+            <div className="relative z-10 space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-black text-white tracking-tight">Set Semula Kata Laluan</h3>
+                <button
+                  onClick={closeForgotModal}
+                  className="text-slate-400 hover:text-white text-xs font-bold cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
+
+              {forgotError && (
+                <div className="p-4 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 text-xs font-bold text-center">
+                  {forgotError}
+                </div>
+              )}
+
+              {resetSuccess ? (
+                <div className="space-y-6 text-center py-4">
+                  <div className="w-16 h-16 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto text-emerald-400">
+                    <ShieldCheck className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-lg font-black text-white">Berjaya Dikemaskini!</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Kata laluan anda telah berjaya dikemaskini. Sila log masuk semula menggunakan kata laluan baharu anda.
+                    </p>
+                  </div>
+                  <button
+                    onClick={closeForgotModal}
+                    className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-xl text-sm font-black shadow-lg cursor-pointer"
+                  >
+                    Kembali Log Masuk
+                  </button>
+                </div>
+              ) : !foundUser ? (
+                <form onSubmit={handleCheckEmail} className="space-y-5">
+                  <p className="text-xs text-slate-400 leading-relaxed font-semibold">
+                    Masukkan e-mel akaun anda untuk menyemak peranan dan memulakan tetapan semula kata laluan.
+                  </p>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">E-mel Akaun</label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="email"
+                        placeholder="nama@syarikat.com"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        required
+                        className="w-full pl-10 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/40 text-sm font-semibold"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-xl text-sm font-black transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {forgotLoading ? "Menyemak..." : "Semak E-mel"}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleResetPassword} className="space-y-5">
+                  <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-xs text-orange-200 leading-relaxed space-y-2">
+                    {foundUser.peranan === "Staf Operasi" ? (
+                      <>
+                        <p className="font-bold">⚠️ Perhatian Staf Operasi:</p>
+                        <p>Sila hubungi <strong>Pengurus</strong> anda untuk menetapkan semula kata laluan di panel Senarai Kakitangan.</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-bold">📧 E-mel Pemulihan Dihantar:</p>
+                        <p>Pautan menetapkan semula kata laluan telah dihantar ke e-mel <strong>{foundUser.emel}</strong>.</p>
+                      </>
+                    )}
+                    <div className="border-t border-orange-500/20 my-2 pt-2 text-[10px] text-orange-300/80 font-semibold">
+                      💡 <strong>Mod Demo:</strong> Sebagai panel penilai, anda boleh menetapkan kata laluan baru di bawah terus untuk tujuan ujian!
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Kata Laluan Baru (Demo)</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        className="w-full pl-10 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/40 text-sm font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-xl text-sm font-black transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {forgotLoading ? "Mengemaskini..." : "Simpan Kata Laluan Baru"}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
