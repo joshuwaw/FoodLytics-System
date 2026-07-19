@@ -856,8 +856,8 @@ export default function PengurusProfilPage() {
       )}
       {/* Manager Reset Staff Password Modal */}
       {showResetModal && resettingStaff && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white/95 backdrop-blur-2xl border border-slate-200 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl w-full max-w-[460px] relative overflow-hidden text-slate-800 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md transition-all duration-300">
+          <div className="bg-white border border-slate-100 rounded-[2rem] p-8 sm:p-10 shadow-2xl w-full max-w-[420px] relative overflow-hidden text-slate-800 animate-in zoom-in-95 duration-200 ease-out">
             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-bl-[100px] -z-10" />
             <div className="space-y-6">
               <div className="flex justify-between items-center">
