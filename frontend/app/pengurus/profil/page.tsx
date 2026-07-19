@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/lib/auth";
-import { UserCircle, Store, Save, Loader2, Building, Phone, Mail, User, Camera, ShieldCheck, KeyRound, Users, Briefcase, ToggleLeft, ToggleRight, Lock } from "lucide-react";
+import { UserCircle, Store, Save, Loader2, Building, Phone, Mail, User, Camera, ShieldCheck, KeyRound, Users, Briefcase, ToggleLeft, ToggleRight, Lock, Eye, EyeOff } from "lucide-react";
 import Cropper from "react-easy-crop";
 import useSWR from "swr";
 import { toast } from "sonner";
@@ -52,6 +52,29 @@ export default function PengurusProfilPage() {
   });
   const [addingManager, setAddingManager] = useState(false);
   const [showAddManager, setShowAddManager] = useState(false);
+  const [showNewManagerPassword, setShowNewManagerPassword] = useState(false);
+
+  // Manager statuses state
+  const [managerStatuses, setManagerStatuses] = useState<Record<number, string>>({});
+  
+  useEffect(() => {
+    if (managers) {
+      const statuses: Record<number, string> = {};
+      managers.forEach((m: any) => {
+        const saved = localStorage.getItem(`manager_status_${m.id_pengguna}`) || "Aktif";
+        statuses[m.id_pengguna] = saved;
+      });
+      setManagerStatuses(statuses);
+    }
+  }, [managers]);
+
+  const handleToggleManagerStatus = (managerId: number) => {
+    const current = managerStatuses[managerId] || "Aktif";
+    const next = current === "Aktif" ? "Tidak Aktif" : "Aktif";
+    localStorage.setItem(`manager_status_${managerId}`, next);
+    setManagerStatuses(prev => ({ ...prev, [managerId]: next }));
+    toast.success("Status pengurus cawangan berjaya dikemas kini!");
+  };
 
   // Staff status toggle state
   const [updatingStaffId, setUpdatingStaffId] = useState<number | null>(null);
@@ -240,7 +263,7 @@ export default function PengurusProfilPage() {
   };
 
   const handleToggleStaffStatus = async (staffId: number, currentStatus: string) => {
-    const nextStatus = currentStatus === "Aktif" ? "Tamat Perkhidmatan" : "Aktif";
+    const nextStatus = currentStatus === "Aktif" ? "Tidak Aktif" : "Aktif";
     
     setUpdatingStaffId(staffId);
     try {
@@ -583,14 +606,23 @@ export default function PengurusProfilPage() {
                           onChange={(e) => setNewManager({...newManager, no_telefon: e.target.value})}
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500/20"
                         />
-                        <input
-                          type="password"
-                          placeholder="Kata Laluan"
-                          required
-                          value={newManager.kata_laluan}
-                          onChange={(e) => setNewManager({...newManager, kata_laluan: e.target.value})}
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500/20"
-                        />
+                        <div className="relative group">
+                          <input
+                            type={showNewManagerPassword ? "text" : "password"}
+                            placeholder="Kata Laluan"
+                            required
+                            value={newManager.kata_laluan}
+                            onChange={(e) => setNewManager({...newManager, kata_laluan: e.target.value})}
+                            className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500/20"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewManagerPassword(!showNewManagerPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650 transition-colors cursor-pointer focus:outline-none"
+                          >
+                            {showNewManagerPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </div>
                       <div className="flex justify-end">
                         <button
@@ -622,9 +654,27 @@ export default function PengurusProfilPage() {
                             <span className="px-2.5 py-0.5 bg-orange-50 text-orange-500 border border-orange-100 rounded-lg text-[9px] font-black uppercase tracking-wider">
                               Pengurus
                             </span>
-                            <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-wider">
-                              Aktif
-                            </span>
+                            {m.id_pengguna === profile?.premis?.id_pengurus ? (
+                              <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                                Aktif
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleToggleManagerStatus(m.id_pengguna)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase transition-all border cursor-pointer active:scale-95 ${
+                                  (managerStatuses[m.id_pengguna] || "Aktif") === "Aktif"
+                                    ? "bg-emerald-50 text-emerald-600 border-emerald-200/60 hover:bg-emerald-100/50"
+                                    : "bg-rose-50 text-rose-600 border-rose-200/60 hover:bg-rose-100/50"
+                                }`}
+                              >
+                                {(managerStatuses[m.id_pengguna] || "Aktif") === "Aktif" ? (
+                                  <ToggleRight className="w-4 h-4" />
+                                ) : (
+                                  <ToggleLeft className="w-4 h-4" />
+                                )}
+                                {managerStatuses[m.id_pengguna] || "Aktif"}
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -679,7 +729,7 @@ export default function PengurusProfilPage() {
                                   ? "Aktif" 
                                   : s.status_bekerja === "Menunggu Kelulusan" 
                                   ? "Sahkan Kelulusan" 
-                                  : "Telah Berhenti"
+                                  : "Tidak Aktif"
                                 }
                               </button>
 
