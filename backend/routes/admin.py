@@ -33,8 +33,8 @@ def login(request: LoginRequest):
                 status = staf_res.data[0].get("status_bekerja") or "Aktif"
                 if status == "Menunggu Kelulusan":
                     raise HTTPException(status_code=403, detail="Akaun anda masih menunggu kelulusan daripada Pengurus Cawangan.")
-                elif status == "Tamat Perkhidmatan":
-                    raise HTTPException(status_code=403, detail="Akaun anda telah dinyahaktifkan (Tamat Perkhidmatan).")
+                elif status == "Tamat Perkhidmatan" or status == "Tidak Aktif":
+                    raise HTTPException(status_code=403, detail="Akaun anda telah dinyahaktifkan (Tidak Aktif).")
         
         return LoginResponse(
             id_pengguna=id_pengguna,

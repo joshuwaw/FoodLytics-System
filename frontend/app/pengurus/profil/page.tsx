@@ -266,15 +266,13 @@ export default function PengurusProfilPage() {
     }
   };
 
-  const handleToggleStaffStatus = async (staffId: number, currentStatus: string) => {
-    const nextStatus = currentStatus === "Aktif" ? "Tidak Aktif" : "Aktif";
-    
+  const handleUpdateStaffStatusExplicit = async (staffId: number, targetStatus: string) => {
     setUpdatingStaffId(staffId);
     try {
       const res = await fetch(`${API_URL}/admin/staff/${staffId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status_bekerja: nextStatus })
+        body: JSON.stringify({ status_bekerja: targetStatus })
       });
       if (res.ok) {
         toast.success("Status kakitangan berjaya dikemas kini!");
@@ -708,34 +706,51 @@ export default function PengurusProfilPage() {
                             
                             {/* Actions Container */}
                             <div className="flex items-center gap-2">
-                              {/* Staff Work Status Toggle Button */}
-                              <button
-                                onClick={() => handleToggleStaffStatus(s.id_pengguna, s.status_bekerja)}
-                                disabled={updatingStaffId === s.id_pengguna}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all border cursor-pointer active:scale-95 ${
-                                  s.status_bekerja === "Aktif"
-                                    ? "bg-emerald-50 text-emerald-600 border-emerald-200/60 hover:bg-emerald-100/50"
-                                    : s.status_bekerja === "Menunggu Kelulusan"
-                                    ? "bg-amber-50 text-amber-600 border-amber-200/60 hover:bg-amber-100/50 animate-pulse"
-                                    : "bg-rose-50 text-rose-600 border-rose-200/60 hover:bg-rose-100/50"
-                                }`}
-                              >
-                                {updatingStaffId === s.id_pengguna ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : s.status_bekerja === "Aktif" ? (
-                                  <ToggleRight className="w-4 h-4" />
-                                ) : s.status_bekerja === "Menunggu Kelulusan" ? (
-                                  <ShieldCheck className="w-4 h-4 text-amber-500" />
-                                ) : (
-                                  <ToggleLeft className="w-4 h-4" />
-                                )}
-                                {s.status_bekerja === "Aktif" 
-                                  ? "Aktif" 
-                                  : s.status_bekerja === "Menunggu Kelulusan" 
-                                  ? "Sahkan Kelulusan" 
-                                  : "Tidak Aktif"
-                                }
-                              </button>
+                              {s.status_bekerja === "Menunggu Kelulusan" ? (
+                                <>
+                                  {/* Sahkan Button */}
+                                  <button
+                                    onClick={() => handleUpdateStaffStatusExplicit(s.id_pengguna, "Aktif")}
+                                    disabled={updatingStaffId === s.id_pengguna}
+                                    className="flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200/60 hover:bg-emerald-100/50 px-2.5 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer active:scale-95 animate-pulse"
+                                  >
+                                    {updatingStaffId === s.id_pengguna ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                    )}
+                                    Sahkan
+                                  </button>
+
+                                  {/* Tolak Button */}
+                                  <button
+                                    onClick={() => handleUpdateStaffStatusExplicit(s.id_pengguna, "Tidak Aktif")}
+                                    disabled={updatingStaffId === s.id_pengguna}
+                                    className="flex items-center gap-1 bg-rose-50 text-rose-600 border border-rose-200/60 hover:bg-rose-100/50 px-2.5 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer active:scale-95"
+                                  >
+                                    Tolak
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => handleUpdateStaffStatusExplicit(s.id_pengguna, s.status_bekerja === "Aktif" ? "Tidak Aktif" : "Aktif")}
+                                  disabled={updatingStaffId === s.id_pengguna}
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all border cursor-pointer active:scale-95 ${
+                                    s.status_bekerja === "Aktif"
+                                      ? "bg-emerald-50 text-emerald-600 border-emerald-200/60 hover:bg-emerald-100/50"
+                                      : "bg-rose-50 text-rose-600 border-rose-200/60 hover:bg-rose-100/50"
+                                  }`}
+                                >
+                                  {updatingStaffId === s.id_pengguna ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : s.status_bekerja === "Aktif" ? (
+                                    <ToggleRight className="w-4 h-4" />
+                                  ) : (
+                                    <ToggleLeft className="w-4 h-4" />
+                                  )}
+                                  {s.status_bekerja}
+                                </button>
+                              )}
 
                               {/* Reset Password Button */}
                               {s.status_bekerja !== "Menunggu Kelulusan" && (
