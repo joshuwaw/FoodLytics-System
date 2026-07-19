@@ -53,6 +53,9 @@ export default function PengurusProfilPage() {
   const [addingManager, setAddingManager] = useState(false);
   const [showAddManager, setShowAddManager] = useState(false);
   const [showNewManagerPassword, setShowNewManagerPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 
   // Staff status toggle state
@@ -778,38 +781,65 @@ export default function PengurusProfilPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Kata Laluan Semasa</label>
-                    <input 
-                      type="password" 
-                      required
-                      value={passwords.kata_laluan_lama}
-                      onChange={(e) => setPasswords({...passwords, kata_laluan_lama: e.target.value})}
-                      className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
-                      placeholder="••••••••"
-                    />
+                    <div className="relative group">
+                      <input 
+                        type={showOldPassword ? "text" : "password"} 
+                        required
+                        value={passwords.kata_laluan_lama}
+                        onChange={(e) => setPasswords({...passwords, kata_laluan_lama: e.target.value})}
+                        className="w-full pl-5 pr-10 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOldPassword(!showOldPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650 transition-colors cursor-pointer focus:outline-none"
+                      >
+                        {showOldPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                   
                   <div>
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Kata Laluan Baharu</label>
-                    <input 
-                      type="password" 
-                      required
-                      value={passwords.kata_laluan_baru}
-                      onChange={(e) => setPasswords({...passwords, kata_laluan_baru: e.target.value})}
-                      className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
-                      placeholder="Min. 6 aksara"
-                    />
+                    <div className="relative group">
+                      <input 
+                        type={showNewPassword ? "text" : "password"} 
+                        required
+                        value={passwords.kata_laluan_baru}
+                        onChange={(e) => setPasswords({...passwords, kata_laluan_baru: e.target.value})}
+                        className="w-full pl-5 pr-10 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
+                        placeholder="Min. 6 aksara"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-655 transition-colors cursor-pointer focus:outline-none"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                   
                   <div>
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Sahkan Kata Laluan Baharu</label>
-                    <input 
-                      type="password" 
-                      required
-                      value={passwords.sahkan_kata_laluan}
-                      onChange={(e) => setPasswords({...passwords, sahkan_kata_laluan: e.target.value})}
-                      className="w-full px-5 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
-                      placeholder="Sahkan kata laluan"
-                    />
+                    <div className="relative group">
+                      <input 
+                        type={showConfirmPassword ? "text" : "password"} 
+                        required
+                        value={passwords.sahkan_kata_laluan}
+                        onChange={(e) => setPasswords({...passwords, sahkan_kata_laluan: e.target.value})}
+                        className="w-full pl-5 pr-10 py-4 bg-white/50 border border-slate-200/50 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-slate-800 font-semibold shadow-inner text-sm"
+                        placeholder="Sahkan kata laluan"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-655 transition-colors cursor-pointer focus:outline-none"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
