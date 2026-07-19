@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "@/lib/auth";
 import { UserCircle, Store, Save, Loader2, Building, Phone, Mail, User, Camera, ShieldCheck, KeyRound, Users, Briefcase, ToggleLeft, ToggleRight, Lock } from "lucide-react";
 import Cropper from "react-easy-crop";
@@ -13,6 +14,12 @@ export default function PengurusProfilPage() {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [profilePic, setProfilePic] = useState<string | null>(null);
+
+  // SSR hydration mounted check
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Cropper State
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -854,9 +861,9 @@ export default function PengurusProfilPage() {
           </div>
         </div>
       )}
-      {/* Manager Reset Staff Password Modal */}
-      {showResetModal && resettingStaff && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md transition-all duration-300">
+      {/* Manager Reset Staff Password Modal (React Portal) */}
+      {mounted && showResetModal && resettingStaff && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
           <div className="bg-white border border-slate-100 rounded-[2rem] p-8 sm:p-10 shadow-2xl w-full max-w-[420px] relative overflow-hidden text-slate-800 animate-in zoom-in-95 duration-200 ease-out">
             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-bl-[100px] -z-10" />
             <div className="space-y-6">
@@ -905,7 +912,8 @@ export default function PengurusProfilPage() {
               </form>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
