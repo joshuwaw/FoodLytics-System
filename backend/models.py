@@ -111,6 +111,7 @@ class CadanganResponse(BaseModel):
     status_kelulusan: str
     status_pelaksanaan: str
     created_at: Optional[datetime] = None
+    tarikh_jana: Optional[datetime] = None
 
 class CadanganUpdate(BaseModel):
     status_kelulusan: Optional[str] = None
