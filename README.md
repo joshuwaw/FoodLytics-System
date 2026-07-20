@@ -14,7 +14,7 @@ FoodLytics utilizes a modern, decoupled architecture connecting a responsive Nex
 ```mermaid
 graph TD
     %% Inputs
-    Customer[Customer / Mobile QR Portal] -->|Submits Ratings & Reviews| API
+    Customer[Mobile QR Portal] -->|Submits Ratings & Reviews| API
     ExtReviews[Google Maps & Social Media Reviews] -->|Scraped via Apify API| API
 
     subgraph Backend [FastAPI Backend Service]
