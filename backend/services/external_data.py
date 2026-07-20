@@ -138,62 +138,47 @@ def _fetch_social_mentions_from_apify(medsos_urls: list, count: int) -> list[dic
 # ==========================================
 
 def _mock_google_reviews(count: int) -> list[dict]:
-    templates = [
-        ("Kedai nampak bersih, makanan pun sedap. Memang berbaloi dengan harga.", 5),
-        ("Portion besar! Puas hati makan. Servis pun pantas je.", 5),
-        ("Tempat selesa untuk lepak dengan kawan-kawan. Suasana chill, staf mesra.", 4),
-        ("Rasa makanan authentic gila. Macam makan kat kampung.", 5),
-        ("Harga murah gila tapi kualiti Tiptop. Akan repeat lagi confirm.", 5),
-        ("Nasi goreng ayam dia sedap, cuma tempat parking susah sikit nak cari.", 4),
-        ("Makanan biasa je. Tak ada yang special sangat. Sesuai la kalau nak alas perut.", 3),
-        ("Harga okay, tapi servis agak lambat masa waktu puncak.", 3),
-        ("Boleh la makan sini, tapi kalau lapar sangat baik pergi tempat lain.", 3),
-        ("Suasana okay tapi makanan dia tak panas sangat bila sampai.", 3),
-        ("Kecewa betul. Sup rasa tawar, macam letak air je lebih.", 1),
-        ("Servis memang out! Tunggu sejam baru makanan sampai. Pekerja buat tak tahu je.", 1),
-        ("Kotor gila lantai bersepah. Tak selesa langsung nak makan.", 1),
-        ("Harga mahal tak masuk akal dengan portion yang bagi ciput je.", 2),
-        ("Ayam mentah! Potong selera betul.", 1)
+    # Return a specific static list of reviews for demo storytelling
+    curated = [
+        ("Pelayan cafe sangat lambat dan kurang ajar, kita panggil dia buat bodoh je.", 1, "Ahmad Faiz"),
+        ("Servis teruk! Barista lebih sibuk berborak sesama sendiri dari buat kopi pelanggan.", 1, "Siti Nurhaliza"),
+        ("Tandas sangat kotor, berbau hancing dan tiada sabun cuci tangan.", 1, "Wong Wei"),
+        ("Lantai tandas basah berlendir, tong sampah melimpah dan bau busuk gila.", 1, "Kumar"),
+        ("Nasi lemak rendang daging dia empuk gila, sedap gila weh!", 5, "Nurul Huda"),
+        ("Tempat sangat aesthetic dan selesa untuk buat kerja. Wifi laju.", 5, "Mohd Rizal"),
+        ("Juruwang biadap gila, orang tanya elok-elok dia jawab kasar giler.", 1, "Sarah Tan")
     ]
-    names = ["Ahmad Faiz", "Siti Nurhaliza", "Wong Wei", "Kumar", "Nurul Huda", "Mohd Rizal", "Sarah Tan", "Azman Hashim", "Aishah"]
     reviews = []
-    for _ in range(count):
-        text, rating = random.choice(templates)
+    now = datetime.now()
+    for i, (text, rating, name) in enumerate(curated[:count]):
+        date_str = (now - timedelta(minutes=i*2)).isoformat()
         reviews.append({
             "platform": "Google Reviews",
             "teks_ulasan": text,
             "bintang": rating,
-            "tarikh": generate_random_date_last_30_days(),
-            "nama_pengguna": random.choice(names)
+            "tarikh": date_str,
+            "nama_pengguna": name
         })
     return reviews
 
 def _mock_social_mentions(count: int) -> list[dict]:
-    platforms = ["X (Twitter)", "Instagram", "TikTok"]
-    templates_x = [
-        "Guys try kedai ni kat area Bangi, sumpah sedap #FoodieBangi",
-        "Tak faham kenapa orang kata sedap. Bagi aku biasa je pun. Overrated. #CafeHopping",
-        "Servis paling lambat dalam sejarah. Buang masa je gi kedai ni 👎",
-        "Craving benda manis then jumpa cafe ni. Matcha latte dia sedap wey! 🍵✨",
-        "Dah la mahal, portion macam nak bagi kucing makan. Tak berbaloi langsung."
+    curated = [
+        ("Layanan staff cafe ni out gila, panggil order pun buat tak tahu je. Lembap giler wey.", "X (Twitter)", "@jalan2makan"),
+        ("Snobby staff, ignored us completely when we wanted to order food. Worst customer service.", "X (Twitter)", "@lapargila"),
+        ("Meja berhabuk n kerusi kotor tak berlap langsung. Geli nak duduk makan kat sini.", "Instagram", "@aestheticcafe"),
+        ("Tandas kotor n tak berbasuh langsung, bau busuk melampau cafe ni.", "X (Twitter)", "@kakimakan99"),
+        ("Banyak gila lalat terbang dekat meja makan belah luar, tolong lap meja bersih sikit.", "Instagram", "@reviewjujur"),
+        ("Terpaling lembap servis kat sini. Order kopi je pun sampai 30 minit baru siap.", "X (Twitter)", "@makanje")
     ]
-    templates_ig = [
-        "Hidden gem alert! 🚨 Korang wajib try menu baru dorang. Memang umph! 🔥 #ViralMenu #MakanLokal",
-        "Aesthetic gila kedai ni. Tapi tu la, makanan lambat sikit sampai. #CafeAesthetic",
-        "Kecewa sikit hari ni. Ayam goreng macam dah sejuk. Harap boleh improve lepas ni.",
-        "Makan malam dengan family. Suasana best, makanan pun semua ngam dengan tekak! ❤️",
-        "Worst experience ever. Meja kotor tak ada orang lap. Pekerja main phone kat kaunter."
-    ]
-    usernames = ["@foodlover", "@jalan2makan", "@lapargila", "@aestheticcafe", "@kakimakan99", "@reviewjujur", "@makanje"]
     mentions = []
-    for _ in range(count):
-        plat = random.choice(platforms)
-        text = random.choice(templates_x if plat in ["X (Twitter)", "TikTok"] else templates_ig)
+    now = datetime.now()
+    for i, (text, platform, username) in enumerate(curated[:count]):
+        date_str = (now - timedelta(minutes=(i+7)*2)).isoformat()
         mentions.append({
-            "platform": plat,
+            "platform": platform,
             "teks_ulasan": text,
             "bintang": None,
-            "tarikh": generate_random_date_last_30_days(),
-            "nama_pengguna": random.choice(usernames)
+            "tarikh": date_str,
+            "nama_pengguna": username
         })
     return mentions
