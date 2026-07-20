@@ -234,12 +234,23 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
     print(f"[Prescriptive] Generating drafts for premise {premise_id}...")
 
     try:
-        # Load existing process log IDs that already have recommendations
-        existing_res = supabase_client.table("tbl_cadangan_ai")\
-            .select("id_log_proses")\
+        # Load existing active/unresolved recommendations
+        active_res = supabase_client.table("tbl_cadangan_ai")\
+            .select("id_topik, id_log_proses")\
             .eq("id_premis", premise_id)\
+            .in_("status_kelulusan", ["Draf", "Lulus"])\
+            .not_.eq("status_pelaksanaan", "Selesai")\
             .execute()
-        existing_log_ids = {r["id_log_proses"] for r in existing_res.data or [] if r.get("id_log_proses") is not None}
+            
+        existing_log_ids = {r["id_log_proses"] for r in active_res.data or [] if r.get("id_log_proses") is not None}
+        active_topic_ids = [r["id_topik"] for r in active_res.data or [] if r.get("id_topik") is not None]
+        active_labels = set()
+        if active_topic_ids:
+            active_topics_res = supabase_client.table("tbl_topik")\
+                .select("label_topik")\
+                .in_("id_topik", active_topic_ids)\
+                .execute()
+            active_labels = {t["label_topik"] for t in active_topics_res.data or []}
 
         # 1. Fetch topics directly from this premise that are negative
         fb_res = supabase_client.table("tbl_maklumbalas").select("id_maklum_balas, ulasan_teks").eq("id_premis", premise_id).execute()
@@ -309,15 +320,19 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
         drafts_to_insert = []
         MIN_REVIEW_THRESHOLD = 5
         
-        # Prepare list of tasks for parallel workers, prioritizing newest reviews first
+        # Prepare list of tasks for parallel workers, prioritizing categories with highest volume of negative reviews first
         workers_tasks = []
         sorted_labels = sorted(
             [l for l in topic_counts.keys() if "Lain-lain" not in l],
-            key=lambda l: topic_latest_log.get(l, 0),
+            key=lambda l: (topic_counts.get(l, 0), topic_latest_log.get(l, 0)),
             reverse=True
         )
         
         for label in sorted_labels:
+            if label in active_labels:
+                print(f"[Prescriptive] Category '{label}' already has an active unresolved recommendation. Skipping overlap.")
+                continue
+                
             count = topic_counts[label]
             if count < MIN_REVIEW_THRESHOLD:
                 print(f"[Prescriptive] Topic '{label}' only has {count} reviews (Threshold: {MIN_REVIEW_THRESHOLD}). Skipping.")
