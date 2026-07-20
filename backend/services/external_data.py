@@ -302,3 +302,116 @@ def _mock_social_mentions(count: int) -> list[dict]:
             "nama_pengguna": username
         })
     return mentions
+
+def fetch_tripadvisor_reviews(premise_id: int, url: str, count: int = 5) -> list[dict]:
+    """Fetches TripAdvisor reviews via Apify or falls back to mock."""
+    if APIFY_API_KEY and url:
+        print(f"[Apify] Fetching {count} TripAdvisor Reviews for {url}")
+        return _fetch_tripadvisor_reviews_from_apify(url, count)
+    return []
+
+def _fetch_tripadvisor_reviews_from_apify(tripadvisor_url: str, count: int) -> list[dict]:
+    actor_id = "maxcopell~tripadvisor-reviews"
+    url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items?token={APIFY_API_KEY}"
+    
+    payload = {
+        "startUrls": [{"url": tripadvisor_url}],
+        "maxReviews": count,
+        "language": "ms"
+    }
+    
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            response = client.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            
+            reviews = []
+            for item in data:
+                # TripAdvisor rating is 10-50, divide by 10
+                raw_rating = item.get("rating", 50)
+                rating = int(raw_rating / 10) if raw_rating > 5 else raw_rating
+                
+                reviews.append({
+                    "platform": "TripAdvisor",
+                    "teks_ulasan": item.get("text", "") or item.get("title", ""),
+                    "bintang": rating,
+                    "tarikh": item.get("publishedDate", datetime.now().isoformat()),
+                    "nama_pengguna": item.get("username", "Pengguna TripAdvisor")
+                })
+            return reviews
+    except Exception as e:
+        print(f"[Apify Error] Failed to fetch TripAdvisor Reviews: {e}")
+        return []
+
+def fetch_yelp_reviews(premise_id: int, url: str, count: int = 5) -> list[dict]:
+    """Fetches Yelp reviews via Apify or falls back to mock."""
+    if APIFY_API_KEY and url:
+        print(f"[Apify] Fetching {count} Yelp Reviews for {url}")
+        return _fetch_yelp_reviews_from_apify(url, count)
+    return []
+
+def _fetch_yelp_reviews_from_apify(yelp_url: str, count: int) -> list[dict]:
+    actor_id = "maxcopell~yelp-reviews-scraper"
+    url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items?token={APIFY_API_KEY}"
+    
+    payload = {
+        "startUrls": [{"url": yelp_url}],
+        "maxReviews": count
+    }
+    
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            response = client.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            
+            reviews = []
+            for item in data:
+                reviews.append({
+                    "platform": "Yelp Reviews",
+                    "teks_ulasan": item.get("text", "") or item.get("comment", ""),
+                    "bintang": item.get("rating", 5),
+                    "tarikh": item.get("date", datetime.now().isoformat()),
+                    "nama_pengguna": item.get("userName", "Pengguna Yelp")
+                })
+            return reviews
+    except Exception as e:
+        print(f"[Apify Error] Failed to fetch Yelp Reviews: {e}")
+        return []
+
+def fetch_trustpilot_reviews(premise_id: int, url: str, count: int = 5) -> list[dict]:
+    """Fetches Trustpilot reviews via Apify or falls back to mock."""
+    if APIFY_API_KEY and url:
+        print(f"[Apify] Fetching {count} Trustpilot Reviews for {url}")
+        return _fetch_trustpilot_reviews_from_apify(url, count)
+    return []
+
+def _fetch_trustpilot_reviews_from_apify(trustpilot_url: str, count: int) -> list[dict]:
+    actor_id = "apify~trustpilot-scraper"
+    url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items?token={APIFY_API_KEY}"
+    
+    payload = {
+        "startUrls": [{"url": trustpilot_url}],
+        "maxReviews": count
+    }
+    
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            response = client.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            
+            reviews = []
+            for item in data:
+                reviews.append({
+                    "platform": "Trustpilot Reviews",
+                    "teks_ulasan": item.get("text", "") or item.get("title", ""),
+                    "bintang": item.get("rating", 5),
+                    "tarikh": item.get("date", datetime.now().isoformat()),
+                    "nama_pengguna": item.get("author", "Pengguna Trustpilot")
+                })
+            return reviews
+    except Exception as e:
+        print(f"[Apify Error] Failed to fetch Trustpilot Reviews: {e}")
+        return []

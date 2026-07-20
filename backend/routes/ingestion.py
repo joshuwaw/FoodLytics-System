@@ -4,7 +4,7 @@ import random
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from database import supabase
 from models import ExternalReviewItem, ExternalFeedbackCreate, IngestionResponse, IngestionSourceStatus
-from services.external_data import fetch_google_reviews, fetch_social_mentions
+from services.external_data import fetch_google_reviews, fetch_social_mentions, fetch_tripadvisor_reviews, fetch_yelp_reviews, fetch_trustpilot_reviews
 from services.sentiment import analyse_sentiment
 
 router = APIRouter()
@@ -124,10 +124,32 @@ def trigger_ingestion(premise_id: int, background_tasks: BackgroundTasks):
             elif isinstance(medsos_raw, str):
                 medsos_urls = [url.strip() for url in medsos_raw.split(",") if url.strip()]
 
+        # Separate specific platforms from social media links
+        tripadvisor_urls = [url for url in medsos_urls if "tripadvisor.com" in url]
+        yelp_urls = [url for url in medsos_urls if "yelp.com" in url]
+        trustpilot_urls = [url for url in medsos_urls if "trustpilot.com" in url]
+        other_medsos_urls = [
+            url for url in medsos_urls 
+            if "tripadvisor.com" not in url and "yelp.com" not in url and "trustpilot.com" not in url
+        ]
+
         google_reviews = fetch_google_reviews(premise_id, gmaps_url=gmaps_url, count=random.randint(3, 8))
-        social_mentions = fetch_social_mentions(premise_id, medsos_urls=medsos_urls, count=random.randint(2, 6))
         
-        all_reviews = google_reviews + social_mentions
+        tripadvisor_reviews = []
+        if tripadvisor_urls:
+            tripadvisor_reviews = fetch_tripadvisor_reviews(premise_id, tripadvisor_urls[0], count=random.randint(3, 6))
+            
+        yelp_reviews = []
+        if yelp_urls:
+            yelp_reviews = fetch_yelp_reviews(premise_id, yelp_urls[0], count=random.randint(3, 6))
+            
+        trustpilot_reviews = []
+        if trustpilot_urls:
+            trustpilot_reviews = fetch_trustpilot_reviews(premise_id, trustpilot_urls[0], count=random.randint(3, 6))
+            
+        social_mentions = fetch_social_mentions(premise_id, medsos_urls=other_medsos_urls, count=random.randint(2, 6))
+        
+        all_reviews = google_reviews + tripadvisor_reviews + yelp_reviews + trustpilot_reviews + social_mentions
         
         if not all_reviews:
             return IngestionResponse(
