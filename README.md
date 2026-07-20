@@ -15,10 +15,10 @@ FoodLytics utilizes a modern, decoupled architecture connecting a responsive Nex
 graph TD
     %% Inputs
     Customer[Customer / Mobile QR Portal] -->|Submits Ratings & Reviews| API
-    ExtReviews[External Sources: Google Maps & Social Media] -->|Scraped via Apify API| API
+    ExtReviews[Google Maps & Social Media Reviews] -->|Scraped via Apify API| API
 
     subgraph Backend [FastAPI Backend Service]
-        API[FastAPI Router / Uvicorn] -->|Background Tasks| Pipeline
+        API[FastAPI Router / REST API] -->|Asynchronous Background Tasks| Pipeline
         
         subgraph Pipeline [AI Operations Pipeline]
             Slang[Malay Slang & Chatspeak Normalizer]
@@ -38,12 +38,11 @@ graph TD
     Backend <-->|Read / Write| DB[(Supabase PostgreSQL)]
 
     %% Dashboards
-    DB <-->|Sync State & Fetch Metrics| Frontend[Next.js Dashboards]
+    DB <-->|Sync State & Fetch Metrics| Frontend[Next.js Role-Based Interfaces]
     
-    subgraph Frontend [Next.js Role-Based Interfaces]
-        AdminDash[Admin: Premise Registration & QR Code Gen]
-        ManagerDash[Manager: Dashboard, Analytics, Report Gen & AI Approvals]
-        StaffDash[Staff: Work Order Execution & Progress Tracker]
+    subgraph Frontend [Next.js Dashboards]
+        ManagerDash[Manager: Analytics & Proposal Approvals]
+        StaffDash[Staff: Receive Work Orders]
     end
 ```
 
@@ -79,11 +78,48 @@ To achieve industry-leading classification accuracy on short-form feedback, a hy
 * **Multilingual Transformer**: Passes clean text through `lxyuan/distilbert-base-multilingual-cased-sentiments-student` for semantic context evaluation.
 * **Rating Calibration**: Calibrates the AI model confidence dynamically when numerical star ratings (food, service, ambience) are present.
 
+```mermaid
+graph LR
+    Input["Raw Review Text<br><i>(e.g., 'sdp giler tp rege mahei')</i>"] --> CleanChar["1. Collapse Duplicated Characters<br><i>(giler ➔ gila)</i>"]
+    CleanChar --> Negation["2. Negation Mapping<br><i>(x sdp ➔ tidak sedap)</i>"]
+    Negation --> SlangMap["3. Local Slang Dictionary<br><i>(rege mahei ➔ harga mahal)</i>"]
+    
+    SlangMap --> CleanText["Clean Text"]
+    
+    subgraph Sentiment [Hybrid Sentiment Engine]
+        CleanText --> Lexicon["Malay Lexicon Scoring<br>(Adjectives & Intensifiers)"]
+        CleanText --> DistilBERT["Multilingual DistilBERT<br>(Semantic Analysis)"]
+        
+        Lexicon & DistilBERT --> Calibration["Rating Calibration Engine<br>(Adjustment by star ratings)"]
+    end
+    
+    Calibration --> FinalSent["Final Sentiment<br>(Positive / Negative / Neutral)"]
+```
+
 ### 3. Three-Layer Diagnostic Topic Modeling
 FoodLytics solves the common issue of BERTopic clustering failing on very short text (2–4 words) by structuring topic modeling in a 3-layer priority stack:
 1. **Layer 1: Rule-Based Classifier (Fast Path)**: Deterministically routes reviews containing clear keywords directly to standard categories (*Layanan Staf*, *Kualiti Makanan*, *Masa Menunggu*, *Kebersihan Kedai*, etc.). Captures ~70% of standard short reviews with 100% accuracy and zero token cost.
 2. **Layer 2: Text Normalization**: Runs Malay chatspeak/slang normalization.
 3. **Layer 3: Guided BERTopic**: Any reviews not captured by Layer 1 are embedded using `sentence-transformers` and clustered using Guided BERTopic with seed topics and KeyBERT representations.
+
+```mermaid
+graph TD
+    Input["Clean Text"] --> Layer1{"Layer 1: Rule-Based Classifier<br>(Fast Path)"}
+    
+    Layer1 -->|Has Keywords| DirectRoute["Direct Topic Routing<br>(Service / Food / Cleanliness)"]
+    Layer1 -->|No Keywords| Layer2["Layer 2: Vector Embedding<br>(Sentence-Transformers)"]
+    
+    Layer2 --> Layer3["Layer 3: Guided BERTopic<br>(Seed Topics + HDBSCAN + KeyBERT)"]
+    
+    DirectRoute & Layer3 --> TopicResult["Classified Topic<br>(e.g., 'Waiting Time')"]
+    
+    TopicResult --> Prescriptive{"Prescriptive AI Engine (Qwen-2.5)"}
+    
+    Prescriptive --> Evidences["1. Extract Complaint Evidence<br><i>('drinks took forever to arrive')</i>"]
+    Prescriptive --> ActionPlan["2. Draft Staff Work Orders<br><i>('Allocate extra staff to drinks counter')</i>"]
+    
+    Evidences & ActionPlan --> Output["Send Recommendation to Manager"]
+```
 
 ### 4. Prescriptive Strategic AI (Evidence-Based Action Routing)
 For negative feedback clusters, the system automatically triggers a prescriptive analysis using Qwen-2.5:
