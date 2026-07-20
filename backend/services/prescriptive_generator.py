@@ -234,23 +234,12 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
     print(f"[Prescriptive] Generating drafts for premise {premise_id}...")
 
     try:
-        # Load existing active/unresolved recommendations
-        active_res = supabase_client.table("tbl_cadangan_ai")\
-            .select("id_topik, id_log_proses")\
+        # Load existing process log IDs that already have recommendations
+        existing_res = supabase_client.table("tbl_cadangan_ai")\
+            .select("id_log_proses")\
             .eq("id_premis", premise_id)\
-            .in_("status_kelulusan", ["Draf", "Lulus"])\
-            .not_.eq("status_pelaksanaan", "Selesai")\
             .execute()
-            
-        existing_log_ids = {r["id_log_proses"] for r in active_res.data or [] if r.get("id_log_proses") is not None}
-        active_topic_ids = [r["id_topik"] for r in active_res.data or [] if r.get("id_topik") is not None]
-        active_labels = set()
-        if active_topic_ids:
-            active_topics_res = supabase_client.table("tbl_topik")\
-                .select("label_topik")\
-                .in_("id_topik", active_topic_ids)\
-                .execute()
-            active_labels = {t["label_topik"] for t in active_topics_res.data or []}
+        existing_log_ids = {r["id_log_proses"] for r in existing_res.data or [] if r.get("id_log_proses") is not None}
 
         # 1. Fetch topics directly from this premise that are negative
         fb_res = supabase_client.table("tbl_maklumbalas").select("id_maklum_balas, ulasan_teks").eq("id_premis", premise_id).execute()
@@ -300,9 +289,20 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
         topic_examples_text = {}
         topic_latest_log = {}
         
+        # 2. Group by label_topik to prioritize the most pressing issues (excluding already recommended reviews)
+        topic_counts = {}
+        topic_examples = {}
+        topic_examples_text = {}
+        topic_latest_log = {}
+        
         for t in topics:
             label = t["label_topik"]
             log_id = t["id_log_proses"]
+            
+            # Skip if this specific review log has already been recommended
+            if log_id in existing_log_ids:
+                continue
+                
             fb_id = log_process_map.get(log_id)
             text = fb_map.get(fb_id, "") if fb_id else ""
             
@@ -320,7 +320,7 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
         drafts_to_insert = []
         MIN_REVIEW_THRESHOLD = 5
         
-        # Prepare list of tasks for parallel workers, prioritizing categories with highest volume of negative reviews first
+        # Prepare list of tasks for parallel workers, prioritizing categories with highest volume of new negative reviews first
         workers_tasks = []
         sorted_labels = sorted(
             [l for l in topic_counts.keys() if "Lain-lain" not in l],
@@ -329,24 +329,12 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
         )
         
         for label in sorted_labels:
-            if label in active_labels:
-                print(f"[Prescriptive] Category '{label}' already has an active unresolved recommendation. Skipping overlap.")
-                continue
-                
             count = topic_counts[label]
             if count < MIN_REVIEW_THRESHOLD:
-                print(f"[Prescriptive] Topic '{label}' only has {count} reviews (Threshold: {MIN_REVIEW_THRESHOLD}). Skipping.")
+                print(f"[Prescriptive] Topic '{label}' only has {count} new reviews (Threshold: {MIN_REVIEW_THRESHOLD}). Skipping.")
                 continue
                 
-            rep_topic = None
-            for t in topic_examples[label]:
-                if t["id_log_proses"] not in existing_log_ids:
-                    rep_topic = t
-                    break
-            
-            if not rep_topic:
-                print(f"[Prescriptive] All log IDs for topic '{label}' already have recommendations. Skipping.")
-                continue
+            rep_topic = topic_examples[label][0]
             
             # Pack parameters
             texts_list = topic_examples_text[label][:5]
