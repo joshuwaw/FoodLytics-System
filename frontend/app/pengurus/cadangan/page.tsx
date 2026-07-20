@@ -472,10 +472,18 @@ export default function CadanganPage() {
                       </h3>
                     </div>
                     
-                    {/* Keyakinan AI Badge */}
-                    <div className="flex items-center gap-1.5 self-start sm:self-auto bg-blue-50/80 border border-blue-100 text-blue-700 rounded-full px-3 py-1 text-xs font-bold shadow-xs">
-                      <BrainCircuit className="w-3.5 h-3.5" />
-                      Keyakinan AI: <span className="font-extrabold text-blue-800">{draft.skor_keyakinan}%</span>
+                    {/* Tarikh Dijana Badge */}
+                    <div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-50 border border-slate-200 text-slate-600 rounded-full px-3 py-1 text-xs font-bold shadow-xs">
+                      <Clock className="w-3.5 h-3.5 text-slate-500" />
+                      Tarikh Dijana: <span className="font-extrabold text-slate-800">
+                        {new Date(draft.tarikh_jana).toLocaleDateString("ms-MY", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })}
+                      </span>
                     </div>
                   </div>
 
