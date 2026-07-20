@@ -65,6 +65,7 @@ export default function PengurusProfilPage() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resettingStaff, setResettingStaff] = useState<any>(null);
   const [staffNewPassword, setStaffNewPassword] = useState("");
+  const [showStaffNewPassword, setShowStaffNewPassword] = useState(false);
   const [resettingLoading, setResettingLoading] = useState(false);
 
   const handleResetStaffPassword = async (e: React.FormEvent) => {
@@ -81,6 +82,7 @@ export default function PengurusProfilPage() {
         toast.success(`Kata laluan untuk ${resettingStaff.nama} berjaya diset semula!`);
         setShowResetModal(false);
         setStaffNewPassword("");
+        setShowStaffNewPassword(false);
         setResettingStaff(null);
       } else {
         const errData = await res.json();
@@ -933,6 +935,7 @@ export default function PengurusProfilPage() {
                   onClick={() => {
                     setShowResetModal(false);
                     setStaffNewPassword("");
+                    setShowStaffNewPassword(false);
                     setResettingStaff(null);
                   }}
                   className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
@@ -948,15 +951,24 @@ export default function PengurusProfilPage() {
               <form onSubmit={handleResetStaffPassword} className="space-y-5">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Kata Laluan Baru Staf</label>
-                  <input
-                    type="password"
-                    placeholder="Masukkan kata laluan baru"
-                    value={staffNewPassword}
-                    onChange={(e) => setStaffNewPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/40 text-sm font-semibold"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showStaffNewPassword ? "text" : "password"}
+                      placeholder="Masukkan kata laluan baru"
+                      value={staffNewPassword}
+                      onChange={(e) => setStaffNewPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/40 text-sm font-semibold tracking-widest"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowStaffNewPassword(!showStaffNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer focus:outline-none"
+                    >
+                      {showStaffNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <button

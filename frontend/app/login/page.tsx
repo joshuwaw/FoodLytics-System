@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [forgotError, setForgotError] = useState<string | null>(null);
   const [foundUser, setFoundUser] = useState<{ id_pengguna: number; nama: string; emel: string; peranan: string } | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
   const handleCheckEmail = async (e: React.FormEvent) => {
@@ -73,6 +74,7 @@ export default function LoginPage() {
     setForgotError(null);
     setFoundUser(null);
     setNewPassword("");
+    setShowNewPassword(false);
     setResetSuccess(false);
   };
 
@@ -373,16 +375,23 @@ export default function LoginPage() {
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Kata Laluan Baru (Demo)</label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
                       <input
-                        type="password"
+                        type={showNewPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         required
-                        className="w-full pl-10 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/40 text-sm font-semibold"
+                        className="w-full pl-10 pr-10 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/40 text-sm font-semibold tracking-widest"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer focus:outline-none"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
                   </div>
 

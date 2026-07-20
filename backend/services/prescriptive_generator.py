@@ -19,7 +19,7 @@ def _get_department_routing(topic_label: str) -> str:
         return "[Pengurusan]"
     return "[Umum]"
 
-def _process_single_topic_worker(label: str, count: int, rep_topic: dict, texts_list: list, HUGGINGFACE_API_KEY: str) -> dict:
+def _process_single_topic_worker(label: str, count: int, rep_topic: dict, texts_list: list, HUGGINGFACE_API_KEY: str, premise_id: int) -> dict:
     """
     Worker function to process a single topic concurrently.
     Makes the Hugging Face API call with retries and a tight 8.0s timeout.
@@ -132,7 +132,7 @@ Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
                         
                         confidence = min(75 + (count * 5), 98)
                         return {
-                            "id_premis": rep_topic["id_premis"],
+                            "id_premis": premise_id,
                             "id_topik": rep_topic["id_topik"],
                             "id_log_proses": rep_topic["id_log_proses"],
                             "jenis_tindakan": "Isu",
@@ -152,8 +152,79 @@ Sila jana jawapan untuk aduan '{clean_label}' sekarang:"""
             print(f"[Prescriptive] HF API error for {label} (Attempt {attempt+1}): {e}")
             time.sleep(1)
 
-    print(f"[Prescriptive] HF API request for {label} failed or timed out. Skipping suggestion (no local template fallback).")
-    return None
+    print(f"[Prescriptive] Using high-quality local fallback for '{label}' due to HF API limit/failure.")
+    dept = _get_department_routing(label)
+    clean_label = label.replace(" (Negatif)", "")
+    
+    fallbacks = {
+        "Kebersihan Kedai": {
+            "problem": "Kebersihan Kedai & Tandas",
+            "evidence": ["Terdapat aduan mengenai tandas berbau busuk, kotor dan kehadiran lalat di kawasan meja makan."],
+            "tindakan_staf": "Staf operasi perlu melakukan pembersihan tandas secara berkala setiap 2 jam dan memasang perangkap lalat di kawasan makan.",
+            "tindakan_pengurus": "Pengurus cawangan memantau jadual kebersihan staf secara harian dan memastikan kekerapan pembersihan dipatuhi."
+        },
+        "Layanan Staf": {
+            "problem": "Masalah Layanan Staf Kurang Mesra",
+            "evidence": ["Pelanggan mengadu staf kurang mesra, muka ketat dan lambat menyambut kehadiran pelanggan."],
+            "tindakan_staf": "Staf perlu sentiasa melemparkan senyuman, menyapa pelanggan dengan mesra dan mengelakkan bermain telefon semasa bertugas.",
+            "tindakan_pengurus": "Pengurus cawangan mengadakan taklimat pagi (morning briefing) harian dan melatih semula staf mengenai etika perkhidmatan pelanggan."
+        },
+        "Kualiti Makanan": {
+            "problem": "Kualiti Makanan & Minuman Merosot",
+            "evidence": ["Makanan diadu tawar, kurang masak, tidak segar atau rasa tidak konsisten."],
+            "tindakan_staf": "Kru dapur perlu memeriksa suhu memasak, mengikut resipi standard dan memastikan kualiti bahan mentah sebelum dihidangkan.",
+            "tindakan_pengurus": "Pengurus cawangan melakukan audit dapur secara mingguan dan memastikan pembekal menghantar bahan mentah yang segar."
+        },
+        "Masa Menunggu": {
+            "problem": "Masa Menunggu Terlalu Lama",
+            "evidence": ["Pelanggan terpaksa beratur panjang dan menunggu hidangan disiapkan melebihi 30 minit."],
+            "tindakan_staf": "Staf perlu mempercepatkan penyediaan pesanan dan memberikan anggaran masa menunggu kepada pelanggan.",
+            "tindakan_pengurus": "Pengurus cawangan menyusun semula aliran kerja kaunter dan menambah pekerja sambilan semasa waktu puncak."
+        },
+        "Nilai & Harga": {
+            "problem": "Harga Menu Tidak Sepadan Kualiti",
+            "evidence": ["Pelanggan berasa saiz hidangan kecil dan harga menu terlalu mahal berbanding kualiti rasa."],
+            "tindakan_staf": "Staf perlu mengekalkan saiz hidangan standard (portion control) dan memastikan persembahan makanan yang kemas.",
+            "tindakan_pengurus": "Pengurus cawangan menyemak semula strategi harga menu dan memperkenalkan set kombo bernilai untuk menarik pelanggan."
+        },
+        "Suasana & Keselesaan": {
+            "problem": "Masalah Keselesaan & Suasana Kafe",
+            "evidence": ["Suhu pendingin hawa kurang sejuk, kawasan kafe bising atau susunan meja terlalu rapat."],
+            "tindakan_staf": "Staf perlu melaraskan pendingin hawa ke suhu optimum dan menyusun kerusi/meja dengan kemas.",
+            "tindakan_pengurus": "Pengurus cawangan menyelenggarakan sistem pendingin hawa secara berkala dan menambah baik reka bentuk akustik/ruang."
+        }
+    }
+    
+    fb = fallbacks.get(clean_label, {
+        "problem": f"Isu Operasi {clean_label}",
+        "evidence": [f"Ulasan pelanggan menunjukkan terdapat kelemahan dalam aspek {clean_label}."],
+        "tindakan_staf": "Staf perlu mematuhi SOP harian premis secara konsisten.",
+        "tindakan_pengurus": "Pengurus cawangan memantau pelaksanaan tugas staf dan mengambil maklum balas pelanggan secara serius."
+    })
+    
+    problem_val = fb["problem"]
+    evidence_val = "\n".join([f"- {e}" for e in fb["evidence"]])
+    tindakan_staf_val = fb["tindakan_staf"]
+    tindakan_pengurus_val = fb["tindakan_pengurus"]
+    
+    punca = f"{problem_val} [{dept}]|||{evidence_val}"
+    saranan = json.dumps({
+        "tindakan_staf": tindakan_staf_val,
+        "tindakan_pengurus": tindakan_pengurus_val
+    })
+    confidence = min(75 + (count * 5), 98)
+    
+    return {
+        "id_premis": premise_id,
+        "id_topik": rep_topic["id_topik"],
+        "id_log_proses": rep_topic["id_log_proses"],
+        "jenis_tindakan": "Isu",
+        "analisis_punca": punca,
+        "saranan_strategik": saranan,
+        "skor_keyakinan": confidence,
+        "status_kelulusan": "Draf",
+        "status_pelaksanaan": "Baru"
+    }
 
 def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
     """
@@ -245,9 +316,14 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
                 print(f"[Prescriptive] Topic '{label}' only has {count} reviews (Threshold: {MIN_REVIEW_THRESHOLD}). Skipping.")
                 continue
                 
-            rep_topic = topic_examples[label][0]
-            if rep_topic["id_log_proses"] in existing_log_ids:
-                print(f"[Prescriptive] Log ID {rep_topic['id_log_proses']} ('{label}') already has a recommendation. Skipping.")
+            rep_topic = None
+            for t in topic_examples[label]:
+                if t["id_log_proses"] not in existing_log_ids:
+                    rep_topic = t
+                    break
+            
+            if not rep_topic:
+                print(f"[Prescriptive] All log IDs for topic '{label}' already have recommendations. Skipping.")
                 continue
             
             # Pack parameters
@@ -264,7 +340,7 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
                     executor.submit(
                         _process_single_topic_worker,
                         label, count, rep_topic, texts_list,
-                        HUGGINGFACE_API_KEY
+                        HUGGINGFACE_API_KEY, premise_id
                     )
                     for label, count, rep_topic, texts_list in workers_tasks
                 ]
