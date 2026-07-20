@@ -287,6 +287,7 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
         topic_counts = {}
         topic_examples = {}
         topic_examples_text = {}
+        topic_latest_log = {}
         
         for t in topics:
             label = t["label_topik"]
@@ -298,20 +299,26 @@ def generate_prescriptive_drafts(premise_id: int, supabase_client) -> dict:
                 topic_counts[label] = 0
                 topic_examples[label] = []
                 topic_examples_text[label] = []
+                topic_latest_log[label] = 0
             topic_counts[label] += 1
             topic_examples[label].append(t)
+            topic_latest_log[label] = max(topic_latest_log[label], log_id)
             if text:
                 topic_examples_text[label].append(text)
 
         drafts_to_insert = []
         MIN_REVIEW_THRESHOLD = 5
         
-        # Prepare list of tasks for parallel workers
+        # Prepare list of tasks for parallel workers, prioritizing newest reviews first
         workers_tasks = []
-        for label, count in topic_counts.items():
-            if "Lain-lain" in label:
-                continue
-                
+        sorted_labels = sorted(
+            [l for l in topic_counts.keys() if "Lain-lain" not in l],
+            key=lambda l: topic_latest_log.get(l, 0),
+            reverse=True
+        )
+        
+        for label in sorted_labels:
+            count = topic_counts[label]
             if count < MIN_REVIEW_THRESHOLD:
                 print(f"[Prescriptive] Topic '{label}' only has {count} reviews (Threshold: {MIN_REVIEW_THRESHOLD}). Skipping.")
                 continue
